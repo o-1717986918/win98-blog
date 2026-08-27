@@ -1,0 +1,17 @@
+---
+const provider = import.meta.env.PUBLIC_ANALYTICS_PROVIDER ?? 'none';
+const cloudflareToken = provider === 'cloudflare' ? import.meta.env.PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN : '';
+const umamiScript = provider === 'umami' ? import.meta.env.PUBLIC_UMAMI_SCRIPT_URL : '';
+const umamiWebsite = provider === 'umami' ? import.meta.env.PUBLIC_UMAMI_WEBSITE_ID : '';
+---
+
+{cloudflareToken && (
+  <script
+    is:inline
+    defer
+    src="https://static.cloudflareinsights.com/beacon.min.js"
+    data-cf-beacon={JSON.stringify({ token: cloudflareToken })}></script>
+)}
+{umamiScript && umamiWebsite && (
+  <script is:inline defer src={umamiScript} data-website-id={umamiWebsite}></script>
+)}

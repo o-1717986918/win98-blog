@@ -75,4 +75,49 @@ describe('blog-architecture contracts', () => {
     expect(site).toContain("title: '某人的小站'");
     expect(site).not.toMatch(/文书手记|文枢手记/);
   });
+
+  it('keeps publication, discovery and content operations in the static build', async () => {
+    const config = await read('src/content.config.ts');
+    const routes = await read('src/integrations/content-routes.mjs');
+    const scripts = JSON.parse(await read('package.json')).scripts;
+    expect(config).toContain('featured: z.boolean()');
+    expect(config).toContain("comments: z.enum(['inherit', 'enabled', 'disabled'])");
+    expect(routes).toContain('PREVIEW_DRAFTS');
+    expect(routes).toContain('publishAt');
+    expect(scripts['content:new']).toBeTruthy();
+    expect(scripts['content:audit']).toBeTruthy();
+    expect(scripts.build).toContain('pagefind');
+    await expect(read('src/pages/search.astro')).resolves.toContain('SearchIndex');
+    await expect(read('src/pages/tags/index.astro')).resolves.toContain('allTags');
+  });
+
+  it('keeps optional network adapters out of standalone content', async () => {
+    const standalone = await read('src/layouts/StandaloneLayout.astro');
+    expect(standalone).not.toMatch(/Analytics|Comments|AmbientField|ReaderControls/);
+    for (const route of ['src/routes/posts-none.astro', 'src/routes/columns-none.astro']) {
+      const source = await read(route);
+      expect(source).not.toMatch(/Analytics|Comments|AmbientField|ReaderControls/);
+    }
+    await expect(read('src/components/Analytics.astro')).resolves.toContain('PUBLIC_ANALYTICS_PROVIDER');
+    await expect(read('src/components/Comments.astro')).resolves.toContain('PUBLIC_COMMENTS_PROVIDER');
+  });
+
+  it('preserves the ambient field with user and system pause controls', async () => {
+    const ambient = await read('src/components/AmbientField.astro');
+    expect(ambient).toContain('requestAnimationFrame');
+    expect(ambient).toContain('data-motion-toggle');
+    expect(ambient).toContain('prefers-reduced-motion');
+    expect(ambient).toContain('visibilitychange');
+    expect(ambient).toContain('someone-site:ambient-paused');
+  });
+
+  it('ships production operations and deployment documentation', async () => {
+    for (const path of [
+      '.env.example',
+      '.github/workflows/ci.yml',
+      'docs/operations/CONTENT_WORKFLOW.md',
+      'docs/operations/DEPLOYMENT.md',
+      'docs/operations/OPERATIONS.md',
+    ]) await expect(read(path)).resolves.toBeTruthy();
+  });
 });

@@ -1,0 +1,27 @@
+---
+import { getCollection } from 'astro:content';
+import FullShell from '../../layouts/FullShell.astro';
+import { allTags, isPublished, sortPosts, tagPath } from '../../lib/content';
+const posts = sortPosts((await getCollection('posts')).filter(isPublished));
+const tags = allTags(posts);
+---
+
+<FullShell title="文章标签" description="按主题标签浏览某人的小站。">
+  <div class="page-wrap tags-page">
+    <header class="page-intro">
+      <div><p class="eyebrow">TAGS</p><h1 class="display-title">文章<br />标签</h1></div>
+      <div class="page-intro__copy"><p>标签描述文章涉及的主题，栏目负责更长期的策展；二者互不替代。</p><div class="page-intro__meta"><span><b>{tags.length}</b> 个标签</span><span><b>{posts.length}</b> 篇文章</span></div></div>
+    </header>
+    <nav class="tag-cloud section-block" aria-label="全部标签">
+      {tags.map((tag) => <a href={tagPath(tag.name)}><span>#{tag.name}</span><b>{tag.count}</b></a>)}
+    </nav>
+  </div>
+</FullShell>
+
+<style>
+  .tags-page { padding-bottom: 5rem; }
+  .tag-cloud { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: .7rem; }
+  .tag-cloud a { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem; border: 1px solid var(--line); color: rgba(var(--text-rgb), .7); background: rgba(var(--surface-rgb), .52); text-decoration: none; }
+  .tag-cloud a:hover { border-color: rgb(var(--signal-rgb)); color: rgb(var(--signal-rgb)); }
+  .tag-cloud b { color: rgb(var(--accent-rgb)); font-family: var(--font-mono); font-size: .7rem; }
+</style>

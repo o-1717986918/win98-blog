@@ -3,6 +3,7 @@ import '../styles/tokens.css';
 import '../styles/shell.css';
 import type { ThemeId } from '../config/site';
 import AmbientField from '../components/AmbientField.astro';
+import Analytics from '../components/Analytics.astro';
 import SiteFooter from '../components/chrome/SiteFooter.astro';
 import SiteHeader from '../components/chrome/SiteHeader.astro';
 import { SITE } from '../config/site';
@@ -13,14 +14,20 @@ interface Props {
   description?: string;
   theme?: ThemeId;
   pageKind?: 'page' | 'post' | 'column';
+  image?: string | undefined;
+  published?: Date | undefined;
+  updated?: Date | undefined;
+  tags?: string[] | undefined;
+  noindex?: boolean | undefined;
 }
-const { title, description, theme = 'graphite', pageKind = 'page' } = Astro.props;
+const { title, description, theme = SITE.defaultTheme, pageKind = 'page', image, published, updated, tags, noindex } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description ?? SITE.description} theme={theme} pageKind={pageKind}>
+<BaseLayout title={title} description={description ?? SITE.description} theme={theme} pageKind={pageKind} {image} {published} {updated} {tags} {noindex}>
   <a class="skip-link" href="#main-content">跳到正文</a>
   <AmbientField />
   <SiteHeader />
   <main class="shell-main" id="main-content"><slot /></main>
   <SiteFooter />
+  <Analytics />
 </BaseLayout>

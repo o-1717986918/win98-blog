@@ -3,11 +3,21 @@ import BackBadge from '../components/chrome/BackBadge.astro';
 import { SITE, type ThemeId } from '../config/site';
 import BaseLayout from './BaseLayout.astro';
 
-interface Props { title: string; description?: string; theme?: ThemeId; back?: boolean; }
-const { title, description, theme = 'graphite', back = true } = Astro.props;
+interface Props {
+  title: string;
+  description?: string;
+  theme?: ThemeId;
+  back?: boolean;
+  pageKind?: 'standalone' | 'post' | 'column';
+  published?: Date | undefined;
+  updated?: Date | undefined;
+  tags?: string[] | undefined;
+  noindex?: boolean | undefined;
+}
+const { title, description, theme = SITE.defaultTheme, back = true, pageKind = 'standalone', published, updated, tags, noindex } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description ?? SITE.description} theme={theme} pageKind="standalone">
+<BaseLayout title={title} description={description ?? SITE.description} theme={theme} {pageKind} {published} {updated} {tags} {noindex}>
   {back && <BackBadge />}
   <slot />
 </BaseLayout>

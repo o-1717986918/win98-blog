@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -9,18 +9,26 @@ const requireText = (source, text, label) => { if (!source.includes(text)) failu
 const forbidText = (source, text, label) => { if (source.includes(text)) failures.push(`${label}: unexpectedly contains ${text}`); };
 
 const home = await read('dist/index.html');
-const full = await read('dist/posts/modular-blog/index.html');
+const full = await read('dist/posts/theme-as-data/index.html');
 const minimal = await read('dist/posts/reader-control/index.html');
 const nonePost = await read('dist/posts/particle-field/index.html');
 const noneColumn = await read('dist/columns/lab/index.html');
 const rss = await read('dist/rss.xml');
 const sitemap = await read('dist/sitemap-0.xml');
+const search = await read('dist/search/index.html');
+const tags = await read('dist/tags/index.html');
+const privacy = await read('dist/privacy/index.html');
+const robots = await read('dist/robots.txt');
+const llms = await read('dist/llms.txt');
 
 requireText(home, '<title>某人的小站</title>', 'home');
 requireText(home, '/columns/engineering/', 'home');
 requireText(full, '<header class="site-header"', 'full post');
 requireText(full, '<footer class="site-footer"', 'full post');
 requireText(full, 'class="reader-controls"', 'full post');
+requireText(full, 'BlogPosting', 'full post SEO');
+requireText(full, 'data-reading-progress', 'full post reading progress');
+requireText(full, 'class="motion-toggle"', 'full post motion control');
 forbidText(minimal, '<header class="site-header"', 'minimal post');
 forbidText(minimal, '<footer class="site-footer"', 'minimal post');
 requireText(minimal, 'class="reader-controls"', 'minimal post');
@@ -32,15 +40,33 @@ for (const [label, source] of [['none post', nonePost], ['none column', noneColu
   forbidText(source, 'class="reader-controls"', label);
   forbidText(source, 'FullShell.', label);
   forbidText(source, 'minimal-main', label);
+  forbidText(source, 'giscus.app', label);
+  forbidText(source, 'cloudflareinsights.com', label);
+  forbidText(source, 'data-motion-toggle', label);
   requireText(source, 'class="back-badge"', label);
 }
 
 requireText(rss, '/posts/particle-field/', 'RSS');
+requireText(rss, '/posts/theme-as-data/', 'RSS');
 requireText(sitemap, '/columns/lab/', 'sitemap');
-requireText(sitemap, '/posts/modular-blog/', 'sitemap');
+requireText(sitemap, '/search/', 'sitemap');
+requireText(search, 'data-search-index', 'search');
+requireText(tags, '/tags/', 'tags');
+requireText(privacy, '当前状态：未启用', 'privacy defaults');
+requireText(robots, '/sitemap-index.xml', 'robots');
+requireText(llms, '# 某人的小站', 'llms');
+for (const [label, source] of [['home', home], ['full post', full], ['minimal post', minimal]]) {
+  forbidText(source, 'giscus.app/client.js', `${label} default comments`);
+  forbidText(source, 'cloudflareinsights.com/beacon.min.js', `${label} default analytics`);
+}
 for (const [label, source] of [['home', home], ['RSS', rss], ['sitemap', sitemap]]) {
   forbidText(source, '文书手记', label);
   forbidText(source, '文枢手记', label);
+}
+
+for (const path of ['dist/pagefind/pagefind.js', 'dist/favicon.svg', 'dist/site.webmanifest', 'dist/og-default.svg', 'dist/_headers']) {
+  try { await access(resolve(root, path)); }
+  catch { failures.push(`${path}: missing build artifact`); }
 }
 
 if (failures.length) {
@@ -48,5 +74,5 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exitCode = 1;
 } else {
-  console.log('Build contract check passed: routes, identity, feeds and chrome isolation verified.');
+  console.log('Build contract check passed: routes, identity, discovery, SEO, privacy and chrome isolation verified.');
 }

@@ -1,0 +1,53 @@
+---
+interface Props { preference?: 'inherit' | 'enabled' | 'disabled'; }
+const { preference = 'inherit' } = Astro.props;
+const provider = import.meta.env.PUBLIC_COMMENTS_PROVIDER ?? 'none';
+const enabled = preference !== 'disabled' && (preference === 'enabled' || provider !== 'none');
+const giscus = enabled && provider === 'giscus' && import.meta.env.PUBLIC_GISCUS_REPO
+  && import.meta.env.PUBLIC_GISCUS_REPO_ID && import.meta.env.PUBLIC_GISCUS_CATEGORY
+  && import.meta.env.PUBLIC_GISCUS_CATEGORY_ID;
+const walineServer = enabled && provider === 'waline' ? import.meta.env.PUBLIC_WALINE_SERVER_URL : '';
+---
+
+{giscus && (
+  <section class="comments" aria-labelledby="comments-heading" data-pagefind-ignore>
+    <h2 id="comments-heading">讨论</h2>
+    <p>评论由 GitHub Discussions 提供；发言需要 GitHub 账号。</p>
+    <script
+      is:inline
+      src="https://giscus.app/client.js"
+      data-repo={import.meta.env.PUBLIC_GISCUS_REPO}
+      data-repo-id={import.meta.env.PUBLIC_GISCUS_REPO_ID}
+      data-category={import.meta.env.PUBLIC_GISCUS_CATEGORY}
+      data-category-id={import.meta.env.PUBLIC_GISCUS_CATEGORY_ID}
+      data-mapping="pathname"
+      data-strict="1"
+      data-reactions-enabled="1"
+      data-emit-metadata="0"
+      data-input-position="top"
+      data-theme="transparent_dark"
+      data-lang="zh-CN"
+      data-loading="lazy"
+      crossorigin="anonymous"
+      async></script>
+  </section>
+)}
+
+{walineServer && (
+  <section class="comments" aria-labelledby="comments-heading" data-pagefind-ignore>
+    <h2 id="comments-heading">讨论</h2>
+    <p>评论由独立 Waline 服务处理，请先阅读本站隐私说明。</p>
+    <link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" />
+    <div id="waline"></div>
+    <script is:inline type="module" define:vars={{ walineServer }}>
+      import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+      init({ el: '#waline', serverURL: walineServer, lang: 'zh-CN', dark: 'html[data-theme="graphite"], html[data-theme="night"], html[data-theme="indigo"]' });
+    </script>
+  </section>
+)}
+
+<style>
+  .comments { width: min(50rem, 100%); margin: 4rem auto 0; padding-top: 2rem; border-top: 1px solid var(--line); }
+  h2 { font-size: 1.15rem; }
+  p { margin: .45rem 0 1.2rem; color: rgba(var(--text-rgb), .5); font-size: .72rem; }
+</style>

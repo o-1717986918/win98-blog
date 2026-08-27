@@ -3,6 +3,8 @@ export const SITE = {
   description: '记录 Web 架构、图形学、阅读与工程实践的个人博客。',
   author: '某人',
   language: 'zh-CN',
+  defaultTheme: 'graphite',
+  defaultOgImage: '/og-default.svg',
 } as const;
 
 export const THEMES = ['graphite', 'paper', 'night', 'indigo'] as const;

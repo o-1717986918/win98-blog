@@ -1,0 +1,45 @@
+<div class="reading-progress" aria-hidden="true" data-pagefind-ignore><i data-reading-progress></i></div>
+<aside class="article-tools" aria-label="文章工具" data-pagefind-ignore>
+  <button type="button" data-share-page>分享</button>
+  <button type="button" data-copy-link>复制链接</button>
+  <span role="status" aria-live="polite" data-tool-status></span>
+</aside>
+
+<style>
+  .reading-progress { position: fixed; inset: 0 0 auto; z-index: 80; height: 2px; pointer-events: none; }
+  .reading-progress i { display: block; width: 100%; height: 100%; background: rgb(var(--signal-rgb)); transform: scaleX(0); transform-origin: left; }
+  .article-tools { display: flex; align-items: center; gap: .45rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+  button { padding: .48rem .7rem; border: 1px solid var(--line); border-radius: var(--radius); color: rgba(var(--text-rgb), .68); background: rgba(var(--surface-rgb), .5); font-family: var(--font-mono); font-size: .59rem; cursor: pointer; }
+  button:hover { border-color: rgb(var(--signal-rgb)); color: rgb(var(--signal-rgb)); }
+  span { color: rgba(var(--text-rgb), .46); font-family: var(--font-mono); font-size: .58rem; }
+</style>
+
+<script>
+  const setProgress = () => {
+    const root = document.documentElement;
+    const max = Math.max(1, root.scrollHeight - innerHeight);
+    const value = Math.min(1, Math.max(0, scrollY / max));
+    document.querySelectorAll<HTMLElement>('[data-reading-progress]').forEach((bar) => {
+      bar.style.transform = `scaleX(${value})`;
+    });
+  };
+  setProgress();
+  addEventListener('scroll', setProgress, { passive: true });
+  addEventListener('resize', setProgress, { passive: true });
+
+  document.querySelectorAll<HTMLElement>('.article-tools').forEach((tools) => {
+    const status = tools.querySelector<HTMLElement>('[data-tool-status]');
+    const notify = (message: string) => { if (status) status.textContent = message; };
+    tools.querySelector('[data-copy-link]')?.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(location.href);
+      notify('链接已复制');
+    });
+    tools.querySelector('[data-share-page]')?.addEventListener('click', async () => {
+      if (navigator.share) await navigator.share({ title: document.title, url: location.href });
+      else {
+        await navigator.clipboard.writeText(location.href);
+        notify('浏览器不支持分享，链接已复制');
+      }
+    });
+  });
+</script>

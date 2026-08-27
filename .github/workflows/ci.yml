@@ -1,0 +1,34 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SITE_URL: https://preview.example.test
+      PUBLIC_COMMENTS_PROVIDER: none
+      PUBLIC_ANALYTICS_PROVIDER: none
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: static-site
+          path: dist
+          if-no-files-found: error
+          retention-days: 7

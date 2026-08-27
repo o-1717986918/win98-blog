@@ -1,6 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
-import { formatDate, isPublished, type PostEntry } from '../lib/content';
+import { formatDate, isPublished, tagPath, type PostEntry } from '../lib/content';
 
 interface Props {
   posts: PostEntry[];
@@ -23,7 +23,7 @@ const columnMap = new Map(columns.map((column) => [column.id, column]));
             const column = columnMap.get(reference.id);
             return column && <a href={`/columns/${column.id}/`}>{column.data.title}</a>;
           })}
-          {post.data.tags.map((tag) => <span>#{tag}</span>)}
+          {post.data.tags.map((tag) => <a href={tagPath(tag)}>#{tag}</a>)}
         </div>
       </div>
       <span class="post-freedom" title="文章外壳档位">{post.data.chrome}</span>

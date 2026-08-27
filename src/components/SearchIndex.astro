@@ -1,0 +1,34 @@
+<section class="search-index" data-search-index>
+  <label for="site-search">搜索标题、正文、标签或栏目</label>
+  <div class="search-box">
+    <input id="site-search" type="search" autocomplete="off" placeholder="输入关键词…" data-search-input />
+    <kbd>/</kbd>
+  </div>
+  <div class="search-filters" aria-label="搜索筛选">
+    <label>类型<select data-search-type><option value="">全部</option></select></label>
+    <label>标签<select data-search-tag><option value="">全部</option></select></label>
+  </div>
+  <div class="search-status" role="status" aria-live="polite" data-search-status>输入关键词开始搜索。</div>
+  <ol class="search-results" data-search-results></ol>
+</section>
+
+<style>
+  .search-index label { display: block; margin-bottom: .7rem; color: rgba(var(--text-rgb), .6); font-size: .78rem; }
+  .search-box { position: relative; }
+  input { width: 100%; padding: 1rem 3.2rem 1rem 1rem; border: 1px solid var(--line-strong); border-radius: var(--radius); outline: 0; color: rgb(var(--text-rgb)); background: rgba(var(--surface-rgb), .78); font-size: clamp(1rem, 2vw, 1.18rem); }
+  input:focus { border-color: rgb(var(--signal-rgb)); box-shadow: 0 0 0 4px rgba(var(--signal-rgb), .09); }
+  kbd { position: absolute; top: 50%; right: 1rem; padding: .15rem .42rem; border: 1px solid var(--line); color: rgba(var(--text-rgb), .45); font-family: var(--font-mono); font-size: .65rem; transform: translateY(-50%); }
+  .search-status { min-height: 1.5rem; margin: 1rem 0; color: rgba(var(--text-rgb), .47); font-family: var(--font-mono); font-size: .65rem; }
+  .search-filters { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: .8rem; }
+  .search-filters label { display: flex; align-items: center; gap: .45rem; margin: 0; color: rgba(var(--text-rgb), .46); font-family: var(--font-mono); font-size: .6rem; }
+  select { padding: .38rem 1.8rem .38rem .5rem; border: 1px solid var(--line); border-radius: var(--radius); color: rgb(var(--text-rgb)); background: rgb(var(--surface-rgb)); font-size: .68rem; }
+  ol { display: grid; gap: .8rem; padding: 0; list-style: none; }
+  :global(.search-result) { padding: 1.2rem; border: 1px solid var(--line); background: rgba(var(--surface-rgb), .55); }
+  :global(.search-result h2) { margin: 0 0 .45rem; font-size: 1.05rem; }
+  :global(.search-result h2 a) { text-decoration: none; }
+  :global(.search-result h2 a:hover) { color: rgb(var(--signal-rgb)); }
+  :global(.search-result p) { margin: 0; color: rgba(var(--text-rgb), .58); font-size: .8rem; line-height: 1.75; }
+  :global(.search-result mark) { color: rgb(var(--bg-rgb)); background: rgb(var(--signal-rgb)); }
+</style>
+
+<script is:inline type="module" src="/scripts/search.js"></script>

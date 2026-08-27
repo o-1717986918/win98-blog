@@ -1,0 +1,16 @@
+---
+import SearchIndex from '../components/SearchIndex.astro';
+import FullShell from '../layouts/FullShell.astro';
+---
+
+<FullShell title="站内搜索" description="搜索某人的小站全部公开文章、栏目与页面。">
+  <div class="page-wrap search-page">
+    <header class="page-intro">
+      <div><p class="eyebrow">FULL-TEXT SEARCH</p><h1 class="display-title">站内<br />搜索</h1></div>
+      <div class="page-intro__copy"><p>索引在构建时生成，支持中文分词；搜索发生在浏览器本地，不上传查询内容。</p></div>
+    </header>
+    <div class="section-block"><SearchIndex /></div>
+  </div>
+</FullShell>
+
+<style>.search-page { padding-bottom: 5rem; }</style>

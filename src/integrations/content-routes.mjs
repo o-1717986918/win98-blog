@@ -21,8 +21,11 @@ function readRouteMetadata(source, file) {
   const frontmatter = source.match(/^---\r?\n([\s\S]*?)\r?\n---/u)?.[1] ?? '';
   const chrome = frontmatter.match(/^chrome:\s*(full|minimal|none)\s*$/mu)?.[1] ?? 'full';
   const draft = /^draft:\s*true\s*$/mu.test(frontmatter);
+  const rawDate = frontmatter.match(/^date:\s*([^\r\n#]+)\s*$/mu)?.[1]?.trim();
+  const publishAt = rawDate ? Date.parse(rawDate) : undefined;
   if (!CHROME.has(chrome)) throw new Error(`Unsupported chrome value in ${file}`);
-  return { chrome, draft };
+  if (rawDate && Number.isNaN(publishAt)) throw new Error(`Invalid date in ${file}`);
+  return { chrome, draft, publishAt };
 }
 
 export default function contentRoutes() {
@@ -36,8 +39,9 @@ export default function contentRoutes() {
           for (const file of await discoverEntries(collectionRoot)) {
             addWatchFile(file);
             const source = await readFile(file, 'utf8');
-            const { chrome, draft } = readRouteMetadata(source, file);
-            if (draft && command === 'build') continue;
+            const { chrome, draft, publishAt } = readRouteMetadata(source, file);
+            const unpublished = draft || (publishAt !== undefined && publishAt > Date.now());
+            if (unpublished && command === 'build' && process.env.PREVIEW_DRAFTS !== 'true') continue;
             const id = relative(collectionRoot, file)
               .split(sep)
               .slice(0, -1)

@@ -8,7 +8,7 @@ const pathname = Astro.url.pathname;
 const current = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
 ---
 
-<header class="site-header" data-site-header>
+<header class="site-header" data-site-header data-pagefind-ignore>
   <div class="header-inner">
     <a class="site-brand" href="/" aria-label={`${SITE.title} · 返回首页`}>
       <span class="brand-mark" aria-hidden="true"><i></i></span>
@@ -26,6 +26,7 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
           </a>
         ))}
         <a href="/archive/" aria-current={current('/archive/') ? 'page' : undefined}>归档</a>
+        <a href="/search/" aria-current={current('/search/') ? 'page' : undefined}>搜索</a>
         <a href="/about/" aria-current={current('/about/') ? 'page' : undefined}>关于</a>
       </nav>
       <button class="theme-button" type="button" data-theme-button aria-label="切换配色">

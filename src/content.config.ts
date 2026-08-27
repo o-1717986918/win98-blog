@@ -1,4 +1,4 @@
-import { defineCollection, reference } from 'astro:content';
+import { defineCollection, reference, type SchemaContext } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
@@ -7,6 +7,10 @@ const contentId = ({ entry }: { entry: string }) =>
 
 const chrome = z.enum(['full', 'minimal', 'none']).default('full');
 const theme = z.enum(['graphite', 'paper', 'night', 'indigo']).default('graphite');
+const cover = ({ image }: SchemaContext) => z.object({
+  src: image(),
+  alt: z.string().min(1),
+});
 
 const columns = defineCollection({
   loader: glob({
@@ -14,9 +18,10 @@ const columns = defineCollection({
     base: './src/content/columns',
     generateId: contentId,
   }),
-  schema: z.object({
+  schema: ({ image }) => z.object({
     title: z.string().min(1),
     description: z.string().min(1),
+    cover: cover({ image }).optional(),
     chrome,
     theme,
     back: z.boolean().default(true),
@@ -34,13 +39,18 @@ const posts = defineCollection({
     base: './src/content/posts',
     generateId: contentId,
   }),
-  schema: z.object({
+  schema: ({ image }) => z.object({
     title: z.string().min(1),
     description: z.string().min(1),
     date: z.coerce.date(),
     updated: z.coerce.date().optional(),
+    cover: cover({ image }).optional(),
     tags: z.array(z.string().min(1)).default([]),
     columns: z.array(reference('columns')).default([]),
+    featured: z.boolean().default(false),
+    comments: z.enum(['inherit', 'enabled', 'disabled']).default('inherit'),
+    noindex: z.boolean().default(false),
+    license: z.string().min(1).default('CC BY-NC-SA 4.0'),
     chrome,
     theme,
     back: z.boolean().default(true),
@@ -48,6 +58,14 @@ const posts = defineCollection({
     hideToc: z.boolean().default(false),
     minutes: z.number().int().positive().optional(),
     draft: z.boolean().default(false),
+  }).superRefine((post, context) => {
+    if (post.updated && post.updated < post.date) {
+      context.addIssue({
+        code: 'custom',
+        path: ['updated'],
+        message: 'updated 不能早于 date',
+      });
+    }
   }),
 });
 

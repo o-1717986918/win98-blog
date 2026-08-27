@@ -1,18 +1,29 @@
 ---
 import { SITE, type ThemeId } from '../config/site';
+import SeoHead from '../components/SeoHead.astro';
 
 interface Props {
   title: string;
   description?: string;
   theme?: ThemeId;
   pageKind?: 'page' | 'post' | 'column' | 'standalone';
+  image?: string | undefined;
+  published?: Date | undefined;
+  updated?: Date | undefined;
+  tags?: string[] | undefined;
+  noindex?: boolean | undefined;
 }
 
 const {
   title,
   description = SITE.description,
-  theme = 'graphite',
+  theme = SITE.defaultTheme,
   pageKind = 'page',
+  image,
+  published,
+  updated,
+  tags,
+  noindex,
 } = Astro.props;
 const documentTitle = title === SITE.title ? title : `${title} · ${SITE.title}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -23,11 +34,14 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
     <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="rgb(20, 28, 38)" />
     <link rel="canonical" href={canonical} />
     <link rel="alternate" type="application/rss+xml" title={`${SITE.title} RSS`} href="/rss.xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <SeoHead {title} {description} {canonical} {pageKind} {image} {published} {updated} {tags} {noindex} />
     <title>{documentTitle}</title>
     <slot name="head" />
   </head>

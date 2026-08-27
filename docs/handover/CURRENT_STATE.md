@@ -4,7 +4,7 @@
 
 ## 结论
 
-项目已经从单文件原型落实为可构建的 Astro 7 多路由博客，公开身份为“某人的小站”。`src/` 是正式实现；旧单文件重设计与 Celestial Matrix 均已隔离为实验。原项目的“文章主体、加法外壳、静态优先、主题数据化、内容共置”结论均有源码与产物级测试。
+项目已经从单文件原型落实为功能完整、可部署的 Astro 7 静态个人博客，公开身份为“某人的小站”。`src/` 是正式实现；旧单文件重设计与 Celestial Matrix 均已隔离为实验。原项目的“文章主体、加法外壳、静态优先、主题数据化、内容共置”结论均有源码、产物和真实浏览器级验证。
 
 ## 已实现
 
@@ -15,9 +15,13 @@
 | 栏目功能 | 独立 `columns` 集合；工程/阅读/实验三种代表栏目 |
 | 栏目网页级自由 | `src/content/columns/lab/LabColumn.astro` 完整控制栏目页面 |
 | 站点结构 | 首页、归档、关于、404、RSS、sitemap、规范 URL |
-| 配色与背景 | 四套语义令牌；静态 CSS 环境网格 + 一次绘制 Canvas 场 |
-| 读取体验 | 搜索、目录、上下篇、字号与沉浸偏好、移动导航 |
-| 架构守护 | Vitest 源码契约 + `scripts/check-build.mjs` 产物契约 |
+| 内容运营 | Git-first 脚手架、草稿/定时发布、审计、共置图片与更新元数据 |
+| 内容发现 | Pagefind 中文全文搜索与筛选、标签页、栏目、归档、相关文章 |
+| 配色与背景 | 四套语义令牌；提亮 graphite/indigo；可暂停、减弱和后台停转的 Canvas 场 |
+| 阅读体验 | 目录、上下篇、进度、分享、字号、沉浸偏好、移动导航 |
+| SEO 与分发 | OG/Twitter、BlogPosting JSON-LD、RSS、robots、manifest、`llms.txt` |
+| 可选服务 | 默认零请求的 Giscus/Waline 与 Cloudflare/Umami 适配器、动态隐私页 |
+| 架构守护 | Vitest、类型/内容审计、产物隔离、内部链接、体积预算与 CI |
 
 ## 关键实现决定
 
@@ -25,9 +29,9 @@ Astro 对同一路由中静态导入的所有布局会聚合样式。为真正�
 
 ## 当前边界
 
-- `SITE_URL` 未配置时 canonical 使用 `https://example.com`，上线前必须在构建环境设置真实域名；
-- Pagefind、评论、统计与 OG 图片尚未接入，遵循“需要时引入”；
+- `SITE_URL` 未配置时 canonical 使用 `https://example.com`，上线前必须设置真实域名并运行 `pnpm deploy:check`；
+- 评论和统计代码已具备但默认关闭，真实启用仍需要站主的 provider 账号与公开配置；
 - 示例内容用于证明架构，可由站主替换为真实文章与栏目；
-- 性能预算与最终托管平台仍属于后续上线 Gate。
+- 公网域名、DNS 与托管账号属于站主外部状态；参考部署和回滚步骤见 `docs/operations/DEPLOYMENT.md`。
 
 冻结源资产和哈希见 `MIGRATION_MANIFEST.md`。

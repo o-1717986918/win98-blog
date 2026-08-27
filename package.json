@@ -10,10 +10,13 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "pnpm check && astro build && node scripts/check-build.mjs",
+    "build": "pnpm check && astro build && pagefind --site dist --force-language zh-cn && node scripts/check-build.mjs && node scripts/check-links.mjs && node scripts/check-budgets.mjs",
     "preview": "astro preview",
-    "check": "pnpm check:workspace && astro check",
+    "check": "pnpm check:workspace && pnpm content:audit && astro check",
     "check:workspace": "node scripts/check-workspace.mjs",
+    "content:new": "node scripts/content-new.mjs",
+    "content:audit": "node scripts/check-content.mjs",
+    "deploy:check": "pnpm verify && node scripts/deploy-check.mjs",
     "test": "vitest run",
     "verify": "pnpm test && pnpm build",
     "preview:prototype": "node scripts/serve-prototype.mjs",
@@ -28,6 +31,8 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
+    "astro-expressive-code": "^0.44.1",
+    "pagefind": "^1.5.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
   }

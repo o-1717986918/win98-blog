@@ -1,5 +1,5 @@
 import { getCollection, getEntry, getEntries, render } from 'astro:content';
-import { belongsToColumn, isPublished, sortPosts } from './content';
+import { belongsToColumn, isPublished, relatedPosts, sortPosts } from './content';
 
 function routeId(pathname: string, collection: 'posts' | 'columns') {
   const segments = decodeURIComponent(pathname).split('/').filter(Boolean);
@@ -25,6 +25,7 @@ export async function loadPostRoute(pathname: string, expectedChrome: 'full' | '
     Content,
     headings,
     columns,
+    related: relatedPosts(post, posts),
     previous: index >= 0 ? posts[index + 1] : undefined,
     next: index > 0 ? posts[index - 1] : undefined,
   };

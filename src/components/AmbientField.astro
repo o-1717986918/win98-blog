@@ -1,6 +1,9 @@
-<div class="ambient-field" aria-hidden="true">
+<div class="ambient-field" aria-hidden="true" data-pagefind-ignore>
   <canvas data-ambient-canvas></canvas>
 </div>
+<button class="motion-toggle" type="button" data-motion-toggle data-pagefind-ignore aria-pressed="false">
+  <i aria-hidden="true"></i><span>暂停背景动效</span>
+</button>
 
 <style>
   .ambient-field {
@@ -10,14 +13,14 @@
     overflow: hidden;
     pointer-events: none;
     background:
-      linear-gradient(180deg, rgba(var(--surface-rgb), .38), transparent 32rem),
+      linear-gradient(180deg, rgba(var(--surface-rgb), .5), transparent 34rem),
       rgb(var(--bg-rgb));
   }
   .ambient-field::before {
     content: '';
     position: absolute;
     inset: 0;
-    opacity: .16;
+    opacity: .2;
     background-image:
       linear-gradient(rgba(var(--text-rgb), .08) 1px, transparent 1px),
       linear-gradient(90deg, rgba(var(--text-rgb), .08) 1px, transparent 1px);
@@ -29,17 +32,44 @@
     content: '';
     position: absolute;
     inset: -25%;
-    opacity: .52;
+    opacity: .68;
     background:
-      radial-gradient(ellipse at 76% 12%, rgba(var(--secondary-rgb), .12), transparent 29%),
-      radial-gradient(ellipse at 18% 74%, rgba(var(--signal-rgb), .055), transparent 31%);
+      radial-gradient(ellipse at 76% 12%, rgba(var(--secondary-rgb), .17), transparent 29%),
+      radial-gradient(ellipse at 18% 74%, rgba(var(--signal-rgb), .085), transparent 31%);
   }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .74; }
-  @media (prefers-reduced-motion: reduce) { canvas { opacity: .52; } }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .84; }
+  .motion-toggle {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 44;
+    display: inline-flex;
+    align-items: center;
+    gap: .48rem;
+    min-height: 2rem;
+    padding: .38rem .56rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: rgba(var(--text-rgb), .55);
+    background: rgba(var(--surface-rgb), .84);
+    font-family: var(--font-mono);
+    font-size: .55rem;
+    backdrop-filter: blur(12px);
+    cursor: pointer;
+  }
+  .motion-toggle i { width: .45rem; height: .45rem; border-radius: 50%; background: rgb(var(--signal-rgb)); box-shadow: 0 0 0 3px rgba(var(--signal-rgb), .1); }
+  .motion-toggle[aria-pressed='true'] i { background: rgba(var(--text-rgb), .35); box-shadow: none; }
+  .motion-toggle:hover { border-color: rgb(var(--signal-rgb)); color: rgb(var(--signal-rgb)); }
+  @media (max-width: 520px) { .motion-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: .62; } }
 </style>
 
 <script>
-  const canvases = document.querySelectorAll<HTMLCanvasElement>('[data-ambient-canvas]');
+  type Point = { x: number; y: number; size: number; phase: number; accent: boolean };
+  const motionKey = 'someone-site:ambient-paused';
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  let manualPause = localStorage.getItem(motionKey) === 'true';
+  let hiddenPause = document.hidden;
 
   const readRgb = (name: string): [number, number, number] => {
     const value = getComputedStyle(document.documentElement).getPropertyValue(name);
@@ -47,61 +77,102 @@
     return [parts[0] ?? 255, parts[1] ?? 255, parts[2] ?? 255];
   };
   const rgba = (rgb: [number, number, number], alpha: number) => `rgba(${rgb.join(',')},${alpha})`;
+  const active = () => !manualPause && !hiddenPause && !reduced.matches;
 
-  for (const canvas of canvases) {
+  document.querySelectorAll<HTMLCanvasElement>('[data-ambient-canvas]').forEach((canvas) => {
     const context = canvas.getContext('2d');
-    if (!context) continue;
-
+    if (!context) return;
     let frame = 0;
-    const draw = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const width = innerWidth;
-        const height = innerHeight;
-        const dpr = Math.min(devicePixelRatio || 1, 2);
-        canvas.width = Math.round(width * dpr);
-        canvas.height = Math.round(height * dpr);
-        context.setTransform(dpr, 0, 0, dpr, 0, 0);
-        context.clearRect(0, 0, width, height);
+    let previous = 0;
+    let width = 0;
+    let height = 0;
+    let points: Point[] = [];
 
-        const signal = readRgb('--signal-rgb');
-        const accent = readRgb('--accent-rgb');
-        const text = readRgb('--text-rgb');
-        let seed = 92821;
-        const random = () => {
-          seed = (seed * 48271) % 2147483647;
-          return seed / 2147483647;
-        };
-
-        context.lineWidth = 1;
-        for (let index = 0; index < 3; index += 1) {
-          const y = height * (.18 + index * .24);
-          context.beginPath();
-          context.moveTo(-40, y + random() * 80);
-          context.bezierCurveTo(
-            width * .24, y - 90 + random() * 130,
-            width * .64, y + 80 - random() * 120,
-            width + 40, y - 25 + random() * 70,
-          );
-          context.strokeStyle = rgba(index === 1 ? signal : accent, .055);
-          context.stroke();
-        }
-
-        const count = Math.min(94, Math.max(42, Math.floor(width * height / 18000)));
-        for (let index = 0; index < count; index += 1) {
-          const x = random() * width;
-          const y = random() * height;
-          const radius = random() > .86 ? 1.25 : .55;
-          context.fillStyle = rgba(index % 11 === 0 ? signal : text, .1 + random() * .3);
-          context.beginPath();
-          context.arc(x, y, radius, 0, Math.PI * 2);
-          context.fill();
-        }
-      });
+    const sizeCanvas = () => {
+      width = innerWidth;
+      height = innerHeight;
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      let seed = 92821;
+      const random = () => { seed = (seed * 48271) % 2147483647; return seed / 2147483647; };
+      const count = Math.min(96, Math.max(44, Math.floor(width * height / 18000)));
+      points = Array.from({ length: count }, (_, index) => ({
+        x: random() * width,
+        y: random() * height,
+        size: random() > .86 ? 1.25 : .55,
+        phase: random() * Math.PI * 2,
+        accent: index % 11 === 0,
+      }));
     };
 
-    draw();
-    addEventListener('resize', draw, { passive: true });
-    addEventListener('site:theme', draw);
-  }
+    const paint = (time = 0) => {
+      context.clearRect(0, 0, width, height);
+      const signal = readRgb('--signal-rgb');
+      const accent = readRgb('--accent-rgb');
+      const text = readRgb('--text-rgb');
+      const drift = time * .00008;
+      context.lineWidth = 1;
+      for (let index = 0; index < 3; index += 1) {
+        const y = height * (.19 + index * .24);
+        const wave = Math.sin(drift + index * 1.8) * 34;
+        context.beginPath();
+        context.moveTo(-40, y + wave);
+        context.bezierCurveTo(width * .24, y - 86 - wave, width * .64, y + 68 + wave, width + 40, y - 18 - wave);
+        context.strokeStyle = rgba(index === 1 ? signal : accent, .07);
+        context.stroke();
+      }
+      for (const point of points) {
+        const x = (point.x + Math.sin(drift * .8 + point.phase) * 7 + width) % width;
+        const y = (point.y + Math.cos(drift + point.phase) * 5 + height) % height;
+        const pulse = .16 + (Math.sin(drift * 3 + point.phase) + 1) * .09;
+        context.fillStyle = rgba(point.accent ? signal : text, pulse);
+        context.beginPath();
+        context.arc(x, y, point.size, 0, Math.PI * 2);
+        context.fill();
+      }
+    };
+
+    const loop = (time: number) => {
+      if (time - previous > 32) { paint(time); previous = time; }
+      frame = active() ? requestAnimationFrame(loop) : 0;
+    };
+    const sync = () => {
+      if (active() && !frame) frame = requestAnimationFrame(loop);
+      if (!active() && frame) { cancelAnimationFrame(frame); frame = 0; paint(previous); }
+    };
+    const resize = () => { sizeCanvas(); paint(previous); sync(); };
+    sizeCanvas();
+    paint();
+    sync();
+    addEventListener('resize', resize, { passive: true });
+    addEventListener('site:theme', () => paint(previous));
+    addEventListener('site:motion', sync);
+    reduced.addEventListener('change', sync);
+  });
+
+  const syncButtons = () => {
+    const paused = manualPause || reduced.matches;
+    document.querySelectorAll<HTMLButtonElement>('[data-motion-toggle]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(paused));
+      const label = button.querySelector('span');
+      if (label) label.textContent = paused ? '启用背景动效' : '暂停背景动效';
+      button.title = reduced.matches ? '系统已启用减弱动态' : (paused ? '启用背景动效' : '暂停背景动效');
+    });
+  };
+  syncButtons();
+  document.querySelectorAll<HTMLButtonElement>('[data-motion-toggle]').forEach((button) => {
+    button.addEventListener('click', () => {
+      manualPause = button.getAttribute('aria-pressed') !== 'true';
+      localStorage.setItem(motionKey, String(manualPause));
+      syncButtons();
+      dispatchEvent(new CustomEvent('site:motion'));
+    });
+  });
+  document.addEventListener('visibilitychange', () => {
+    hiddenPause = document.hidden;
+    dispatchEvent(new CustomEvent('site:motion'));
+  });
+  reduced.addEventListener('change', syncButtons);
 </script>

@@ -1,0 +1,75 @@
+---
+import { SITE } from '../config/site';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical: URL;
+  pageKind: 'page' | 'post' | 'column' | 'standalone';
+  image?: string | undefined;
+  published?: Date | undefined;
+  updated?: Date | undefined;
+  tags?: string[] | undefined;
+  noindex?: boolean | undefined;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  pageKind,
+  image = SITE.defaultOgImage,
+  published,
+  updated,
+  tags = [],
+  noindex = false,
+} = Astro.props;
+const documentTitle = title === SITE.title ? title : `${title} · ${SITE.title}`;
+const imageUrl = new URL(image, Astro.site);
+const isArticle = pageKind === 'post';
+const structuredData = isArticle
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: title,
+      description,
+      image: imageUrl.href,
+      datePublished: published?.toISOString(),
+      dateModified: (updated ?? published)?.toISOString(),
+      inLanguage: SITE.language,
+      author: { '@type': 'Person', name: SITE.author },
+      publisher: { '@type': 'Person', name: SITE.author },
+      mainEntityOfPage: canonical.href,
+      keywords: tags.join(', '),
+    }
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: SITE.title,
+      description: SITE.description,
+      inLanguage: SITE.language,
+      url: new URL('/', Astro.site).href,
+    };
+---
+
+<meta name="description" content={description} />
+<meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+<meta property="og:type" content={isArticle ? 'article' : 'website'} />
+<meta property="og:site_name" content={SITE.title} />
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:title" content={documentTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical.href} />
+<meta property="og:image" content={imageUrl.href} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={documentTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl.href} />
+{published && <meta property="article:published_time" content={published.toISOString()} />}
+{updated && <meta property="article:modified_time" content={updated.toISOString()} />}
+{tags.map((tag) => <meta property="article:tag" content={tag} />)}
+<meta data-pagefind-meta="title[content]" content={title} />
+<meta data-pagefind-meta="description[content]" content={description} />
+<meta data-pagefind-filter="type[content]" content={pageKind === 'post' ? '文章' : pageKind === 'column' ? '栏目' : '页面'} />
+{tags.map((tag) => <meta data-pagefind-filter="tag[content]" content={tag} />)}
+<script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />

@@ -5,6 +5,16 @@ import { loadPostRoute } from '../lib/route-content';
 const { post, Content } = await loadPostRoute(Astro.url.pathname, 'none');
 ---
 
-<StandaloneLayout title={post.data.title} description={post.data.description} theme={post.data.theme} back={post.data.back}>
+<StandaloneLayout
+  title={post.data.title}
+  description={post.data.description}
+  theme={post.data.theme}
+  back={post.data.back}
+  pageKind="post"
+  published={post.data.date}
+  updated={post.data.updated}
+  tags={post.data.tags}
+  noindex={post.data.noindex}
+>
   <Content />
 </StandaloneLayout>

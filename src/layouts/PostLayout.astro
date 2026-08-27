@@ -1,23 +1,29 @@
 ---
 import '../styles/prose.css';
 import type { MarkdownHeading } from 'astro';
+import { getImage, Image } from 'astro:assets';
 import ReaderControls from '../components/chrome/ReaderControls.astro';
 import TableOfContents from '../components/chrome/TableOfContents.astro';
-import { formatDate, type ColumnEntry, type PostEntry } from '../lib/content';
+import ArticleTools from '../components/ArticleTools.astro';
+import Comments from '../components/Comments.astro';
+import RelatedPosts from '../components/RelatedPosts.astro';
+import { formatDate, tagPath, type ColumnEntry, type PostEntry } from '../lib/content';
 import FullShell from './FullShell.astro';
 
 interface Props {
   post: PostEntry;
   columns: ColumnEntry[];
   headings: MarkdownHeading[];
+  related: PostEntry[];
   previous?: PostEntry | undefined;
   next?: PostEntry | undefined;
 }
-const { post, columns, headings, previous, next } = Astro.props;
+const { post, columns, headings, related, previous, next } = Astro.props;
 const showToc = !post.data.hideToc && headings.filter((heading) => heading.depth === 2 || heading.depth === 3).length > 1;
+const socialImage = post.data.cover ? await getImage({ src: post.data.cover.src, width: 1200, format: 'webp' }) : undefined;
 ---
 
-<FullShell title={post.data.title} description={post.data.description} theme={post.data.theme} pageKind="post">
+<FullShell title={post.data.title} description={post.data.description} theme={post.data.theme} pageKind="post" image={socialImage?.src} published={post.data.date} updated={post.data.updated} tags={post.data.tags} noindex={post.data.noindex}>
   <article class:list={['article-page', 'page-wrap', { 'article-page--wide': post.data.wide }]}>
     <header class="article-head">
       <p class="eyebrow">ARTICLE / {post.data.chrome.toUpperCase()}</p>
@@ -28,18 +34,24 @@ const showToc = !post.data.hideToc && headings.filter((heading) => heading.depth
         {post.data.minutes && <span>约 {post.data.minutes} 分钟</span>}
         <span class="article-chrome">CHROME {post.data.chrome.toUpperCase()}</span>
         {columns.map((column) => <a href={`/columns/${column.id}/`}>{column.data.title}</a>)}
+        {post.data.tags.map((tag) => <a href={tagPath(tag)}>#{tag}</a>)}
       </div>
     </header>
+    {post.data.cover && <Image class="article-cover" src={post.data.cover.src} alt={post.data.cover.alt} widths={[640, 960, 1280]} sizes="(max-width: 800px) 100vw, 800px" loading="eager" />}
     <div class:list={['article-grid', { 'article-grid--no-toc': !showToc }]}>
       <div class="prose"><slot /></div>
       {showToc && <TableOfContents headings={headings} />}
     </div>
+    <ArticleTools />
     {(previous || next) && (
       <nav class="post-navigation" aria-label="相邻文章">
         {previous ? <a href={`/posts/${previous.id}/`}><small>上一篇</small><span>{previous.data.title}</span></a> : <span></span>}
         {next ? <a href={`/posts/${next.id}/`}><small>下一篇</small><span>{next.data.title}</span></a> : <span></span>}
       </nav>
     )}
+    <RelatedPosts posts={related} />
+    <Comments preference={post.data.comments} />
+    <p class="article-license">本文采用 {post.data.license} 许可；转载时请保留作者与原文链接。</p>
   </article>
   <ReaderControls />
 </FullShell>

@@ -1,5 +1,6 @@
 ---
 import '../styles/prose.css';
+import { Image } from 'astro:assets';
 import PostList from '../components/PostList.astro';
 import type { ColumnEntry, PostEntry } from '../lib/content';
 import FullShell from './FullShell.astro';
@@ -14,6 +15,7 @@ const { column, posts } = Astro.props;
       <div><p class="eyebrow">COLUMN / FULL</p><h1 class="display-title">{column.data.title}</h1></div>
       <div class="page-intro__copy"><p>{column.data.description}</p><div class="page-intro__meta"><span><b>{posts.length}</b> 篇文章</span><span>网页外壳可独立配置</span></div></div>
     </header>
+    {column.data.cover && <Image class="column-cover" src={column.data.cover.src} alt={column.data.cover.alt} widths={[640, 960, 1280]} sizes="(max-width: 800px) 100vw, 1152px" />}
     <section class="section-block column-copy" aria-label="栏目说明"><div class="prose"><slot /></div></section>
     {column.data.showPosts && <section class="section-block"><div class="section-heading"><h2>栏目文章</h2><span>POSTS IN COLUMN</span></div><PostList posts={posts} /></section>}
   </div>

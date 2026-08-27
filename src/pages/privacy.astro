@@ -1,0 +1,31 @@
+---
+import FullShell from '../layouts/FullShell.astro';
+const comments = import.meta.env.PUBLIC_COMMENTS_PROVIDER ?? 'none';
+const analytics = import.meta.env.PUBLIC_ANALYTICS_PROVIDER ?? 'none';
+const commentLabel = comments === 'giscus' ? 'Giscus / GitHub Discussions' : comments === 'waline' ? 'Waline' : '未启用';
+const analyticsLabel = analytics === 'cloudflare' ? 'Cloudflare Web Analytics' : analytics === 'umami' ? 'Umami' : '未启用';
+---
+
+<FullShell title="隐私说明" description="某人的小站当前启用服务、浏览器存储与隐私边界。">
+  <div class="page-wrap privacy-page">
+    <header class="page-intro">
+      <div><p class="eyebrow">PRIVACY</p><h1 class="display-title">隐私<br />说明</h1></div>
+      <div class="page-intro__copy"><p>本站以无数据库的静态页面为核心。下面列出当前构建实际启用的浏览器存储与第三方服务。</p></div>
+    </header>
+    <div class="prose privacy-copy">
+      <h2>浏览器本地设置</h2>
+      <p>主题、字号、沉浸阅读和背景动效偏好保存在当前浏览器的 <code>localStorage</code> 中，仅用于恢复界面设置，不会由本站上传。</p>
+      <h2>站内搜索</h2>
+      <p>全文索引随静态网站一同下载，查询在浏览器本地执行；本站不接收搜索关键词。</p>
+      <h2>访问统计</h2>
+      <p><strong>当前状态：{analyticsLabel}</strong>。未启用时不会加载统计脚本；启用时，数据处理边界由对应部署方的配置与隐私政策决定。</p>
+      <h2>文章评论</h2>
+      <p><strong>当前状态：{commentLabel}</strong>。未启用时不会发起评论服务请求；启用后，评论内容与必要身份信息由对应服务处理。</p>
+      <h2>外部链接</h2>
+      <p>访问外部链接后适用目标站点的隐私政策。本站不对第三方站点的存储和网络请求作代理。</p>
+      <p><small>本页随构建配置自动显示启用状态，更新日期：2026-08-28。</small></p>
+    </div>
+  </div>
+</FullShell>
+
+<style>.privacy-page { padding-bottom: 7rem; }.privacy-copy { margin: 4rem auto 0; }</style>
