@@ -1,0 +1,30 @@
+---
+import type { ColumnEntry, PostEntry } from '../lib/content';
+import { belongsToColumn } from '../lib/content';
+
+interface Props { columns: ColumnEntry[]; posts: PostEntry[]; }
+const { columns, posts } = Astro.props;
+---
+
+<div class="column-directory">
+  {columns.map((column, index) => (
+    <a class="column-card" href={`/columns/${column.id}/`}>
+      <span class="column-number">{String(index + 1).padStart(2, '0')}</span>
+      <div><h3>{column.data.title}</h3><p>{column.data.description}</p></div>
+      <span class="column-count">{posts.filter((post) => belongsToColumn(post, column.id)).length} 篇</span>
+      <span class="column-arrow">→</span>
+    </a>
+  ))}
+</div>
+
+<style>
+  .column-directory { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+  .column-card { position: relative; min-height: 13rem; padding: 1.35rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-decoration: none; }
+  .column-card:hover { background: rgba(var(--text-rgb), .025); }
+  .column-number, .column-count { color: rgba(var(--text-rgb), .38); font-family: var(--font-mono); font-size: .58rem; }
+  h3 { margin-top: 2.5rem; font-size: 1.3rem; letter-spacing: -.025em; }
+  p { margin-top: .65rem; color: rgba(var(--text-rgb), .55); font-size: .79rem; line-height: 1.75; }
+  .column-count { position: absolute; right: 1.35rem; bottom: 1.25rem; }
+  .column-arrow { position: absolute; bottom: 1.15rem; left: 1.35rem; color: rgb(var(--signal-rgb)); }
+  @media (max-width: 800px) { .column-directory { grid-template-columns: 1fr; } .column-card { min-height: 11rem; } }
+</style>

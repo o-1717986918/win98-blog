@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="文枢手记——将 Web 架构、图形学与工程实践标定为可交互坐标。">
+  <meta name="theme-color" content="#DDE1DB">
+  <title>文枢手记 · Celestial Matrix</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+
+  <div class="boot-screen" aria-hidden="true">
+    <div class="boot-panel boot-panel-a"><span>WENSHU / CELESTIAL INDEX</span></div>
+    <div class="boot-panel boot-panel-b"><span>CELESTIAL MATRIX / CALIBRATING</span></div>
+    <div class="boot-panel boot-panel-c"><span>RECORD 004 / 2026</span></div>
+  </div>
+
+  <header class="site-header">
+    <a class="masthead" href="#top" aria-label="文枢手记首页">
+      <span class="masthead-mark" aria-hidden="true">文</span>
+      <span class="masthead-name">文枢手记</span>
+      <span class="masthead-sub">WENSHU OBSERVATION NOTES</span>
+    </a>
+
+    <div class="header-readout" aria-label="当前刊期">
+      <span>ISSUE 004</span>
+      <span>31.2304° N</span>
+      <span>2026 / 08</span>
+    </div>
+
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+      <span>目录</span><span aria-hidden="true">＋</span>
+    </button>
+
+    <nav class="site-nav" id="site-nav" aria-label="主导航">
+      <a href="#notes">手记</a>
+      <a href="#observatory">观测场</a>
+      <a href="#about">关于</a>
+      <button class="nav-observe" type="button" data-scroll-lab>进入星图仪 <span aria-hidden="true">↘</span></button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="hero-title-rail">
+        <p class="vertical-kicker">SYSTEMS / GRAPHICS / CODE</p>
+        <h1 id="hero-title"><span>文枢</span><span>手记</span></h1>
+        <span class="rail-plate">FIELD INTERFACE / 004</span>
+      </div>
+
+      <div class="atlas-stage" data-atlas-stage>
+        <canvas id="hero-atlas" aria-label="一张随指针和滚动变化的生成式天文图"></canvas>
+        <div class="atlas-axis axis-x" aria-hidden="true"></div>
+        <div class="atlas-axis axis-y" aria-hidden="true"></div>
+        <div class="atlas-corner corner-nw" aria-hidden="true">N</div>
+        <div class="atlas-corner corner-se" aria-hidden="true">55° S</div>
+        <div class="atlas-coordinate" aria-live="off">
+          <span>赤经 <b id="readout-ra">12h 00m</b></span>
+          <span>赤纬 <b id="readout-dec">+00° 00′</b></span>
+        </div>
+        <button class="atlas-enter" type="button" data-scroll-lab>
+          <span class="enter-index">OBS / 01</span>
+          <span class="enter-label">打开坐标场</span>
+          <span class="enter-arrow" aria-hidden="true">↘</span>
+        </button>
+      </div>
+
+      <aside class="hero-legend" aria-label="星图图例">
+        <div class="legend-head">
+          <span>SYSTEM STATUS</span>
+          <span class="live-indicator"><i></i> LIVE</span>
+        </div>
+        <p class="legend-thesis">将技术思考<br>标定为可交互坐标。</p>
+        <dl class="legend-data">
+          <div><dt>扇区</dt><dd id="readout-sector">SECTOR / A01</dd></div>
+          <div><dt>对象</dt><dd>ARCHITECTURE</dd></div>
+          <div><dt>纪元</dt><dd>J2026.65</dd></div>
+          <div><dt>采样</dt><dd>1434 : 280</dd></div>
+        </dl>
+        <div class="legend-key" aria-label="图例标记">
+          <span><i class="key-dot"></i> NOTE</span>
+          <span><i class="key-cross"></i> PROTOTYPE</span>
+          <span><i class="key-ring"></i> SOURCE</span>
+        </div>
+        <p class="legend-note">移动指针改变观测坐标；滚动页面让天球换相。</p>
+      </aside>
+
+      <div class="hero-statement">
+        <p>TECHNICAL WRITING / VISUAL SYSTEMS / CREATIVE CODE</p>
+        <strong>把思考变成可运行系统。</strong>
+        <span>04 篇手记 · 01 座观测场</span>
+      </div>
+    </section>
+
+    <section class="thesis-section" aria-labelledby="thesis-title">
+      <div class="section-index">SYSTEM / POSITION</div>
+      <h2 id="thesis-title">技术写作应该<br><em>可以体验、检验与复用。</em></h2>
+      <div class="thesis-copy">
+        <p>文枢手记记录 Web 架构、图形学与工程实践。每篇文章既是可检索的知识，也是一个拥有独立参数、交互和视觉逻辑的技术界面。</p>
+        <p>标准文章专注阅读效率；实验文章则开放更大的运行空间，让代码、数据和图形成为论证本身。</p>
+      </div>
+      <div class="thesis-mark" aria-hidden="true">
+        <span>文</span><span>枢</span><i></i>
+      </div>
+    </section>
+
+    <section class="notes-section" id="notes" aria-labelledby="notes-title">
+      <header class="section-header">
+        <div>
+          <p class="section-index">NOTES / CHANGE LOG</p>
+          <h2 id="notes-title">近期记录</h2>
+        </div>
+        <p class="section-description">按更新时间排序。每条记录拥有自己的技术上下文、视觉系统与运行边界。</p>
+      </header>
+
+      <div class="note-list">
+        <article class="note-entry note-cobalt" data-sector="0">
+          <div class="note-meta">
+            <time datetime="2026-08-27">2026 — 08 — 27</time>
+            <span>CANVAS / 图形学</span>
+          </div>
+          <button class="note-main" type="button" data-open-post="stars" aria-label="阅读：用 Canvas 画一片星野">
+            <span class="note-number">RECORD 004</span>
+            <h3>用 Canvas 画一片星野：<br>分层、视差与性能预算</h3>
+            <span class="note-arrow" aria-hidden="true">↗</span>
+          </button>
+          <p class="note-excerpt">背景不是贴图，是每帧画出来的。拆解三层视差、星点生成、指针坐标和一份严格的性能预算。</p>
+          <div class="note-glyph glyph-stars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        </article>
+
+        <article class="note-entry note-paper" data-sector="7">
+          <div class="note-meta">
+            <time datetime="2026-08-26">2026 — 08 — 26</time>
+            <span>ARCH / 工程</span>
+          </div>
+          <button class="note-main" type="button" data-open-post="architecture" aria-label="阅读：博客骨架设计">
+            <span class="note-number">RECORD 003</span>
+            <h3>博客骨架设计：<br>外壳分档与内容即数据</h3>
+            <span class="note-arrow" aria-hidden="true">↗</span>
+          </button>
+          <p class="note-excerpt">基础布局只保留文档骨架。导航、页脚、目录与评论作为部件逐层装配，自由不再需要逃离模板。</p>
+          <div class="note-glyph glyph-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
+        </article>
+
+        <article class="note-entry note-sulfur" data-sector="14">
+          <div class="note-meta">
+            <time datetime="2026-08-25">2026 — 08 — 25</time>
+            <span>CSS / 主题</span>
+          </div>
+          <button class="note-main" type="button" data-open-post="theme-system" aria-label="阅读：主题系统">
+            <span class="note-number">RECORD 002</span>
+            <h3>主题系统：<br>让 CSS 变量成为单一事实源</h3>
+            <span class="note-arrow" aria-hidden="true">↗</span>
+          </button>
+          <p class="note-excerpt">DOM、Canvas 与分享图不再各有一份颜色。语义令牌同时驱动三种媒介，让主题真正成为数据。</p>
+          <div class="note-glyph glyph-grid" aria-hidden="true"></div>
+        </article>
+
+        <article class="note-entry note-ink" data-sector="21">
+          <div class="note-meta">
+            <time datetime="2026-08-24">2026 — 08 — 24</time>
+            <span>TYPE / 排版</span>
+          </div>
+          <button class="note-main" type="button" data-open-post="typography" aria-label="阅读：中文正文排版参数记录">
+            <span class="note-number">RECORD 001</span>
+            <h3>中文正文排版参数记录</h3>
+            <span class="note-arrow" aria-hidden="true">↗</span>
+          </button>
+          <p class="note-excerpt">行高、行长、字族分工与阅读缩放。一份经过长文阅读验证的中文排版坐标表。</p>
+          <div class="note-glyph glyph-type" aria-hidden="true">字</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="observatory" id="observatory" aria-labelledby="observatory-title">
+      <canvas id="lab-atlas" aria-label="可交互的全幅天文坐标实验"></canvas>
+      <div class="observatory-grid" aria-hidden="true"></div>
+      <div class="observatory-copy">
+        <p class="section-index">CELESTIAL FIELD / INTERACTIVE SYSTEM</p>
+        <h2 id="observatory-title"><span>位相星图</span><br>坐标实验</h2>
+        <p>移动指针改变局部坐标场，观察拓扑关系如何重新投影。点击重新生成确定性采样；这不是背景，而是一套可操作的图形系统。</p>
+        <div class="observatory-actions">
+          <button type="button" id="freeze-atlas">暂停换相</button>
+          <button type="button" id="regenerate-atlas">重新生成</button>
+        </div>
+      </div>
+      <div class="observatory-scale" aria-hidden="true">
+        <span>00°</span><span>15°</span><span>30°</span><span>45°</span><span>60°</span><span>75°</span><span>90°</span>
+      </div>
+      <div class="observatory-seal" aria-hidden="true"><span>文<br>枢</span></div>
+    </section>
+
+    <section class="about-section" id="about" aria-labelledby="about-title">
+      <p class="section-index">关于 / COORDINATES</p>
+      <h2 id="about-title">把文章发布成<br>可以运行的技术界面。</h2>
+      <div class="about-columns">
+        <p>普通文章使用稳定、安静的阅读外壳；特殊文章可以逐级拆除界面，直到代码和图像独占页面。不同的是外观，相同的是内容身份。</p>
+        <dl>
+          <div><dt>主题</dt><dd>Web 架构 / 图形学 / 创意编程</dd></div>
+          <div><dt>形式</dt><dd>长文 / 界面 / 交互实验</dd></div>
+          <div><dt>原则</dt><dd>静态优先 / 自由渐进 / 同域同构</dd></div>
+        </dl>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-mark">文枢手记</div>
+    <p>WRITING / SYSTEMS / COMPUTATION</p>
+    <div class="footer-meta"><span>© 2026</span><span>31.2304° N / 121.4737° E</span><a href="#top">回到页首 ↑</a></div>
+  </footer>
+
+  <dialog class="reader-dialog" id="reader-dialog" aria-labelledby="reader-title">
+    <div class="reader-toolbar">
+      <span>WENSHU / READING INTERFACE</span>
+      <button type="button" id="reader-close" aria-label="关闭文章">关闭 ×</button>
+    </div>
+    <article class="reader-article" id="reader-content"></article>
+  </dialog>
+
+  <template id="post-stars">
+    <header><p>RECORD 004 · CANVAS / 图形学</p><h2 id="reader-title">用 Canvas 画一片星野：分层、视差与性能预算</h2><div><time datetime="2026-08-27">2026-08-27</time><span>约 6 分钟</span></div></header>
+    <p class="reader-lead">这个博客的背景没有使用图片或第三方库。星野由 Canvas 2D 每帧绘制，真正重要的并不是“画星星”，而是为动效设定边界。</p>
+    <h3>三层深度</h3><p>星点按视口面积生成并封顶，随机分配到远、中、近三层。不同的视差幅度让深度出现，成本只是几次乘法；设计的关键是知道何时停止。</p>
+    <pre><code>const parallax = [6, 14, 26][star.depth]
+const x = star.x + pointer.x * parallax
+const y = star.y + pointer.y * parallax</code></pre>
+    <h3>性能预算</h3><ul><li>设备像素比按 2 截断；</li><li>标签页不可见时停止更新；</li><li>减弱动效时退化为静态单帧；</li><li>所有星点在单一 Canvas 和单循环内完成。</li></ul>
+  </template>
+
+  <template id="post-architecture">
+    <header><p>RECORD 003 · ARCH / 工程</p><h2 id="reader-title">博客骨架设计：外壳分档与内容即数据</h2><div><time datetime="2026-08-26">2026-08-26</time><span>约 8 分钟</span></div></header>
+    <p class="reader-lead">骨架默认是裸的，外壳是一层层组装上去的。完整页面只是基础文档加一组部件，而不是不可逃离的主题模板。</p>
+    <h3>外壳是加法</h3><p>导航、页脚、目录、进度和评论都是可增删部件。文章只声明需要多少外壳，集中式调度器负责选择拼装方案。</p>
+    <table><thead><tr><th>档位</th><th>构成</th><th>用途</th></tr></thead><tbody><tr><td>full</td><td>完整阅读外壳</td><td>普通长文</td></tr><tr><td>minimal</td><td>正文 + 返回桥</td><td>特殊版式</td></tr><tr><td>none</td><td>纯内容文档</td><td>全屏实验</td></tr></tbody></table>
+    <blockquote>独立的是渲染，不是文章的身份。</blockquote>
+  </template>
+
+  <template id="post-theme-system">
+    <header><p>RECORD 002 · CSS / 主题</p><h2 id="reader-title">主题系统：让 CSS 变量成为单一事实源</h2><div><time datetime="2026-08-25">2026-08-25</time><span>约 6 分钟</span></div></header>
+    <p class="reader-lead">主题不应是一组散落的颜色覆盖。每个颜色令牌都要表达用途，再由 DOM、Canvas 和图像管线读取同一组语义。</p>
+    <h3>从色值转向语义</h3><pre><code>:root {
+  --surface-paper: #dde1db;
+  --ink-primary: #11120f;
+  --signal-active: #ff3d16;
+}</code></pre>
+    <p>组件依赖“正文、背景、信号、标记”，不依赖某套主题的具体颜色。换主题时，整个视觉系统一起换相。</p>
+  </template>
+
+  <template id="post-typography">
+    <header><p>RECORD 001 · TYPE / 排版</p><h2 id="reader-title">中文正文排版参数记录</h2><div><time datetime="2026-08-24">2026-08-24</time><span>约 5 分钟</span></div></header>
+    <p class="reader-lead">中文长文的核心不是选择一款“高级字体”，而是让行长、行高、字面与段落间距形成稳定节奏。</p>
+    <h3>阅读坐标</h3><table><thead><tr><th>参数</th><th>取值</th></tr></thead><tbody><tr><td>正文字号</td><td>18px</td></tr><tr><td>行高</td><td>2.05</td></tr><tr><td>行长</td><td>约 38–42 字</td></tr><tr><td>正文</td><td>现代无衬线</td></tr><tr><td>界面</td><td>窄体无衬线</td></tr></tbody></table>
+    <blockquote>排版的终点，是读者不再意识到排版。</blockquote>
+  </template>
+
+  <noscript><p class="noscript">JavaScript 未启用。文章索引仍可阅读，但生成式星图和文章阅读层不可用。</p></noscript>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

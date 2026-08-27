@@ -1,0 +1,10 @@
+---
+import PostLayout from '../layouts/PostLayout.astro';
+import { loadPostRoute } from '../lib/route-content';
+
+const { post, Content, headings, columns, previous, next } = await loadPostRoute(Astro.url.pathname, 'full');
+---
+
+<PostLayout post={post} columns={columns} headings={headings} previous={previous} next={next}>
+  <Content />
+</PostLayout>

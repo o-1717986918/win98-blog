@@ -1,48 +1,51 @@
-# 文枢手记
+# 某人的小站
 
-这是从 `C:\Users\26532\.zcode\workspace\default` 接手后建立的独立工作区。源目录保持不动；原始架构文档与单文件原型以相同内容迁入本仓库，并用 SHA-256 固定了接手基线。
+一个静态优先、允许文章与栏目逐级获得网页级自由的个人博客。仓库从 `C:\Users\26532\.zcode\workspace\default` 的原项目接手而来；外部源目录保持不动，原型和架构文档以固定 SHA-256 保留为接手证据。
 
-## 当前状态
+## 当前实现
 
-- 当前可运行资产是零依赖单文件原型，不是 Astro 工程。
-- 正式实现目标调整为 Astro 7、静态输出优先、MDX Content Collections。
-- 原型只承担视觉与交互验收基线；正式工程不得沿用 hash 路由或单文件应用结构。
-- 接手盘点、计划审查、设计审查、原则和 ADR 已落在 `docs/`。
+- Astro 7 + TypeScript + MDX Content Collections + 原生 CSS；
+- 首页、归档、关于、RSS、sitemap 与真实文章/栏目 URL；
+- 文章和栏目各自支持 `full / minimal / none`，两者的档位互不推导；
+- 栏目是开发者可新增的一等内容集合，可拥有私有 Astro 组件、样式、脚本和媒体；
+- 构建期路由分派保证 `none` 产物不包含站点 Header、Footer、阅读控件或全站样式；
+- 四套语义配色与低优先级 Canvas 背景；标准正文无 JavaScript 也可阅读。
+
+## 快速开始
+
+需要 Node.js 22.12+ 与 pnpm 11.19+。
+
+```powershell
+pnpm install
+pnpm verify
+pnpm dev
+```
+
+开发服务器默认打开 `http://localhost:4321/`。生产预览使用 `pnpm preview`。
 
 ## 目录
 
 ```text
-.
-├── AGENTS.md                         # 代理和开发者的仓库级规则
-├── prototype/index.html              # 原样迁入的可运行原型
-├── docs/source/blog-architecture.md  # 原样迁入的历史架构方案
-├── docs/handover/                    # 接手现状、审查与实施计划
-├── docs/decisions/                   # 架构决策记录（ADR）
-└── scripts/                          # 零依赖校验与原型预览
+src/
+├── content/columns/        # 栏目正文与栏目私有组件
+├── content/posts/          # 文章正文与文章私有组件
+├── integrations/           # 构建期 chrome 路由分派
+├── layouts/                # Base + full/minimal/none 装配
+├── routes/                 # 六个文章/栏目构建入口
+├── pages/                  # 首页、归档、关于、RSS、404
+└── styles/                 # 语义主题、站点外壳与长文排版
+docs/source/                # 原项目的确定性架构结论
+docs/handover/              # 接手现状、原则、研究与开发说明
+experiments/                # 不属于生产主轴的历史视觉实验
+prototype/                  # 冻结的原版单文件原型
 ```
 
-## 快速开始
+新增栏目与关联文章见 `docs/handover/COLUMN_MODEL.md`。项目级约束见 `AGENTS.md`。
 
-要求 Node.js 22.12 或更高版本，推荐使用仓库声明的 pnpm 版本。
+## 权威顺序
 
-```powershell
-pnpm check
-pnpm preview:prototype
-```
-
-然后访问 `http://127.0.0.1:8765/`。端口冲突时可先设置 `PORT`：
-
-```powershell
-$env:PORT = '9000'
-pnpm preview:prototype
-```
-
-## 文档权威顺序
-
-1. 当前用户需求与已接受的 ADR；
-2. `docs/handover/PRINCIPLES.md` 与 `AGENTS.md`；
-3. `docs/handover/TAKEOVER_PLAN.md`；
-4. `docs/source/blog-architecture.md`（历史输入，不再是未经审查的唯一依据）；
-5. `prototype/index.html`（视觉和交互参考，不是生产架构范本）。
-
-下一阶段从 `docs/handover/TAKEOVER_PLAN.md` 的 Gate 1 开始：初始化 Astro 7 骨架，并先做原型等价迁移，不接第三方服务。
+1. 用户当前明确要求；
+2. `docs/source/blog-architecture.md` 的确定性结论；
+3. 已接受 ADR、`AGENTS.md` 与 `docs/handover/PRINCIPLES.md`；
+4. `prototype/index.html` 的博客构造与设计哲学；
+5. 视觉实验只提供过程证据，不定义生产主线。

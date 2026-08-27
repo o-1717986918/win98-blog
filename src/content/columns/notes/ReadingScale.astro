@@ -1,0 +1,9 @@
+<div class="reading-scale" aria-label="栏目设计说明">
+  <span>01 / 短记</span><span>02 / 推导</span><span>03 / 长文</span>
+</div>
+
+<style>
+  .reading-scale { display: grid; grid-template-columns: repeat(3, 1fr); margin: 2rem 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+  span { padding: 1rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); color: rgba(var(--text-rgb), .55); font: .62rem/1.4 var(--font-mono); }
+  @media (max-width: 520px) { .reading-scale { grid-template-columns: 1fr; } }
+</style>

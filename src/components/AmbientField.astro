@@ -1,0 +1,107 @@
+<div class="ambient-field" aria-hidden="true">
+  <canvas data-ambient-canvas></canvas>
+</div>
+
+<style>
+  .ambient-field {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(var(--surface-rgb), .38), transparent 32rem),
+      rgb(var(--bg-rgb));
+  }
+  .ambient-field::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: .16;
+    background-image:
+      linear-gradient(rgba(var(--text-rgb), .08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--text-rgb), .08) 1px, transparent 1px);
+    background-size: 72px 72px;
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent 78%);
+    mask-image: linear-gradient(to bottom, black, transparent 78%);
+  }
+  .ambient-field::after {
+    content: '';
+    position: absolute;
+    inset: -25%;
+    opacity: .52;
+    background:
+      radial-gradient(ellipse at 76% 12%, rgba(var(--secondary-rgb), .12), transparent 29%),
+      radial-gradient(ellipse at 18% 74%, rgba(var(--signal-rgb), .055), transparent 31%);
+  }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .74; }
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: .52; } }
+</style>
+
+<script>
+  const canvases = document.querySelectorAll<HTMLCanvasElement>('[data-ambient-canvas]');
+
+  const readRgb = (name: string): [number, number, number] => {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name);
+    const parts = value.split(',').map(Number);
+    return [parts[0] ?? 255, parts[1] ?? 255, parts[2] ?? 255];
+  };
+  const rgba = (rgb: [number, number, number], alpha: number) => `rgba(${rgb.join(',')},${alpha})`;
+
+  for (const canvas of canvases) {
+    const context = canvas.getContext('2d');
+    if (!context) continue;
+
+    let frame = 0;
+    const draw = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const width = innerWidth;
+        const height = innerHeight;
+        const dpr = Math.min(devicePixelRatio || 1, 2);
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        context.setTransform(dpr, 0, 0, dpr, 0, 0);
+        context.clearRect(0, 0, width, height);
+
+        const signal = readRgb('--signal-rgb');
+        const accent = readRgb('--accent-rgb');
+        const text = readRgb('--text-rgb');
+        let seed = 92821;
+        const random = () => {
+          seed = (seed * 48271) % 2147483647;
+          return seed / 2147483647;
+        };
+
+        context.lineWidth = 1;
+        for (let index = 0; index < 3; index += 1) {
+          const y = height * (.18 + index * .24);
+          context.beginPath();
+          context.moveTo(-40, y + random() * 80);
+          context.bezierCurveTo(
+            width * .24, y - 90 + random() * 130,
+            width * .64, y + 80 - random() * 120,
+            width + 40, y - 25 + random() * 70,
+          );
+          context.strokeStyle = rgba(index === 1 ? signal : accent, .055);
+          context.stroke();
+        }
+
+        const count = Math.min(94, Math.max(42, Math.floor(width * height / 18000)));
+        for (let index = 0; index < count; index += 1) {
+          const x = random() * width;
+          const y = random() * height;
+          const radius = random() > .86 ? 1.25 : .55;
+          context.fillStyle = rgba(index % 11 === 0 ? signal : text, .1 + random() * .3);
+          context.beginPath();
+          context.arc(x, y, radius, 0, Math.PI * 2);
+          context.fill();
+        }
+      });
+    };
+
+    draw();
+    addEventListener('resize', draw, { passive: true });
+    addEventListener('site:theme', draw);
+  }
+</script>

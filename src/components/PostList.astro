@@ -1,0 +1,48 @@
+---
+import { getCollection } from 'astro:content';
+import { formatDate, isPublished, type PostEntry } from '../lib/content';
+
+interface Props {
+  posts: PostEntry[];
+  showDescription?: boolean;
+}
+const { posts, showDescription = true } = Astro.props;
+const columns = (await getCollection('columns')).filter(isPublished);
+const columnMap = new Map(columns.map((column) => [column.id, column]));
+---
+
+<div class="post-list">
+  {posts.length === 0 ? <p class="empty-state">这个栏目还没有文章。</p> : posts.map((post) => (
+    <article class="post-row" data-post-row data-search={`${post.data.title} ${post.data.description} ${post.data.tags.join(' ')} ${post.data.columns.map((reference) => columnMap.get(reference.id)?.data.title ?? '').join(' ')}`.toLowerCase()}>
+      <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+      <div>
+        <h3><a href={`/posts/${post.id}/`}>{post.data.title}</a></h3>
+        {showDescription && <p>{post.data.description}</p>}
+        <div class="post-taxonomy">
+          {post.data.columns.map((reference) => {
+            const column = columnMap.get(reference.id);
+            return column && <a href={`/columns/${column.id}/`}>{column.data.title}</a>;
+          })}
+          {post.data.tags.map((tag) => <span>#{tag}</span>)}
+        </div>
+      </div>
+      <span class="post-freedom" title="文章外壳档位">{post.data.chrome}</span>
+    </article>
+  ))}
+</div>
+
+<style>
+  .post-list { border-top: 1px solid var(--line); }
+  .post-row { position: relative; display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) auto; gap: 1.5rem; padding: 1.65rem .5rem; border-bottom: 1px solid var(--line); }
+  .post-row::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 2px; background: rgb(var(--signal-rgb)); opacity: 0; transition: opacity .2s; }
+  .post-row:hover::before { opacity: 1; }
+  time { padding-top: .24rem; color: rgba(var(--text-rgb), .43); font-family: var(--font-mono); font-size: .64rem; }
+  h3 { font-size: clamp(1.08rem, 2.2vw, 1.45rem); line-height: 1.45; letter-spacing: -.025em; }
+  h3 a { text-decoration: none; }
+  h3 a:hover { color: rgb(var(--signal-rgb)); }
+  p { max-width: 48rem; margin-top: .45rem; color: rgba(var(--text-rgb), .56); font-size: .82rem; line-height: 1.8; }
+  .post-taxonomy { display: flex; flex-wrap: wrap; gap: .4rem .75rem; margin-top: .75rem; color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .57rem; }
+  .post-taxonomy a { color: rgb(var(--signal-rgb)); text-decoration: none; }
+  .post-freedom { align-self: center; padding: .16rem .42rem; border: 1px solid var(--line); border-radius: 2px; color: rgba(var(--text-rgb), .38); font-family: var(--font-mono); font-size: .52rem; text-transform: uppercase; }
+  @media (max-width: 660px) { .post-row { grid-template-columns: 1fr auto; gap: .5rem 1rem; padding: 1.35rem .35rem; } time { grid-column: 1; } .post-row > div { grid-column: 1 / -1; } .post-freedom { grid-column: 2; grid-row: 1; } }
+</style>

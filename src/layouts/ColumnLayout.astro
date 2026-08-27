@@ -1,0 +1,25 @@
+---
+import '../styles/prose.css';
+import PostList from '../components/PostList.astro';
+import type { ColumnEntry, PostEntry } from '../lib/content';
+import FullShell from './FullShell.astro';
+
+interface Props { column: ColumnEntry; posts: PostEntry[]; }
+const { column, posts } = Astro.props;
+---
+
+<FullShell title={column.data.title} description={column.data.description} theme={column.data.theme} pageKind="column">
+  <div class="page-wrap">
+    <header class="page-intro column-intro">
+      <div><p class="eyebrow">COLUMN / FULL</p><h1 class="display-title">{column.data.title}</h1></div>
+      <div class="page-intro__copy"><p>{column.data.description}</p><div class="page-intro__meta"><span><b>{posts.length}</b> 篇文章</span><span>网页外壳可独立配置</span></div></div>
+    </header>
+    <section class="section-block column-copy" aria-label="栏目说明"><div class="prose"><slot /></div></section>
+    {column.data.showPosts && <section class="section-block"><div class="section-heading"><h2>栏目文章</h2><span>POSTS IN COLUMN</span></div><PostList posts={posts} /></section>}
+  </div>
+</FullShell>
+
+<style>
+  .column-copy { padding-bottom: 1rem; }
+  .column-copy .prose { max-width: 38em; }
+</style>

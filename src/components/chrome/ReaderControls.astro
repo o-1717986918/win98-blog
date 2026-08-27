@@ -1,0 +1,41 @@
+<div class="reader-controls" aria-label="阅读设置" data-reader-controls>
+  <button type="button" data-reader="smaller" aria-label="减小字号">A−</button>
+  <button type="button" data-reader="larger" aria-label="增大字号">A+</button>
+  <button type="button" data-reader="focus" aria-label="切换沉浸阅读">专注</button>
+</div>
+
+<style>
+  .reader-controls { position: fixed; right: 1rem; bottom: 1rem; z-index: 45; display: flex; gap: .28rem; padding: .28rem; border: 1px solid var(--line-strong); border-radius: 3px; background: rgba(var(--surface-rgb), .9); backdrop-filter: blur(14px); }
+  button { min-width: 2.25rem; height: 2.25rem; padding: 0 .55rem; border: 1px solid var(--line); border-radius: 2px; color: rgba(var(--text-rgb), .66); background: transparent; font-family: var(--font-mono); font-size: .61rem; cursor: pointer; }
+  button:hover { border-color: rgb(var(--signal-rgb)); color: rgb(var(--signal-rgb)); }
+  :global(body[data-immersive='true'] .site-header), :global(body[data-immersive='true'] .site-footer), :global(body[data-immersive='true'] .toc) { opacity: 0; visibility: hidden; pointer-events: none; }
+  :global(body[data-immersive='true'] .shell-main) { padding-top: 0; }
+</style>
+
+<script>
+  const scaleKey = 'someone-site:reader-scale';
+  const focusKey = 'someone-site:immersive';
+  const clamp = (value: number) => Math.min(1.2, Math.max(.9, value));
+  let scale = clamp(Number(localStorage.getItem(scaleKey)) || 1);
+  const applyScale = () => document.documentElement.style.setProperty('--reader-scale', String(scale));
+  applyScale();
+  document.body.dataset.immersive = localStorage.getItem(focusKey) === 'true' ? 'true' : 'false';
+
+  const toggleFocus = () => {
+    const next = document.body.dataset.immersive !== 'true';
+    document.body.dataset.immersive = String(next);
+    localStorage.setItem(focusKey, String(next));
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-reader-controls]').forEach((controls) => {
+    controls.querySelector('[data-reader="smaller"]')?.addEventListener('click', () => { scale = clamp(scale - .1); localStorage.setItem(scaleKey, String(scale)); applyScale(); });
+    controls.querySelector('[data-reader="larger"]')?.addEventListener('click', () => { scale = clamp(scale + .1); localStorage.setItem(scaleKey, String(scale)); applyScale(); });
+    controls.querySelector('[data-reader="focus"]')?.addEventListener('click', toggleFocus);
+  });
+  addEventListener('keydown', (event) => {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('input, textarea, select') || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.key.toLowerCase() === 't') toggleFocus();
+    if (event.key === 'Escape' && document.body.dataset.immersive === 'true') toggleFocus();
+  });
+</script>

@@ -1,0 +1,26 @@
+---
+import '../styles/tokens.css';
+import '../styles/shell.css';
+import type { ThemeId } from '../config/site';
+import AmbientField from '../components/AmbientField.astro';
+import SiteFooter from '../components/chrome/SiteFooter.astro';
+import SiteHeader from '../components/chrome/SiteHeader.astro';
+import { SITE } from '../config/site';
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  theme?: ThemeId;
+  pageKind?: 'page' | 'post' | 'column';
+}
+const { title, description, theme = 'graphite', pageKind = 'page' } = Astro.props;
+---
+
+<BaseLayout title={title} description={description ?? SITE.description} theme={theme} pageKind={pageKind}>
+  <a class="skip-link" href="#main-content">跳到正文</a>
+  <AmbientField />
+  <SiteHeader />
+  <main class="shell-main" id="main-content"><slot /></main>
+  <SiteFooter />
+</BaseLayout>

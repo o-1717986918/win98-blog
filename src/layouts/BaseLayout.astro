@@ -1,0 +1,37 @@
+---
+import { SITE, type ThemeId } from '../config/site';
+
+interface Props {
+  title: string;
+  description?: string;
+  theme?: ThemeId;
+  pageKind?: 'page' | 'post' | 'column' | 'standalone';
+}
+
+const {
+  title,
+  description = SITE.description,
+  theme = 'graphite',
+  pageKind = 'page',
+} = Astro.props;
+const documentTitle = title === SITE.title ? title : `${title} · ${SITE.title}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang={SITE.language} data-theme={theme}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="application/rss+xml" title={`${SITE.title} RSS`} href="/rss.xml" />
+    <title>{documentTitle}</title>
+    <slot name="head" />
+  </head>
+  <body data-page-kind={pageKind}>
+    <slot />
+  </body>
+</html>

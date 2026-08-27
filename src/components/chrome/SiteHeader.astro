@@ -1,0 +1,117 @@
+---
+import { getCollection } from 'astro:content';
+import { SITE } from '../../config/site';
+import { isPublished, sortColumns } from '../../lib/content';
+
+const columns = sortColumns((await getCollection('columns')).filter(isPublished).filter((column) => column.data.nav));
+const pathname = Astro.url.pathname;
+const current = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
+---
+
+<header class="site-header" data-site-header>
+  <div class="header-inner">
+    <a class="site-brand" href="/" aria-label={`${SITE.title} · 返回首页`}>
+      <span class="brand-mark" aria-hidden="true"><i></i></span>
+      <span>{SITE.title}<small>PERSONAL NOTES</small></span>
+    </a>
+    <button class="menu-button" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="site-navigation" data-menu-button>
+      <i></i><i></i>
+    </button>
+    <div class="navigation-shell" id="site-navigation" data-navigation-shell>
+      <nav class="site-navigation" aria-label="主导航">
+        <a href="/" aria-current={current('/') ? 'page' : undefined}>首页</a>
+        {columns.map((column) => (
+          <a href={`/columns/${column.id}/`} aria-current={current(`/columns/${column.id}/`) ? 'page' : undefined}>
+            {column.data.navLabel ?? column.data.title}
+          </a>
+        ))}
+        <a href="/archive/" aria-current={current('/archive/') ? 'page' : undefined}>归档</a>
+        <a href="/about/" aria-current={current('/about/') ? 'page' : undefined}>关于</a>
+      </nav>
+      <button class="theme-button" type="button" data-theme-button aria-label="切换配色">
+        <span data-theme-name>GRAPHITE</span><i aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header { position: fixed; inset: 0 0 auto; z-index: 50; height: var(--header); border-bottom: 1px solid var(--line); background: rgba(var(--bg-rgb), .88); backdrop-filter: blur(18px); }
+  .header-inner { display: flex; align-items: center; width: min(100% - 2rem, 78rem); height: 100%; margin-inline: auto; }
+  .site-brand { display: flex; align-items: center; gap: .72rem; margin-right: auto; color: rgb(var(--text-rgb)); font-size: .88rem; font-weight: 680; letter-spacing: .08em; text-decoration: none; }
+  .site-brand small { display: block; margin-top: .12rem; color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .49rem; font-weight: 500; letter-spacing: .12em; }
+  .brand-mark { position: relative; width: 1.75rem; height: 1.75rem; border: 1px solid rgba(var(--accent-rgb), .56); border-radius: 50%; }
+  .brand-mark::before, .brand-mark::after, .brand-mark i { content: ''; position: absolute; border-radius: 50%; }
+  .brand-mark::before { inset: .47rem; background: rgb(var(--signal-rgb)); }
+  .brand-mark::after { top: .28rem; right: .17rem; width: .3rem; height: .3rem; background: rgb(var(--accent-rgb)); }
+  .brand-mark i { inset: .16rem -.12rem; border-top: 1px solid rgba(var(--text-rgb), .32); transform: rotate(-20deg); }
+  .navigation-shell, .site-navigation { display: flex; align-items: center; }
+  .navigation-shell { gap: 1.65rem; }
+  .site-navigation { gap: 1.35rem; }
+  .site-navigation a { position: relative; padding: .6rem 0; color: rgba(var(--text-rgb), .56); font-size: .78rem; text-decoration: none; }
+  .site-navigation a::after { content: ''; position: absolute; right: 0; bottom: .3rem; left: 0; height: 1px; background: rgb(var(--signal-rgb)); transform: scaleX(0); transform-origin: left; transition: transform .25s var(--ease); }
+  .site-navigation a:hover, .site-navigation a[aria-current='page'] { color: rgb(var(--text-rgb)); }
+  .site-navigation a:hover::after, .site-navigation a[aria-current='page']::after { transform: scaleX(1); }
+  .theme-button { display: inline-flex; align-items: center; gap: .55rem; min-width: 6.7rem; padding: .48rem .58rem; border: 1px solid var(--line); border-radius: var(--radius); color: rgba(var(--text-rgb), .62); background: transparent; font-family: var(--font-mono); font-size: .56rem; letter-spacing: .06em; cursor: pointer; }
+  .theme-button i { width: .48rem; height: .48rem; margin-left: auto; border-radius: 50%; background: rgb(var(--signal-rgb)); box-shadow: 0 0 0 3px rgba(var(--signal-rgb), .09); }
+  .menu-button { display: none; width: 2.35rem; height: 2.35rem; border: 1px solid var(--line); border-radius: var(--radius); background: transparent; cursor: pointer; }
+  .menu-button i { display: block; width: 1rem; height: 1px; margin: .28rem auto; background: currentColor; transition: transform .22s var(--ease); }
+  .menu-button[aria-expanded='true'] i:first-child { transform: translateY(.145rem) rotate(45deg); }
+  .menu-button[aria-expanded='true'] i:last-child { transform: translateY(-.145rem) rotate(-45deg); }
+  @media (max-width: 860px) {
+    .menu-button { display: block; }
+    .navigation-shell { position: fixed; top: calc(var(--header) + .5rem); right: 1rem; left: 1rem; display: block; padding: .5rem; border: 1px solid var(--line-strong); border-radius: var(--radius); background: rgb(var(--surface-rgb)); opacity: 0; visibility: hidden; transform: translateY(-.5rem); pointer-events: none; transition: .22s var(--ease); }
+    .navigation-shell[data-open='true'] { opacity: 1; visibility: visible; transform: none; pointer-events: auto; }
+    .site-navigation { display: grid; gap: 0; }
+    .site-navigation a { padding: .8rem .7rem; border-bottom: 1px solid var(--line); }
+    .site-navigation a::after { display: none; }
+    .theme-button { width: 100%; margin-top: .5rem; padding: .72rem; }
+  }
+  @media (max-width: 430px) { .site-brand small { display: none; } }
+</style>
+
+<script>
+  const themeIds = ['graphite', 'paper', 'night', 'indigo'] as const;
+  type ThemeId = (typeof themeIds)[number];
+  const root = document.documentElement;
+  const stored = localStorage.getItem('someone-site:theme');
+  if (stored && themeIds.includes(stored as ThemeId)) root.dataset.theme = stored;
+
+  const syncThemeLabel = () => {
+    const name = root.dataset.theme ?? 'graphite';
+    document.querySelectorAll<HTMLElement>('[data-theme-name]').forEach((node) => { node.textContent = name.toUpperCase(); });
+  };
+  syncThemeLabel();
+
+  document.querySelectorAll<HTMLElement>('[data-site-header]').forEach((header) => {
+    const button = header.querySelector<HTMLButtonElement>('[data-menu-button]');
+    const shell = header.querySelector<HTMLElement>('[data-navigation-shell]');
+    const themeButton = header.querySelector<HTMLButtonElement>('[data-theme-button]');
+    if (!button || !shell || !themeButton) return;
+
+    const close = () => {
+      shell.dataset.open = 'false';
+      button.setAttribute('aria-expanded', 'false');
+      button.setAttribute('aria-label', '打开导航');
+    };
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const open = shell.dataset.open !== 'true';
+      shell.dataset.open = String(open);
+      button.setAttribute('aria-expanded', String(open));
+      button.setAttribute('aria-label', open ? '关闭导航' : '打开导航');
+    });
+    themeButton.addEventListener('click', () => {
+      const current = themeIds.indexOf((root.dataset.theme ?? 'graphite') as ThemeId);
+      const next = themeIds[(current + 1) % themeIds.length] ?? 'graphite';
+      root.dataset.theme = next;
+      localStorage.setItem('someone-site:theme', next);
+      syncThemeLabel();
+      dispatchEvent(new CustomEvent('site:theme'));
+      close();
+    });
+    header.querySelectorAll('a').forEach((link) => link.addEventListener('click', close));
+    document.addEventListener('click', (event) => { if (!header.contains(event.target as Node)) close(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
+  });
+</script>

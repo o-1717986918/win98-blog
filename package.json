@@ -1,15 +1,34 @@
 {
-  "name": "wenshu-blog",
+  "name": "someone-site",
   "version": "0.0.0",
   "private": true,
-  "description": "文枢手记接手工作区与原型基线",
+  "description": "某人的小站：可自由组合文章与栏目的个人博客",
   "type": "module",
   "packageManager": "pnpm@11.19.0",
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
-    "check": "node scripts/check-workspace.mjs",
-    "preview:prototype": "node scripts/serve-prototype.mjs"
+    "dev": "astro dev",
+    "build": "pnpm check && astro build && node scripts/check-build.mjs",
+    "preview": "astro preview",
+    "check": "pnpm check:workspace && astro check",
+    "check:workspace": "node scripts/check-workspace.mjs",
+    "test": "vitest run",
+    "verify": "pnpm test && pnpm build",
+    "preview:prototype": "node scripts/serve-prototype.mjs",
+    "preview:visual-experiment": "node scripts/serve-static.mjs experiments/single-file-visual-candidate",
+    "preview:experiment": "node scripts/serve-static.mjs experiments/celestial-matrix"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "7.0.8",
+    "@astrojs/rss": "4.0.19",
+    "@astrojs/sitemap": "3.7.3",
+    "astro": "7.2.9"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
   }
 }

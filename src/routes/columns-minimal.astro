@@ -1,0 +1,8 @@
+---
+import MinimalColumnLayout from '../layouts/MinimalColumnLayout.astro';
+import { loadColumnRoute } from '../lib/route-content';
+
+const { column, Content, posts } = await loadColumnRoute(Astro.url.pathname, 'minimal');
+---
+
+<MinimalColumnLayout column={column} posts={posts}><Content /></MinimalColumnLayout>

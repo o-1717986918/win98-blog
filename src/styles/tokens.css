@@ -1,0 +1,77 @@
+@layer reset, tokens, shell, components, prose, utilities;
+
+@layer tokens {
+  :root {
+    --font-ui: Inter, 'SF Pro Text', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-reading: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', STSong, SimSun, serif;
+    --font-mono: 'Cascadia Code', 'SFMono-Regular', 'JetBrains Mono', Consolas, monospace;
+    --content: 72rem;
+    --reading: 40em;
+    --header: 4.25rem;
+    --radius: 3px;
+    --ease: cubic-bezier(.22, 1, .36, 1);
+    --reader-scale: 1;
+    color-scheme: dark;
+  }
+
+  :root,
+  :root[data-theme='graphite'] {
+    --bg-rgb: 8, 12, 17;
+    --surface-rgb: 13, 19, 27;
+    --raised-rgb: 20, 28, 38;
+    --text-rgb: 230, 235, 239;
+    --muted-rgb: 143, 155, 166;
+    --signal-rgb: 92, 205, 183;
+    --accent-rgb: 206, 165, 91;
+    --secondary-rgb: 134, 145, 202;
+    --danger-rgb: 231, 103, 79;
+    --line: rgba(230, 235, 239, .13);
+    --line-strong: rgba(230, 235, 239, .23);
+    color-scheme: dark;
+  }
+
+  :root[data-theme='paper'] {
+    --bg-rgb: 238, 237, 232;
+    --surface-rgb: 249, 248, 243;
+    --raised-rgb: 226, 225, 219;
+    --text-rgb: 27, 31, 35;
+    --muted-rgb: 94, 101, 105;
+    --signal-rgb: 0, 111, 98;
+    --accent-rgb: 144, 91, 26;
+    --secondary-rgb: 72, 81, 142;
+    --danger-rgb: 174, 55, 37;
+    --line: rgba(27, 31, 35, .15);
+    --line-strong: rgba(27, 31, 35, .28);
+    color-scheme: light;
+  }
+
+  :root[data-theme='night'] {
+    --bg-rgb: 4, 6, 9;
+    --surface-rgb: 9, 12, 16;
+    --raised-rgb: 17, 21, 27;
+    --text-rgb: 237, 235, 228;
+    --muted-rgb: 151, 150, 144;
+    --signal-rgb: 109, 191, 169;
+    --accent-rgb: 222, 174, 87;
+    --secondary-rgb: 151, 135, 188;
+    --danger-rgb: 235, 95, 69;
+    --line: rgba(237, 235, 228, .12);
+    --line-strong: rgba(237, 235, 228, .22);
+    color-scheme: dark;
+  }
+
+  :root[data-theme='indigo'] {
+    --bg-rgb: 11, 10, 22;
+    --surface-rgb: 18, 16, 33;
+    --raised-rgb: 29, 25, 48;
+    --text-rgb: 234, 231, 241;
+    --muted-rgb: 153, 146, 169;
+    --signal-rgb: 100, 202, 183;
+    --accent-rgb: 190, 158, 107;
+    --secondary-rgb: 178, 154, 231;
+    --danger-rgb: 231, 105, 85;
+    --line: rgba(234, 231, 241, .13);
+    --line-strong: rgba(234, 231, 241, .24);
+    color-scheme: dark;
+  }
+}

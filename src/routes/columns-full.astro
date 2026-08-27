@@ -1,0 +1,8 @@
+---
+import ColumnLayout from '../layouts/ColumnLayout.astro';
+import { loadColumnRoute } from '../lib/route-content';
+
+const { column, Content, posts } = await loadColumnRoute(Astro.url.pathname, 'full');
+---
+
+<ColumnLayout column={column} posts={posts}><Content /></ColumnLayout>

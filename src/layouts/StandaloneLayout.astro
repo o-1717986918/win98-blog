@@ -1,0 +1,13 @@
+---
+import BackBadge from '../components/chrome/BackBadge.astro';
+import { SITE, type ThemeId } from '../config/site';
+import BaseLayout from './BaseLayout.astro';
+
+interface Props { title: string; description?: string; theme?: ThemeId; back?: boolean; }
+const { title, description, theme = 'graphite', back = true } = Astro.props;
+---
+
+<BaseLayout title={title} description={description ?? SITE.description} theme={theme} pageKind="standalone">
+  {back && <BackBadge />}
+  <slot />
+</BaseLayout>

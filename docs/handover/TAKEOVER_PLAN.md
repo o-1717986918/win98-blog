@@ -1,6 +1,6 @@
 # 接手实施计划
 
-状态：已审查，可执行。每个 Gate 通过后再进入下一阶段。
+状态：Gate 0–2 已完成，Gate 3 已完成核心守护；上线生态仍按需推进。
 
 ## Gate 0：基线接管（已完成）
 
@@ -13,40 +13,43 @@
 
 退出条件：`pnpm check` 通过，源目录未改变，新仓库首个基线提交可复现。
 
-## Gate 1：Astro 7 最小骨架
+## Gate 1：Astro 7 最小骨架（已完成）
 
 范围：
 
 - 使用 pnpm 初始化 Astro 7，固定 lockfile；
 - 静态输出，不加云平台 adapter；
 - 建立 TypeScript、格式化、类型检查、Vitest 和最小浏览器冒烟；
-- 建立 `BaseLayout`、内容 schema 与真实 `/posts/[...slug]/` 路由；
+- 建立 `BaseLayout`、内容 schema 与真实文章路由；
 - 建立一个最小文章，证明构建、404、canonical、sitemap 和 RSS 路径。
 
 退出条件：全新安装后 `check + test + build` 通过；构建产物使用真实路径且无 hash 路由。
 
-## Gate 2：原型等价迁移
+## Gate 2：原型等价迁移（已完成）
 
 范围：
 
 - 将四篇内嵌文章拆为自包含 MDX 目录；
-- 建立 `full`、`minimal`、`none` 布局与集中 dispatcher；
+- 建立 `full`、`minimal`、`none` 布局与构建期集中分派；
 - 拆出主题令牌、header、footer、TOC、返回桥和阅读控制；
 - 将星野和粒子实验变为独立、可清理的客户端模块；
+- 以 `docs/source/blog-architecture.md` 的确定性结论和 `prototype/index.html` 的博客构造、内容层级与设计哲学为主线基线；
+- Celestial Matrix 只验证三档文章类型，不迁移为全站品牌语言或首页主轴；
+- 主线视觉变化先形成研究和设计审查，再从原版副本小步实现；
 - 修复移动顶栏溢出和浮层可访问性。
 
-退出条件：三档各有代表页；桌面视觉意图与原型一致；390px 无溢出；无 JS 标准文章可读；`none` 构建产物不含标准 chrome 服务。
+退出条件：三档各有代表页；主线结构与原版、架构结论一致；桌面和移动视觉审查通过；390px 无溢出；无 JS 标准文章可读；`none` 构建产物不含标准 chrome 服务。
 
-## Gate 3：架构守护与内容工作流
+## Gate 3：架构守护与内容工作流（核心已完成）
 
 范围：
 
-- schema 覆盖 title、description、date、tags、chrome、theme、back、draft 和 OG 字段；
+- schema 覆盖 title、description、date、tags、columns、chrome、theme、back 与 draft；
 - 测试文章目录完整性、slug 唯一性、主题存在性、chrome 映射、内部链接和构建输出；
 - 建立文章模板、媒体规范、草稿/发布日期规则；
 - 记录正式性能预算和浏览器支持矩阵。
 
-退出条件：错误 frontmatter 会使 CI 失败；新建文章无需修改 dispatcher；文档可让新贡献者独立完成一篇文章。
+当前证据：错误 frontmatter、悬空栏目引用与 chrome 不一致会使构建失败；新建文章或栏目无需修改分派器；源码测试和产物测试同时守护 `none` 隔离。OG 字段、内部链接爬取和正式性能预算留在生态接入前补齐。
 
 ## Gate 4：生态能力逐项接入
 

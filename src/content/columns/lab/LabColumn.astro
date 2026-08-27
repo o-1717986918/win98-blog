@@ -1,0 +1,31 @@
+---
+import { getCollection } from 'astro:content';
+import { belongsToColumn, isPublished, sortPosts } from '../../../lib/content';
+const posts = sortPosts((await getCollection('posts')).filter(isPublished).filter((post) => belongsToColumn(post, 'lab')));
+---
+
+<main class="lab-index">
+  <header><p>INDEPENDENT COLUMN / CHROME NONE</p><h1>实验</h1><span>栏目本身就是一个可以完全定制的网页。</span></header>
+  <section>
+    {posts.map((post, index) => (
+      <a href={`/posts/${post.id}/`}><small>{String(index + 1).padStart(2, '0')} / {post.data.chrome.toUpperCase()}</small><strong>{post.data.title}</strong><span>{post.data.description}</span><i>打开 →</i></a>
+    ))}
+  </section>
+</main>
+
+<style>
+  :global(html), :global(body) { margin: 0; min-height: 100%; background: #070a0e; color: #edf2f0; font-family: Inter, 'Segoe UI', 'PingFang SC', sans-serif; }
+  :global(*) { box-sizing: border-box; }
+  .lab-index { min-height: 100vh; padding: clamp(6rem, 12vw, 10rem) clamp(1.25rem, 7vw, 7rem) 5rem; background-image: linear-gradient(rgba(110, 224, 198, .055) 1px, transparent 1px), linear-gradient(90deg, rgba(110, 224, 198, .055) 1px, transparent 1px); background-size: 56px 56px; }
+  header { max-width: 72rem; margin: 0 auto 5rem; }
+  header p, small { color: #67d7bd; font: .65rem/1.4 ui-monospace, monospace; letter-spacing: .12em; }
+  h1 { margin: 1.2rem 0 1rem; font-size: clamp(5rem, 18vw, 13rem); line-height: .8; letter-spacing: -.08em; }
+  header span { color: #98a5a2; }
+  section { display: grid; grid-template-columns: repeat(2, 1fr); max-width: 72rem; margin: auto; border-top: 1px solid #26312f; border-left: 1px solid #26312f; }
+  a { position: relative; display: flex; min-height: 18rem; flex-direction: column; padding: 1.5rem; border-right: 1px solid #26312f; border-bottom: 1px solid #26312f; color: inherit; text-decoration: none; }
+  a:hover { background: #0e1718; }
+  strong { max-width: 14ch; margin-top: 3rem; font-size: clamp(1.6rem, 4vw, 3rem); line-height: 1.15; }
+  a span { max-width: 34rem; margin-top: 1rem; color: #879390; line-height: 1.75; }
+  i { position: absolute; right: 1.5rem; bottom: 1.5rem; color: #67d7bd; font: normal .7rem/1 ui-monospace, monospace; }
+  @media (max-width: 700px) { section { grid-template-columns: 1fr; } a { min-height: 15rem; } }
+</style>

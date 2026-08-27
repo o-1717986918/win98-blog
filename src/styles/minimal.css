@@ -1,0 +1,22 @@
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body, h1, h2, h3, p, ul, ol { margin: 0; }
+  body { min-width: 20rem; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid rgb(var(--signal-rgb)); outline-offset: 4px; }
+}
+
+@layer shell {
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: rgb(var(--text-rgb));
+    background: rgb(var(--bg-rgb));
+    font-family: var(--font-ui);
+    line-height: 1.72;
+    -webkit-font-smoothing: antialiased;
+  }
+  .minimal-main { position: relative; z-index: 1; width: min(58rem, calc(100% - 2rem)); margin-inline: auto; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+}

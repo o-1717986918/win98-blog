@@ -1,0 +1,69 @@
+<main class="particle-page">
+  <canvas data-particle-field aria-label="交互粒子场"></canvas>
+  <div class="particle-copy"><p>INTERACTIVE ARTICLE / CHROME NONE</p><h1>粒子场</h1><span>移动指针扰动流场；点击重新生成。这个页面不加载站点外壳。</span></div>
+</main>
+
+<style>
+  :global(html), :global(body) { margin: 0; min-height: 100%; overflow: hidden; background: #05080c; color: #edf2ef; font-family: Inter, 'Segoe UI', 'PingFang SC', sans-serif; }
+  :global(*) { box-sizing: border-box; }
+  .particle-page, canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+  canvas { cursor: crosshair; }
+  .particle-copy { position: fixed; right: 1.4rem; bottom: 1.4rem; left: 1.4rem; max-width: 42rem; pointer-events: none; }
+  p { color: #65d5bc; font: .62rem/1.4 ui-monospace, monospace; letter-spacing: .12em; }
+  h1 { margin: .8rem 0 .7rem; font-size: clamp(3.6rem, 12vw, 8.5rem); line-height: .85; letter-spacing: -.07em; }
+  span { color: #94a09d; font-size: .82rem; line-height: 1.7; }
+</style>
+
+<script>
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-particle-field]');
+  const context = canvas?.getContext('2d');
+  if (canvas && context) {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let frame = 0;
+    let tick = 0;
+    let pointer = { x: .5, y: .5 };
+    type Particle = { x: number; y: number; phase: number; speed: number; radius: number };
+    let particles: Particle[] = [];
+
+    const build = () => {
+      width = innerWidth;
+      height = innerHeight;
+      dpr = Math.min(devicePixelRatio || 1, 2);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      let seed = 4109;
+      const random = () => ((seed = seed * 16807 % 2147483647) / 2147483647);
+      particles = Array.from({ length: Math.min(840, Math.floor(width * height / 850)) }, () => ({ x: random() * width, y: random() * height, phase: random() * Math.PI * 2, speed: .15 + random() * .45, radius: .35 + random() * 1.1 }));
+    };
+    const draw = () => {
+      context.fillStyle = 'rgba(5,8,12,.18)';
+      context.fillRect(0, 0, width, height);
+      for (const particle of particles) {
+        const dx = particle.x / width - pointer.x;
+        const dy = particle.y / height - pointer.y;
+        const influence = Math.max(0, .18 - Math.hypot(dx, dy)) * 8;
+        if (!reduced) {
+          particle.phase += .006 * particle.speed;
+          particle.x += Math.cos(particle.phase + dy * 5) * particle.speed + dx * influence;
+          particle.y += Math.sin(particle.phase + dx * 5) * particle.speed + dy * influence;
+          if (particle.x < 0) particle.x += width; if (particle.x > width) particle.x -= width;
+          if (particle.y < 0) particle.y += height; if (particle.y > height) particle.y -= height;
+        }
+        context.fillStyle = influence > .2 ? 'rgba(102,216,190,.78)' : 'rgba(229,237,235,.38)';
+        context.beginPath(); context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2); context.fill();
+      }
+      tick += 1;
+      if (!reduced && tick < 100000) frame = requestAnimationFrame(draw);
+    };
+    const restart = () => { cancelAnimationFrame(frame); build(); tick = 0; context.fillStyle = '#05080c'; context.fillRect(0, 0, width, height); draw(); };
+    addEventListener('resize', restart, { passive: true });
+    canvas.addEventListener('pointermove', (event) => { pointer = { x: event.clientX / width, y: event.clientY / height }; });
+    canvas.addEventListener('click', restart);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) cancelAnimationFrame(frame); else if (!reduced) draw(); });
+    restart();
+  }
+</script>

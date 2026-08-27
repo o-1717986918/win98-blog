@@ -1,0 +1,13 @@
+---
+interface Heading { depth: number; slug: string; text: string; }
+interface Props { headings: Heading[]; }
+const { headings } = Astro.props;
+const visible = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+---
+
+{visible.length > 1 && (
+  <nav class="toc" aria-label="文章目录">
+    <p>ON THIS PAGE</p>
+    {visible.map((heading) => <a href={`#${heading.slug}`} data-depth={heading.depth}>{heading.text}</a>)}
+  </nav>
+)}

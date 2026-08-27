@@ -1,0 +1,33 @@
+---
+import '../styles/tokens.css';
+import '../styles/minimal.css';
+import '../styles/prose.css';
+import AmbientField from '../components/AmbientField.astro';
+import PostList from '../components/PostList.astro';
+import BackBadge from '../components/chrome/BackBadge.astro';
+import type { ColumnEntry, PostEntry } from '../lib/content';
+import BaseLayout from './BaseLayout.astro';
+
+interface Props { column: ColumnEntry; posts: PostEntry[]; }
+const { column, posts } = Astro.props;
+---
+
+<BaseLayout title={column.data.title} description={column.data.description} theme={column.data.theme} pageKind="column">
+  <AmbientField />
+  {column.data.back && <BackBadge />}
+  <main class="minimal-main minimal-column">
+    <header><p class="eyebrow">COLUMN / MINIMAL</p><h1>{column.data.title}</h1><p class="lead">{column.data.description}</p></header>
+    <div class="prose column-copy"><slot /></div>
+    {column.data.showPosts && <section><h2>栏目文章</h2><PostList posts={posts} /></section>}
+  </main>
+</BaseLayout>
+
+<style>
+  .minimal-column { padding: clamp(6rem, 13vh, 9rem) 0 7rem; }
+  header { max-width: 43rem; padding-bottom: 2.2rem; border-bottom: 1px solid var(--line); }
+  h1 { font-size: clamp(3rem, 9vw, 6.5rem); line-height: .98; letter-spacing: -.06em; }
+  .lead { max-width: 36rem; margin-top: 1.5rem; color: rgba(var(--text-rgb), .64); line-height: 1.9; }
+  .column-copy { margin-top: 3rem; }
+  section { margin-top: 4.5rem; }
+  section > h2 { margin-bottom: 1.2rem; font-size: 1.3rem; }
+</style>

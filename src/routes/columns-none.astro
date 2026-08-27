@@ -1,0 +1,10 @@
+---
+import StandaloneLayout from '../layouts/StandaloneLayout.astro';
+import { loadColumnRoute } from '../lib/route-content';
+
+const { column, Content } = await loadColumnRoute(Astro.url.pathname, 'none');
+---
+
+<StandaloneLayout title={column.data.title} description={column.data.description} theme={column.data.theme} back={column.data.back}>
+  <Content />
+</StandaloneLayout>

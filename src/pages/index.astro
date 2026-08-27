@@ -1,0 +1,42 @@
+---
+import { getCollection } from 'astro:content';
+import ColumnDirectory from '../components/ColumnDirectory.astro';
+import PostList from '../components/PostList.astro';
+import PostSearch from '../components/PostSearch.astro';
+import { SITE } from '../config/site';
+import { isPublished, sortColumns, sortPosts } from '../lib/content';
+import FullShell from '../layouts/FullShell.astro';
+
+const posts = sortPosts((await getCollection('posts')).filter(isPublished));
+const columns = sortColumns((await getCollection('columns')).filter(isPublished));
+---
+
+<FullShell title={SITE.title} description={SITE.description}>
+  <div class="page-wrap">
+    <header class="page-intro">
+      <div><p class="eyebrow">PERSONAL SITE / SINCE 2026</p><h1 class="display-title">某人的<br />小站</h1></div>
+      <div class="page-intro__copy">
+        <p>记录 Web 架构、图形学、阅读与工程实践。文章可以保持标准长文，也可以逐级获得完整网页的编写自由。</p>
+        <div class="page-intro__meta"><span><b>{posts.length}</b> 篇文章</span><span><b>{columns.length}</b> 个栏目</span><span>静态 HTML 优先</span></div>
+      </div>
+    </header>
+
+    <section class="section-block" aria-labelledby="latest-heading">
+      <div class="section-heading"><h2 id="latest-heading">最近文章</h2><span>LATEST WRITING</span></div>
+      <PostSearch />
+      <PostList posts={posts.slice(0, 6)} />
+      <p class="section-link"><a class="plain-link" href="/archive/">查看全部文章 →</a></p>
+    </section>
+
+    <section class="section-block" aria-labelledby="columns-heading">
+      <div class="section-heading"><h2 id="columns-heading">栏目</h2><span>DEVELOPER-DEFINED COLLECTIONS</span></div>
+      <p class="section-note">栏目按内容分类，与文章外壳档位彼此独立；每个栏目也可以拥有自己的页面结构。</p>
+      <ColumnDirectory columns={columns} posts={posts} />
+    </section>
+  </div>
+</FullShell>
+
+<style>
+  .section-link { margin-top: 1.2rem; font-size: .78rem; }
+  .section-note { max-width: 43rem; margin: -.2rem 0 1.5rem; color: rgba(var(--text-rgb), .55); font-size: .82rem; line-height: 1.8; }
+</style>

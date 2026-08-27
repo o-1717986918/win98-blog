@@ -1,0 +1,30 @@
+---
+interface Props { href?: string; label?: string; }
+const { href = '/', label = '返回小站' } = Astro.props;
+---
+
+<a class="back-badge" href={href} aria-label={label}>← <span>{label}</span></a>
+
+<style>
+  .back-badge {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 80;
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .62rem .76rem;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 2px;
+    color: #eef0ef;
+    background: rgba(10, 14, 20, .86);
+    backdrop-filter: blur(12px);
+    font: 600 .7rem/1.2 ui-monospace, 'Cascadia Code', monospace;
+    letter-spacing: .04em;
+    text-decoration: none;
+  }
+  .back-badge:hover { border-color: #62ccb8; color: #77dbc8; }
+  .back-badge:focus-visible { outline: 2px solid #77dbc8; outline-offset: 3px; }
+  @media (max-width: 520px) { .back-badge span { display: none; } }
+</style>

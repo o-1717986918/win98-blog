@@ -1,0 +1,30 @@
+---
+title: 主题不是皮肤：让配色成为多层渲染的共同数据
+description: 用语义 CSS 令牌同时驱动 DOM、背景 Canvas 与文章私有组件。
+date: 2026-08-27
+minutes: 6
+tags: [CSS, 设计令牌]
+columns: [engineering]
+chrome: full
+theme: paper
+---
+
+主题切换最容易退化成一组散落的颜色覆盖。组件知道“这个地方是蓝色”，Canvas 又维护另一套蓝色，最终每增加一个主题都要修改多个系统。
+
+## 从颜色名转向语义
+
+组件依赖的是 `background`、`surface`、`text`、`muted`、`signal` 与 `accent`，而不是某个主题下的具体十六进制颜色。
+
+```css
+:root[data-theme='graphite'] {
+  --bg-rgb: 8, 12, 17;
+  --text-rgb: 230, 235, 239;
+  --signal-rgb: 92, 205, 183;
+}
+```
+
+## 背景也读取同一份数据
+
+页面背景 Canvas 在绘制时通过 `getComputedStyle(document.documentElement)` 读取 signal、accent 和 text。切换配色会广播一个小事件，背景只重绘一次，不运行持续动画。
+
+这样背景仍然具有视觉层次，却不会拿走正文的主线程预算或阅读注意力。

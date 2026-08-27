@@ -1,0 +1,23 @@
+<label class="post-search">
+  <span>搜索文章或栏目</span>
+  <input type="search" placeholder="输入标题、标签或栏目…" data-post-search />
+</label>
+
+<style>
+  .post-search { display: block; margin-bottom: 1rem; }
+  .post-search span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  input { width: min(100%, 31rem); padding: .75rem .85rem; border: 1px solid var(--line); border-radius: var(--radius); outline: 0; color: rgb(var(--text-rgb)); background: rgba(var(--surface-rgb), .74); font-size: .8rem; }
+  input:focus { border-color: rgb(var(--signal-rgb)); box-shadow: 0 0 0 3px rgba(var(--signal-rgb), .08); }
+  input::placeholder { color: rgba(var(--text-rgb), .38); }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLInputElement>('[data-post-search]').forEach((input) => {
+    input.addEventListener('input', () => {
+      const query = input.value.trim().toLowerCase();
+      document.querySelectorAll<HTMLElement>('[data-post-row]').forEach((row) => {
+        row.hidden = Boolean(query) && !(row.dataset.search ?? '').includes(query);
+      });
+    });
+  });
+</script>
