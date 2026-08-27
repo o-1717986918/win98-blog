@@ -7,13 +7,12 @@ const { posts } = Astro.props;
 {posts.length > 0 && (
   <aside class="related" aria-labelledby="related-heading">
     <div class="related__head"><h2 id="related-heading">继续阅读</h2><span>RELATED</span></div>
-    <div class="related__grid">
+    <div class="related__list">
       {posts.map((post) => (
         <article>
-          <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+          <div class="related__meta"><time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time><span>{post.data.tags.slice(0, 2).map((tag) => <a href={tagPath(tag)}>#{tag}</a>)}</span></div>
           <h3><a href={`/posts/${post.id}/`}>{post.data.title}</a></h3>
-          <p>{post.data.description}</p>
-          <div>{post.data.tags.slice(0, 2).map((tag) => <a href={tagPath(tag)}>#{tag}</a>)}</div>
+          <span class="related__arrow" aria-hidden="true">↗</span>
         </article>
       ))}
     </div>
@@ -25,14 +24,16 @@ const { posts } = Astro.props;
   .related__head { display: flex; align-items: baseline; gap: .8rem; margin-bottom: 1.2rem; }
   .related__head h2 { font-size: 1.15rem; }
   .related__head span { color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .58rem; letter-spacing: .1em; }
-  .related__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
-  article { min-width: 0; padding: 1.25rem; background: rgba(var(--surface-rgb), .8); }
-  time, article > div { color: rgba(var(--text-rgb), .43); font-family: var(--font-mono); font-size: .57rem; }
-  h3 { margin: .65rem 0 .45rem; font-size: .98rem; line-height: 1.5; }
+  .related__list { border-top: 1px solid var(--line); }
+  article { --related-accent: var(--spectrum-aqua-rgb); position: relative; display: grid; grid-template-columns: 8rem minmax(0, 1fr) auto; gap: 1.5rem; align-items: center; min-width: 0; padding: 1.25rem .35rem; border-bottom: 1px solid var(--line); }
+  article:nth-child(2) { --related-accent: var(--spectrum-coral-rgb); }
+  article:nth-child(3) { --related-accent: var(--spectrum-violet-rgb); }
+  .related__meta { color: rgba(var(--text-rgb), .43); font-family: var(--font-mono); font-size: .57rem; }
+  .related__meta span { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .3rem; }
+  h3 { font-family: var(--font-display); font-size: 1.03rem; line-height: 1.45; letter-spacing: -.025em; }
   h3 a { text-decoration: none; }
-  h3 a:hover { color: rgb(var(--signal-rgb)); }
-  p { color: rgba(var(--text-rgb), .55); font-size: .75rem; line-height: 1.7; }
-  article > div { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
-  article > div a { color: rgb(var(--signal-rgb)); text-decoration: none; }
-  @media (max-width: 760px) { .related__grid { grid-template-columns: 1fr; } }
+  h3 a:hover { color: rgb(var(--related-accent)); }
+  .related__meta a { color: rgb(var(--related-accent)); text-decoration: none; }
+  .related__arrow { color: rgb(var(--related-accent)); }
+  @media (max-width: 620px) { article { grid-template-columns: 1fr auto; gap: .7rem 1rem; } .related__meta { grid-column: 1; } h3 { grid-column: 1 / -1; } .related__arrow { grid-column: 2; grid-row: 1; } }
 </style>

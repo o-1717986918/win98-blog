@@ -2,41 +2,152 @@
 import { getCollection } from 'astro:content';
 import ColumnDirectory from '../components/ColumnDirectory.astro';
 import PostList from '../components/PostList.astro';
-import PostSearch from '../components/PostSearch.astro';
 import { SITE } from '../config/site';
-import { isPublished, sortColumns, sortPosts } from '../lib/content';
+import { formatDate, isPublished, sortColumns, sortPosts, tagPath } from '../lib/content';
 import FullShell from '../layouts/FullShell.astro';
 
 const posts = sortPosts((await getCollection('posts')).filter(isPublished));
 const columns = sortColumns((await getCollection('columns')).filter(isPublished));
+const columnMap = new Map(columns.map((column) => [column.id, column]));
+const spotlight = posts.find((post) => post.data.featured) ?? posts[0];
+const recent = posts.filter((post) => post.id !== spotlight?.id).slice(0, 5);
 ---
 
 <FullShell title={SITE.title} description={SITE.description}>
-  <div class="page-wrap">
-    <header class="page-intro">
-      <div><p class="eyebrow">PERSONAL SITE / SINCE 2026</p><h1 class="display-title">某人的<br />小站</h1></div>
-      <div class="page-intro__copy">
-        <p>记录 Web 架构、图形学、阅读与工程实践。文章可以保持标准长文，也可以逐级获得完整网页的编写自由。</p>
-        <div class="page-intro__meta"><span><b>{posts.length}</b> 篇文章</span><span><b>{columns.length}</b> 个栏目</span><span>静态 HTML 优先</span></div>
+  <div class="page-wrap home-page">
+    <header class="home-hero">
+      <div class="home-identity">
+        <p class="home-kicker">PERSONAL TECHNICAL BLOG · EST. 2026</p>
+        <h1>某人的小站</h1>
       </div>
+      <div class="home-statement">
+        <p>记录 Web 架构、图形学、阅读与工程实践。先把问题想清楚，再把实现和判断公开留下。</p>
+        <dl>
+          <div><dt>文章</dt><dd>{posts.length}</dd></div>
+          <div><dt>栏目</dt><dd>{columns.length}</dd></div>
+          <div><dt>输出</dt><dd>静态优先</dd></div>
+        </dl>
+      </div>
+
+      {spotlight ? (
+        <article class="spotlight" data-depth-card>
+          <div class="spotlight-main">
+            <p class="spotlight-label"><span>最近更新</span><time datetime={spotlight.data.date.toISOString()}>{formatDate(spotlight.data.date)}</time></p>
+            <h2><a href={`/posts/${spotlight.id}/`}>{spotlight.data.title}</a></h2>
+          </div>
+          <div class="spotlight-detail">
+            <p>{spotlight.data.description}</p>
+            <div class="spotlight-taxonomy">
+              {spotlight.data.columns.map((reference) => {
+                const column = columnMap.get(reference.id);
+                return column && <a href={`/columns/${column.id}/`}>{column.data.title}</a>;
+              })}
+              {spotlight.data.tags.map((tag) => <a href={tagPath(tag)}>#{tag}</a>)}
+            </div>
+            <a class="spotlight-link" href={`/posts/${spotlight.id}/`}>开始阅读 <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+      ) : (
+        <div class="spotlight spotlight--empty"><p>第一篇文章正在准备中。</p></div>
+      )}
+
+      <div class="spectrum-rail" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     </header>
 
-    <section class="section-block" aria-labelledby="latest-heading">
-      <div class="section-heading"><h2 id="latest-heading">最近文章</h2><span>LATEST WRITING</span></div>
-      <PostSearch />
-      <PostList posts={posts.slice(0, 6)} />
-      <p class="section-link"><a class="plain-link" href="/archive/">查看全部文章 →</a></p>
-    </section>
+    <div class="home-library">
+      <section class="recent-writing" aria-labelledby="latest-heading">
+        <div class="library-heading">
+          <div><p>CHRONOLOGICAL</p><h2 id="latest-heading">继续阅读</h2></div>
+          <a href="/archive/">全部文章 →</a>
+        </div>
+        <PostList posts={recent} />
+      </section>
 
-    <section class="section-block" aria-labelledby="columns-heading">
-      <div class="section-heading"><h2 id="columns-heading">栏目</h2><span>DEVELOPER-DEFINED COLLECTIONS</span></div>
-      <p class="section-note">栏目按内容分类，与文章外壳档位彼此独立；每个栏目也可以拥有自己的页面结构。</p>
-      <ColumnDirectory columns={columns} posts={posts} />
-    </section>
+      <aside class="column-browser" aria-labelledby="columns-heading">
+        <div class="library-heading">
+          <div><p>CURATED PATHS</p><h2 id="columns-heading">栏目</h2></div>
+        </div>
+        <p class="column-note">栏目是开发者自由定义的内容路径，与文章页面采用哪一种外壳互不推导。</p>
+        <ColumnDirectory columns={columns} posts={posts} />
+      </aside>
+    </div>
   </div>
 </FullShell>
 
 <style>
-  .section-link { margin-top: 1.2rem; font-size: .78rem; }
-  .section-note { max-width: 43rem; margin: -.2rem 0 1.5rem; color: rgba(var(--text-rgb), .55); font-size: .82rem; line-height: 1.8; }
+  .home-page { padding-bottom: clamp(5rem, 10vw, 9rem); }
+  .home-hero { position: relative; padding: clamp(2.6rem, 5vh, 4rem) 0 0; }
+  .home-identity { display: flex; align-items: end; justify-content: space-between; gap: 2rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
+  .home-kicker { color: rgb(var(--spectrum-aqua-rgb)); font-family: var(--font-mono); font-size: .62rem; letter-spacing: .12em; }
+  .home-identity h1 { font-family: var(--font-display); font-size: clamp(1.65rem, 3.2vw, 2.5rem); font-stretch: condensed; font-weight: 620; letter-spacing: -.045em; }
+  .home-statement { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2rem; align-items: end; padding: 1rem 0 clamp(2rem, 3vw, 3rem); }
+  .home-statement > p { max-width: 43rem; color: rgba(var(--text-rgb), .66); font-size: clamp(.9rem, 1.4vw, 1.02rem); line-height: 1.9; }
+  dl { display: flex; gap: 1.6rem; margin: 0; }
+  dl div { display: grid; gap: .12rem; }
+  dt { color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .54rem; }
+  dd { margin: 0; color: rgb(var(--spectrum-gold-rgb)); font-family: var(--font-mono); font-size: .68rem; }
+  .spotlight { --tilt-x: 0deg; --tilt-y: 0deg; position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(16rem, .72fr); gap: clamp(2.5rem, 8vw, 8rem); align-items: center; min-height: clamp(21rem, 34vw, 26rem); padding: clamp(2.4rem, 4vw, 3.2rem) clamp(1.4rem, 4vw, 3.6rem); border: 1px solid rgba(var(--text-rgb), .18); border-radius: 1.2rem; background: linear-gradient(135deg, rgba(var(--raised-rgb), .82), rgba(var(--surface-rgb), .62) 48%, rgba(var(--bg-rgb), .32)); box-shadow: 0 2.8rem 6rem rgba(8, 19, 28, .23), 0 .8rem 1.8rem rgba(8, 19, 28, .12), inset 0 1px rgba(255, 255, 255, .15); transform: perspective(1200px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)); transform-style: preserve-3d; transition: transform .18s var(--ease), box-shadow .3s var(--ease); will-change: transform; }
+  .spotlight::before { content: ''; position: absolute; inset: .9rem -.75rem -.85rem .8rem; z-index: -2; border: 1px solid rgba(var(--spectrum-violet-rgb), .25); border-radius: 1.3rem; background: rgba(var(--surface-rgb), .28); box-shadow: 0 1.8rem 4rem rgba(0, 0, 0, .16); transform: translateZ(-2rem); }
+  .spotlight::after { content: ''; position: absolute; top: -12%; right: 6%; z-index: -1; width: clamp(12rem, 28vw, 24rem); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 32%, rgba(255, 255, 255, .34), rgba(var(--spectrum-violet-rgb), .16) 34%, rgba(var(--spectrum-aqua-rgb), .07) 58%, transparent 72%); filter: blur(.2px); transform: translateZ(-1rem); }
+  .spotlight:hover { box-shadow: 0 3.5rem 7.5rem rgba(8, 19, 28, .3), 0 1rem 2rem rgba(8, 19, 28, .14), inset 0 1px rgba(255, 255, 255, .18); }
+  .spotlight > * { position: relative; z-index: 1; transform: translateZ(1.5rem); }
+  .spotlight-label { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.4rem; color: rgba(var(--text-rgb), .48); font-family: var(--font-mono); font-size: .6rem; }
+  .spotlight-label span { color: rgb(var(--spectrum-coral-rgb)); }
+  .spotlight h2 { max-width: 14ch; font-family: var(--font-display); font-size: clamp(3rem, 6vw, 6rem); font-stretch: condensed; font-weight: 640; line-height: .98; letter-spacing: -.065em; text-wrap: balance; }
+  .spotlight h2 a { text-decoration: none; }
+  .spotlight h2 a:hover { color: rgb(var(--spectrum-aqua-rgb)); }
+  .spotlight-detail { align-self: end; padding-bottom: .35rem; }
+  .spotlight-detail > p { color: rgba(var(--text-rgb), .68); font-size: .9rem; line-height: 1.9; }
+  .spotlight-taxonomy { display: flex; flex-wrap: wrap; gap: .45rem .9rem; margin-top: 1.3rem; font-family: var(--font-mono); font-size: .58rem; }
+  .spotlight-taxonomy a { color: rgb(var(--spectrum-violet-rgb)); text-decoration: none; }
+  .spotlight-taxonomy a:nth-child(2n) { color: rgb(var(--spectrum-gold-rgb)); }
+  .spotlight-link { display: inline-flex; gap: .6rem; align-items: center; margin-top: 2rem; color: rgb(var(--spectrum-coral-rgb)); font-size: .82rem; font-weight: 650; text-decoration: none; }
+  .spotlight-link span { transition: transform .2s var(--ease); }
+  .spotlight-link:hover span { transform: translate(.2rem, -.2rem); }
+  .spotlight--empty { min-height: 18rem; align-items: center; }
+  .spectrum-rail { display: grid; grid-template-columns: 2.1fr .75fr 1.2fr .95fr; height: .48rem; }
+  .spectrum-rail i:nth-child(1) { background: rgb(var(--spectrum-aqua-rgb)); }
+  .spectrum-rail i:nth-child(2) { background: rgb(var(--spectrum-coral-rgb)); }
+  .spectrum-rail i:nth-child(3) { background: rgb(var(--spectrum-gold-rgb)); }
+  .spectrum-rail i:nth-child(4) { background: rgb(var(--spectrum-violet-rgb)); }
+  .home-library { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(18rem, .72fr); gap: clamp(3rem, 8vw, 7rem); padding-top: clamp(5rem, 9vw, 8rem); }
+  .library-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.4rem; }
+  .library-heading p { margin-bottom: .32rem; color: rgb(var(--spectrum-coral-rgb)); font-family: var(--font-mono); font-size: .55rem; letter-spacing: .1em; }
+  .library-heading h2 { font-family: var(--font-display); font-size: clamp(1.65rem, 3vw, 2.5rem); letter-spacing: -.045em; }
+  .library-heading > a { color: rgba(var(--text-rgb), .54); font-size: .68rem; text-decoration: none; }
+  .library-heading > a:hover { color: rgb(var(--spectrum-aqua-rgb)); }
+  .column-note { margin: -.45rem 0 1rem; color: rgba(var(--text-rgb), .52); font-size: .72rem; line-height: 1.75; }
+  @media (max-width: 900px) {
+    .spotlight { grid-template-columns: 1fr; gap: 2rem; min-height: auto; transform: none !important; }
+    .spotlight h2 { max-width: 16ch; }
+    .spotlight-detail { max-width: 38rem; }
+    .home-library { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 620px) {
+    .home-hero { padding-top: 2.8rem; }
+    .home-identity, .home-statement { display: grid; gap: 1rem; }
+    .home-statement { padding-bottom: 2.6rem; }
+    dl { justify-content: space-between; gap: .8rem; }
+    .spotlight { padding: 2.4rem 1rem 2rem; }
+    .spotlight h2 { font-size: clamp(2.6rem, 13.5vw, 4.3rem); }
+  }
 </style>
+
+<script>
+  const finePointer = matchMedia('(pointer: fine)');
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  document.querySelectorAll<HTMLElement>('[data-depth-card]').forEach((card) => {
+    card.addEventListener('pointermove', (event) => {
+      if (!finePointer.matches || reducedMotion.matches) return;
+      const bounds = card.getBoundingClientRect();
+      const x = (event.clientX - bounds.left) / bounds.width - .5;
+      const y = (event.clientY - bounds.top) / bounds.height - .5;
+      card.style.setProperty('--tilt-x', `${(-y * 3.2).toFixed(2)}deg`);
+      card.style.setProperty('--tilt-y', `${(x * 3.2).toFixed(2)}deg`);
+    });
+    card.addEventListener('pointerleave', () => {
+      card.style.setProperty('--tilt-x', '0deg');
+      card.style.setProperty('--tilt-y', '0deg');
+    });
+  });
+</script>

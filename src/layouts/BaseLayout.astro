@@ -36,7 +36,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta name="color-scheme" content="dark light" />
-    <meta name="theme-color" content="rgb(20, 28, 38)" />
+    <meta name="theme-color" content={theme === 'paper' ? '#deebed' : theme === 'night' ? '#07171d' : theme === 'indigo' ? '#262340' : '#2b3946'} />
     <link rel="canonical" href={canonical} />
     <link rel="alternate" type="application/rss+xml" title={`${SITE.title} RSS`} href="/rss.xml" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

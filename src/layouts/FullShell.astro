@@ -6,6 +6,7 @@ import AmbientField from '../components/AmbientField.astro';
 import Analytics from '../components/Analytics.astro';
 import SiteFooter from '../components/chrome/SiteFooter.astro';
 import SiteHeader from '../components/chrome/SiteHeader.astro';
+import SearchOverlay from '../components/SearchOverlay.astro';
 import { SITE } from '../config/site';
 import BaseLayout from './BaseLayout.astro';
 
@@ -28,6 +29,7 @@ const { title, description, theme = SITE.defaultTheme, pageKind = 'page', image,
   <AmbientField />
   <SiteHeader />
   <main class="shell-main" id="main-content"><slot /></main>
+  <SearchOverlay />
   <SiteFooter />
   <Analytics />
 </BaseLayout>

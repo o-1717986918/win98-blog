@@ -2,9 +2,10 @@
 import { getCollection } from 'astro:content';
 import PostList from '../components/PostList.astro';
 import PostSearch from '../components/PostSearch.astro';
-import { isPublished, sortPosts } from '../lib/content';
+import { allTags, isPublished, sortPosts } from '../lib/content';
 import FullShell from '../layouts/FullShell.astro';
 const posts = sortPosts((await getCollection('posts')).filter(isPublished));
+const tags = allTags(posts);
 ---
 
 <FullShell title="文章归档" description="某人的小站全部文章，按时间倒序排列。">
@@ -13,6 +14,6 @@ const posts = sortPosts((await getCollection('posts')).filter(isPublished));
       <div><p class="eyebrow">ARCHIVE</p><h1 class="display-title">文章<br />归档</h1></div>
       <div class="page-intro__copy"><p>时间是博客最稳定的默认轴。栏目和搜索提供第二种发现路径，但不替代完整归档。</p><div class="page-intro__meta"><span><b>{posts.length}</b> 篇文章</span><span>按时间倒序</span></div></div>
     </header>
-    <section class="section-block"><PostSearch /><PostList posts={posts} /></section>
+    <section class="section-block"><PostSearch tags={tags} /><PostList posts={posts} /></section>
   </div>
 </FullShell>

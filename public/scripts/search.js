@@ -54,9 +54,21 @@ document.querySelectorAll('[data-search-index]').forEach((root) => {
   let timer = 0;
   input.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(run, 140); });
   input.addEventListener('focus', () => { load().catch(() => undefined); }, { once: true });
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') {
+      const first = list.querySelector('a');
+      if (first) { event.preventDefault(); first.focus(); }
+    }
+  });
+  list.addEventListener('keydown', (event) => {
+    if (!['ArrowDown', 'ArrowUp'].includes(event.key)) return;
+    const links = [...list.querySelectorAll('a')];
+    const current = event.target?.closest?.('a');
+    const index = links.indexOf(current);
+    const next = event.key === 'ArrowDown' ? links[index + 1] : links[index - 1];
+    if (next) { event.preventDefault(); next.focus(); }
+    else if (event.key === 'ArrowUp') { event.preventDefault(); input.focus(); }
+  });
   typeSelect.addEventListener('change', run);
   tagSelect.addEventListener('change', run);
-  document.addEventListener('keydown', (event) => {
-    if (event.key === '/' && !event.target?.closest?.('input, textarea, select')) { event.preventDefault(); input.focus(); }
-  });
 });

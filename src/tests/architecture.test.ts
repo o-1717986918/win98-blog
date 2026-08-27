@@ -87,7 +87,9 @@ describe('blog-architecture contracts', () => {
     expect(scripts['content:new']).toBeTruthy();
     expect(scripts['content:audit']).toBeTruthy();
     expect(scripts.build).toContain('pagefind');
-    await expect(read('src/pages/search.astro')).resolves.toContain('SearchIndex');
+    await expect(read('src/layouts/FullShell.astro')).resolves.toContain('SearchOverlay');
+    await expect(read('src/components/SearchOverlay.astro')).resolves.toContain('SearchIndex');
+    await expect(read('src/pages/search.astro')).resolves.toContain('data-search-trigger');
     await expect(read('src/pages/tags/index.astro')).resolves.toContain('allTags');
   });
 

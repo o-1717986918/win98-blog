@@ -1,23 +1,62 @@
-<label class="post-search">
-  <span>搜索文章或栏目</span>
-  <input type="search" placeholder="输入标题、标签或栏目…" data-post-search />
-</label>
+---
+interface Props { tags?: Array<{ name: string; count: number }>; }
+const { tags = [] } = Astro.props;
+---
+
+<section class="post-filter" data-post-filter aria-label="筛选归档文章">
+  <label class="post-search">
+    <span>筛选文章、栏目或主题</span>
+    <input type="search" placeholder="在归档中即时筛选…" data-post-search />
+    <kbd>LOCAL</kbd>
+  </label>
+  {tags.length > 0 && (
+    <div class="topic-filters" aria-label="按主题筛选">
+      <button class="is-active" type="button" data-topic-filter="" aria-pressed="true">全部</button>
+      {tags.map((tag) => <button type="button" data-topic-filter={tag.name.toLowerCase()} aria-pressed="false">{tag.name}<small>{tag.count}</small></button>)}
+    </div>
+  )}
+  <p class="filter-status" aria-live="polite" data-filter-status></p>
+</section>
 
 <style>
-  .post-search { display: block; margin-bottom: 1rem; }
+  .post-filter { margin-bottom: 1.4rem; }
+  .post-search { position: relative; display: block; }
   .post-search span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  input { width: min(100%, 31rem); padding: .75rem .85rem; border: 1px solid var(--line); border-radius: var(--radius); outline: 0; color: rgb(var(--text-rgb)); background: rgba(var(--surface-rgb), .74); font-size: .8rem; }
-  input:focus { border-color: rgb(var(--signal-rgb)); box-shadow: 0 0 0 3px rgba(var(--signal-rgb), .08); }
+  input { width: 100%; padding: .9rem 3rem .9rem 1rem; border: 1px solid var(--line-strong); border-radius: .65rem; outline: 0; color: rgb(var(--text-rgb)); background: linear-gradient(145deg, rgba(var(--surface-rgb), .86), rgba(var(--raised-rgb), .5)); box-shadow: 0 .8rem 2.2rem rgba(0, 0, 0, .08), inset 0 1px rgba(255, 255, 255, .09); font-size: .82rem; }
+  input:focus { border-color: rgb(var(--signal-rgb)); box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .1), 0 0 0 3px rgba(var(--signal-rgb), .1); }
   input::placeholder { color: rgba(var(--text-rgb), .38); }
+  kbd { position: absolute; top: 50%; right: 1rem; padding: .1rem .35rem; border: 1px solid var(--line); border-radius: .22rem; color: rgba(var(--text-rgb), .4); font-family: var(--font-mono); font-size: .58rem; transform: translateY(-50%); }
+  .topic-filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+  .topic-filters button { display: inline-flex; align-items: center; gap: .42rem; padding: .38rem .65rem; border: 1px solid var(--line); border-radius: 999px; color: rgba(var(--text-rgb), .58); background: rgba(var(--surface-rgb), .42); font-size: .66rem; cursor: pointer; transition: transform .2s var(--ease), background .2s var(--ease), box-shadow .2s var(--ease); }
+  .topic-filters button:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .1); }
+  .topic-filters button.is-active { border-color: rgba(var(--spectrum-violet-rgb), .55); color: rgb(var(--text-rgb)); background: rgba(var(--spectrum-violet-rgb), .13); box-shadow: inset 0 1px rgba(255, 255, 255, .09); }
+  .topic-filters small { color: rgb(var(--spectrum-gold-rgb)); font-family: var(--font-mono); font-size: .52rem; }
+  .filter-status { min-height: 1em; margin-top: .7rem; color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .57rem; }
 </style>
 
 <script>
-  document.querySelectorAll<HTMLInputElement>('[data-post-search]').forEach((input) => {
-    input.addEventListener('input', () => {
+  document.querySelectorAll<HTMLElement>('[data-post-filter]').forEach((filter) => {
+    const input = filter.querySelector<HTMLInputElement>('[data-post-search]');
+    const status = filter.querySelector<HTMLElement>('[data-filter-status]');
+    const buttons = [...filter.querySelectorAll<HTMLButtonElement>('[data-topic-filter]')];
+    if (!input || !status) return;
+    let activeTopic = '';
+    const run = () => {
       const query = input.value.trim().toLowerCase();
+      let visible = 0;
       document.querySelectorAll<HTMLElement>('[data-post-row]').forEach((row) => {
-        row.hidden = Boolean(query) && !(row.dataset.search ?? '').includes(query);
+        const matchesText = !query || (row.dataset.search ?? '').includes(query);
+        const matchesTopic = !activeTopic || (row.dataset.tags ?? '').split('|').includes(activeTopic);
+        row.hidden = !(matchesText && matchesTopic);
+        if (!row.hidden) visible += 1;
       });
-    });
+      status.textContent = query || activeTopic ? `当前显示 ${visible} 篇文章` : '';
+    };
+    input.addEventListener('input', run);
+    buttons.forEach((button) => button.addEventListener('click', () => {
+      activeTopic = button.dataset.topicFilter ?? '';
+      buttons.forEach((item) => { const active = item === button; item.classList.toggle('is-active', active); item.setAttribute('aria-pressed', String(active)); });
+      run();
+    }));
   });
 </script>

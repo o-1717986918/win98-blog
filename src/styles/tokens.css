@@ -2,7 +2,8 @@
 
 @layer tokens {
   :root {
-    --font-ui: Inter, 'SF Pro Text', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-display: Bahnschrift, 'Aptos Display', 'Segoe UI Variable Display', 'Microsoft YaHei UI', sans-serif;
+    --font-ui: 'Segoe UI Variable Text', Aptos, 'SF Pro Text', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
     --font-reading: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', STSong, SimSun, serif;
     --font-mono: 'Cascadia Code', 'SFMono-Regular', 'JetBrains Mono', Consolas, monospace;
     --content: 72rem;
@@ -16,14 +17,18 @@
 
   :root,
   :root[data-theme='graphite'] {
-    --bg-rgb: 20, 28, 38;
-    --surface-rgb: 28, 39, 52;
-    --raised-rgb: 39, 52, 67;
-    --text-rgb: 238, 243, 246;
-    --muted-rgb: 163, 177, 189;
-    --signal-rgb: 120, 217, 198;
-    --accent-rgb: 227, 185, 110;
-    --secondary-rgb: 176, 185, 237;
+    --bg-rgb: 43, 57, 70;
+    --surface-rgb: 56, 74, 90;
+    --raised-rgb: 72, 92, 108;
+    --text-rgb: 244, 247, 249;
+    --muted-rgb: 179, 193, 203;
+    --signal-rgb: 126, 231, 210;
+    --accent-rgb: 255, 128, 104;
+    --secondary-rgb: 190, 201, 255;
+    --spectrum-aqua-rgb: 126, 231, 210;
+    --spectrum-coral-rgb: 255, 128, 104;
+    --spectrum-gold-rgb: 239, 196, 119;
+    --spectrum-violet-rgb: 190, 167, 255;
     --danger-rgb: 231, 103, 79;
     --line: rgba(230, 235, 239, .13);
     --line-strong: rgba(230, 235, 239, .23);
@@ -31,29 +36,37 @@
   }
 
   :root[data-theme='paper'] {
-    --bg-rgb: 238, 237, 232;
-    --surface-rgb: 249, 248, 243;
-    --raised-rgb: 226, 225, 219;
-    --text-rgb: 27, 31, 35;
-    --muted-rgb: 94, 101, 105;
-    --signal-rgb: 0, 111, 98;
-    --accent-rgb: 144, 91, 26;
-    --secondary-rgb: 72, 81, 142;
+    --bg-rgb: 222, 235, 237;
+    --surface-rgb: 248, 251, 249;
+    --raised-rgb: 204, 223, 226;
+    --text-rgb: 20, 43, 54;
+    --muted-rgb: 78, 101, 110;
+    --signal-rgb: 0, 112, 103;
+    --accent-rgb: 188, 65, 44;
+    --secondary-rgb: 87, 66, 174;
+    --spectrum-aqua-rgb: 0, 148, 134;
+    --spectrum-coral-rgb: 214, 82, 59;
+    --spectrum-gold-rgb: 181, 126, 18;
+    --spectrum-violet-rgb: 105, 82, 194;
     --danger-rgb: 174, 55, 37;
-    --line: rgba(27, 31, 35, .15);
-    --line-strong: rgba(27, 31, 35, .28);
+    --line: rgba(20, 43, 54, .16);
+    --line-strong: rgba(20, 43, 54, .3);
     color-scheme: light;
   }
 
   :root[data-theme='night'] {
-    --bg-rgb: 4, 6, 9;
-    --surface-rgb: 9, 12, 16;
-    --raised-rgb: 17, 21, 27;
-    --text-rgb: 237, 235, 228;
-    --muted-rgb: 151, 150, 144;
-    --signal-rgb: 109, 191, 169;
-    --accent-rgb: 222, 174, 87;
-    --secondary-rgb: 151, 135, 188;
+    --bg-rgb: 7, 23, 29;
+    --surface-rgb: 13, 38, 45;
+    --raised-rgb: 22, 52, 60;
+    --text-rgb: 237, 245, 244;
+    --muted-rgb: 154, 177, 176;
+    --signal-rgb: 91, 218, 194;
+    --accent-rgb: 255, 121, 96;
+    --secondary-rgb: 174, 156, 255;
+    --spectrum-aqua-rgb: 91, 218, 194;
+    --spectrum-coral-rgb: 255, 121, 96;
+    --spectrum-gold-rgb: 244, 197, 102;
+    --spectrum-violet-rgb: 174, 156, 255;
     --danger-rgb: 235, 95, 69;
     --line: rgba(237, 235, 228, .12);
     --line-strong: rgba(237, 235, 228, .22);
@@ -61,14 +74,18 @@
   }
 
   :root[data-theme='indigo'] {
-    --bg-rgb: 25, 23, 45;
-    --surface-rgb: 36, 32, 61;
-    --raised-rgb: 49, 43, 78;
+    --bg-rgb: 38, 35, 64;
+    --surface-rgb: 51, 46, 80;
+    --raised-rgb: 65, 58, 98;
     --text-rgb: 242, 239, 248;
-    --muted-rgb: 175, 166, 190;
-    --signal-rgb: 121, 218, 199;
-    --accent-rgb: 218, 182, 122;
-    --secondary-rgb: 196, 176, 244;
+    --muted-rgb: 190, 181, 205;
+    --signal-rgb: 132, 230, 211;
+    --accent-rgb: 232, 195, 132;
+    --secondary-rgb: 207, 190, 255;
+    --spectrum-aqua-rgb: 132, 230, 211;
+    --spectrum-coral-rgb: 255, 137, 112;
+    --spectrum-gold-rgb: 242, 202, 126;
+    --spectrum-violet-rgb: 207, 190, 255;
     --danger-rgb: 231, 105, 85;
     --line: rgba(234, 231, 241, .13);
     --line-strong: rgba(234, 231, 241, .24);

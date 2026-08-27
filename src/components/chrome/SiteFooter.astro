@@ -5,13 +5,14 @@ import { SITE } from '../../config/site';
 <footer class="site-footer" data-pagefind-ignore>
   <span>© {new Date().getFullYear()} {SITE.title}</span>
   <span>写作 / 系统 / 图形</span>
-  <nav aria-label="页脚导航"><a href="/search/">搜索</a><a href="/tags/">标签</a><a href="/rss.xml">RSS</a><a href="/privacy/">隐私</a></nav>
+  <nav aria-label="页脚导航"><button type="button" data-search-trigger>搜索</button><a href="/archive/">文章</a><a href="/rss.xml">RSS</a><a href="/privacy/">隐私</a></nav>
 </footer>
 
 <style>
   .site-footer { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; width: min(100% - 2rem, 78rem); margin-inline: auto; padding: 1.8rem 0 2.2rem; border-top: 1px solid var(--line); color: rgba(var(--text-rgb), .44); font-family: var(--font-mono); font-size: .6rem; }
+  .site-footer::before { content: ''; position: absolute; top: -2px; left: 0; width: 7rem; height: 2px; background: linear-gradient(90deg, rgb(var(--spectrum-aqua-rgb)) 0 32%, rgb(var(--spectrum-coral-rgb)) 32% 52%, rgb(var(--spectrum-gold-rgb)) 52% 73%, rgb(var(--spectrum-violet-rgb)) 73%); }
   .site-footer nav { display: flex; justify-content: flex-end; gap: 1rem; }
-  .site-footer a { text-decoration: none; }
-  .site-footer a:hover { color: rgb(var(--signal-rgb)); }
+  .site-footer a, .site-footer button { padding: 0; border: 0; color: inherit; background: none; font: inherit; text-decoration: none; cursor: pointer; }
+  .site-footer a:hover, .site-footer button:hover { color: rgb(var(--signal-rgb)); }
   @media (max-width: 620px) { .site-footer { grid-template-columns: 1fr; } .site-footer nav { justify-content: flex-start; } }
 </style>

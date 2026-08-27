@@ -11,8 +11,8 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
 <header class="site-header" data-site-header data-pagefind-ignore>
   <div class="header-inner">
     <a class="site-brand" href="/" aria-label={`${SITE.title} · 返回首页`}>
-      <span class="brand-mark" aria-hidden="true"><i></i></span>
-      <span>{SITE.title}<small>PERSONAL NOTES</small></span>
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>{SITE.title}<small>PERSONAL TECHNICAL BLOG</small></span>
     </a>
     <button class="menu-button" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="site-navigation" data-menu-button>
       <i></i><i></i>
@@ -20,17 +20,23 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
     <div class="navigation-shell" id="site-navigation" data-navigation-shell>
       <nav class="site-navigation" aria-label="主导航">
         <a href="/" aria-current={current('/') ? 'page' : undefined}>首页</a>
-        {columns.map((column) => (
-          <a href={`/columns/${column.id}/`} aria-current={current(`/columns/${column.id}/`) ? 'page' : undefined}>
-            {column.data.navLabel ?? column.data.title}
-          </a>
-        ))}
-        <a href="/archive/" aria-current={current('/archive/') ? 'page' : undefined}>归档</a>
-        <a href="/search/" aria-current={current('/search/') ? 'page' : undefined}>搜索</a>
+        <a href="/archive/" aria-current={current('/archive/') ? 'page' : undefined}>文章</a>
+        <details class="column-menu">
+          <summary data-current={current('/columns/') ? 'true' : undefined}>栏目 <span aria-hidden="true">⌄</span></summary>
+          <div class="column-menu__panel">
+            {columns.map((column) => (
+              <a href={`/columns/${column.id}/`} aria-current={current(`/columns/${column.id}/`) ? 'page' : undefined}>
+                <span>{column.data.navLabel ?? column.data.title}</span><i aria-hidden="true">↗</i>
+              </a>
+            ))}
+          </div>
+        </details>
+        <button class="search-trigger" type="button" data-search-trigger>搜索 <kbd>⌘K</kbd></button>
         <a href="/about/" aria-current={current('/about/') ? 'page' : undefined}>关于</a>
       </nav>
       <button class="theme-button" type="button" data-theme-button aria-label="切换配色">
-        <span data-theme-name>GRAPHITE</span><i aria-hidden="true"></i>
+        <span data-theme-name>AERO</span>
+        <span class="theme-spectrum" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       </button>
     </div>
   </div>
@@ -39,22 +45,38 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
 <style>
   .site-header { position: fixed; inset: 0 0 auto; z-index: 50; height: var(--header); border-bottom: 1px solid var(--line); background: rgba(var(--bg-rgb), .88); backdrop-filter: blur(18px); }
   .header-inner { display: flex; align-items: center; width: min(100% - 2rem, 78rem); height: 100%; margin-inline: auto; }
-  .site-brand { display: flex; align-items: center; gap: .72rem; margin-right: auto; color: rgb(var(--text-rgb)); font-size: .88rem; font-weight: 680; letter-spacing: .08em; text-decoration: none; }
+  .site-brand { display: flex; align-items: center; gap: .72rem; margin-right: auto; color: rgb(var(--text-rgb)); font-family: var(--font-display); font-size: .88rem; font-weight: 680; letter-spacing: .06em; text-decoration: none; }
   .site-brand small { display: block; margin-top: .12rem; color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .49rem; font-weight: 500; letter-spacing: .12em; }
-  .brand-mark { position: relative; width: 1.75rem; height: 1.75rem; border: 1px solid rgba(var(--accent-rgb), .56); border-radius: 50%; }
-  .brand-mark::before, .brand-mark::after, .brand-mark i { content: ''; position: absolute; border-radius: 50%; }
-  .brand-mark::before { inset: .47rem; background: rgb(var(--signal-rgb)); }
-  .brand-mark::after { top: .28rem; right: .17rem; width: .3rem; height: .3rem; background: rgb(var(--accent-rgb)); }
-  .brand-mark i { inset: .16rem -.12rem; border-top: 1px solid rgba(var(--text-rgb), .32); transform: rotate(-20deg); }
+  .brand-mark { display: grid; grid-template-columns: repeat(4, 1fr); align-items: end; gap: 2px; width: 1.75rem; height: 1.75rem; padding: .25rem; border: 1px solid var(--line-strong); }
+  .brand-mark i { display: block; height: 100%; background: rgb(var(--spectrum-aqua-rgb)); }
+  .brand-mark i:nth-child(2) { height: 54%; background: rgb(var(--spectrum-coral-rgb)); }
+  .brand-mark i:nth-child(3) { height: 78%; background: rgb(var(--spectrum-gold-rgb)); }
+  .brand-mark i:nth-child(4) { height: 37%; background: rgb(var(--spectrum-violet-rgb)); }
   .navigation-shell, .site-navigation { display: flex; align-items: center; }
   .navigation-shell { gap: 1.65rem; }
   .site-navigation { gap: 1.35rem; }
-  .site-navigation a { position: relative; padding: .6rem 0; color: rgba(var(--text-rgb), .56); font-size: .78rem; text-decoration: none; }
+  .site-navigation > a, .column-menu > summary, .search-trigger { position: relative; padding: .6rem 0; border: 0; color: rgba(var(--text-rgb), .56); background: transparent; font-size: .78rem; text-decoration: none; cursor: pointer; }
+  .search-trigger { display: inline-flex; align-items: center; gap: .42rem; }
+  .search-trigger kbd { padding: .05rem .27rem; border: 1px solid var(--line); border-radius: .2rem; color: rgba(var(--text-rgb), .38); font-family: var(--font-mono); font-size: .48rem; }
+  .column-menu { position: relative; }
+  .column-menu > summary { display: flex; align-items: center; gap: .35rem; list-style: none; cursor: pointer; }
+  .column-menu > summary::-webkit-details-marker { display: none; }
+  .column-menu > summary span { color: rgb(var(--spectrum-violet-rgb)); transition: transform .2s var(--ease); }
+  .column-menu[open] > summary span { transform: rotate(180deg); }
+  .column-menu__panel { position: absolute; top: calc(100% + .8rem); left: 50%; display: grid; min-width: 14.5rem; padding: .45rem; border: 1px solid var(--line-strong); background: rgb(var(--surface-rgb)); box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, .2); transform: translateX(-50%); }
+  .column-menu__panel a { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem .75rem; color: rgba(var(--text-rgb), .68); font-size: .73rem; text-decoration: none; }
+  .column-menu__panel a::after { display: none; }
+  .column-menu__panel a:hover { color: rgb(var(--text-rgb)); background: rgba(var(--raised-rgb), .55); }
+  .column-menu__panel i { color: rgb(var(--spectrum-violet-rgb)); font-style: normal; }
   .site-navigation a::after { content: ''; position: absolute; right: 0; bottom: .3rem; left: 0; height: 1px; background: rgb(var(--signal-rgb)); transform: scaleX(0); transform-origin: left; transition: transform .25s var(--ease); }
-  .site-navigation a:hover, .site-navigation a[aria-current='page'] { color: rgb(var(--text-rgb)); }
+  .site-navigation > a:hover, .site-navigation > a[aria-current='page'], .column-menu > summary:hover, .column-menu > summary[data-current='true'], .search-trigger:hover { color: rgb(var(--text-rgb)); }
   .site-navigation a:hover::after, .site-navigation a[aria-current='page']::after { transform: scaleX(1); }
-  .theme-button { display: inline-flex; align-items: center; gap: .55rem; min-width: 6.7rem; padding: .48rem .58rem; border: 1px solid var(--line); border-radius: var(--radius); color: rgba(var(--text-rgb), .62); background: transparent; font-family: var(--font-mono); font-size: .56rem; letter-spacing: .06em; cursor: pointer; }
-  .theme-button i { width: .48rem; height: .48rem; margin-left: auto; border-radius: 50%; background: rgb(var(--signal-rgb)); box-shadow: 0 0 0 3px rgba(var(--signal-rgb), .09); }
+  .theme-button { display: inline-flex; align-items: center; gap: .7rem; min-width: 7.4rem; padding: .48rem .58rem; border: 1px solid var(--line); border-radius: var(--radius); color: rgba(var(--text-rgb), .62); background: transparent; font-family: var(--font-mono); font-size: .56rem; letter-spacing: .06em; cursor: pointer; }
+  .theme-spectrum { display: grid; grid-template-columns: repeat(4, .35rem); gap: 2px; margin-left: auto; }
+  .theme-spectrum i { width: .35rem; height: .58rem; background: rgb(var(--spectrum-aqua-rgb)); }
+  .theme-spectrum i:nth-child(2) { background: rgb(var(--spectrum-coral-rgb)); }
+  .theme-spectrum i:nth-child(3) { background: rgb(var(--spectrum-gold-rgb)); }
+  .theme-spectrum i:nth-child(4) { background: rgb(var(--spectrum-violet-rgb)); }
   .menu-button { display: none; width: 2.35rem; height: 2.35rem; border: 1px solid var(--line); border-radius: var(--radius); background: transparent; cursor: pointer; }
   .menu-button i { display: block; width: 1rem; height: 1px; margin: .28rem auto; background: currentColor; transition: transform .22s var(--ease); }
   .menu-button[aria-expanded='true'] i:first-child { transform: translateY(.145rem) rotate(45deg); }
@@ -64,8 +86,10 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
     .navigation-shell { position: fixed; top: calc(var(--header) + .5rem); right: 1rem; left: 1rem; display: block; padding: .5rem; border: 1px solid var(--line-strong); border-radius: var(--radius); background: rgb(var(--surface-rgb)); opacity: 0; visibility: hidden; transform: translateY(-.5rem); pointer-events: none; transition: .22s var(--ease); }
     .navigation-shell[data-open='true'] { opacity: 1; visibility: visible; transform: none; pointer-events: auto; }
     .site-navigation { display: grid; gap: 0; }
-    .site-navigation a { padding: .8rem .7rem; border-bottom: 1px solid var(--line); }
+    .site-navigation > a, .column-menu > summary, .search-trigger { width: 100%; padding: .8rem .7rem; border-bottom: 1px solid var(--line); text-align: left; }
     .site-navigation a::after { display: none; }
+    .column-menu__panel { position: static; min-width: 0; padding: 0 0 0 .65rem; border: 0; border-bottom: 1px solid var(--line); background: transparent; box-shadow: none; transform: none; }
+    .column-menu__panel a { padding: .65rem .75rem; border-left: 1px solid var(--line); }
     .theme-button { width: 100%; margin-top: .5rem; padding: .72rem; }
   }
   @media (max-width: 430px) { .site-brand small { display: none; } }
@@ -78,9 +102,10 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
   const stored = localStorage.getItem('someone-site:theme');
   if (stored && themeIds.includes(stored as ThemeId)) root.dataset.theme = stored;
 
+  const themeNames: Record<ThemeId, string> = { graphite: 'AERO', paper: 'MIST', night: 'ABYSS', indigo: 'IRIS' };
   const syncThemeLabel = () => {
-    const name = root.dataset.theme ?? 'graphite';
-    document.querySelectorAll<HTMLElement>('[data-theme-name]').forEach((node) => { node.textContent = name.toUpperCase(); });
+    const name = (root.dataset.theme ?? 'graphite') as ThemeId;
+    document.querySelectorAll<HTMLElement>('[data-theme-name]').forEach((node) => { node.textContent = themeNames[name] ?? 'AERO'; });
   };
   syncThemeLabel();
 
@@ -94,6 +119,7 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
       shell.dataset.open = 'false';
       button.setAttribute('aria-expanded', 'false');
       button.setAttribute('aria-label', '打开导航');
+      header.querySelectorAll<HTMLDetailsElement>('details[open]').forEach((details) => { details.open = false; });
     };
     button.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -111,7 +137,7 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
       dispatchEvent(new CustomEvent('site:theme'));
       close();
     });
-    header.querySelectorAll('a').forEach((link) => link.addEventListener('click', close));
+    header.querySelectorAll('a, [data-search-trigger]').forEach((control) => control.addEventListener('click', close));
     document.addEventListener('click', (event) => { if (!header.contains(event.target as Node)) close(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
   });

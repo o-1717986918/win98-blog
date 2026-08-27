@@ -12,7 +12,7 @@ const { column, posts } = Astro.props;
 <FullShell title={column.data.title} description={column.data.description} theme={column.data.theme} pageKind="column">
   <div class="page-wrap">
     <header class="page-intro column-intro">
-      <div><p class="eyebrow">COLUMN / FULL</p><h1 class="display-title">{column.data.title}</h1></div>
+      <div><p class="eyebrow">CURATED COLUMN</p><h1 class="display-title">{column.data.title}</h1></div>
       <div class="page-intro__copy"><p>{column.data.description}</p><div class="page-intro__meta"><span><b>{posts.length}</b> 篇文章</span><span>网页外壳可独立配置</span></div></div>
     </header>
     {column.data.cover && <Image class="column-cover" src={column.data.cover.src} alt={column.data.cover.alt} widths={[640, 960, 1280]} sizes="(max-width: 800px) 100vw, 1152px" />}

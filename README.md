@@ -5,13 +5,13 @@
 ## 已交付能力
 
 - Astro 7 + TypeScript + MDX Content Collections + 原生 CSS，输出纯静态站点；
-- 首页、栏目、标签、归档、中文全文搜索、关于、隐私、RSS、sitemap、robots 与 `llms.txt`；
+- 首页、栏目、归档、全局中文全文搜索、归档内主题筛选、关于、隐私、RSS、sitemap、robots 与 `llms.txt`；
 - 文章和栏目各自支持 `full / minimal / none`，两者的档位互不推导；
 - 栏目是开发者可新增的一等内容集合，可拥有私有 Astro 组件、样式、脚本和媒体；
 - 构建期路由分派保证 `none` 产物不包含站点 Header、Footer、阅读控件或全站样式；
 - 草稿/定时发布、内容脚手架与审计、相关文章、阅读进度、分享、许可信息与封面图片；
 - Open Graph、Twitter Card、BlogPosting JSON-LD、Expressive Code 与 Astro 图片管线；
-- 可暂停的 Canvas 背景、四套语义配色、字号与沉浸偏好；标准正文无 JavaScript 也可阅读；
+- 可暂停的多景深 Canvas 背景、四套多色语义配色、字号与沉浸偏好；标准正文无 JavaScript 也可阅读；
 - 评论和统计是默认关闭的可选适配器，不配置时没有第三方请求；
 - CI、内部链接检查、静态产物契约、体积预算与部署前检查。
 

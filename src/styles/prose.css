@@ -1,30 +1,30 @@
 @layer prose {
   .article-page { padding: clamp(4rem, 8vw, 7rem) 0 7rem; }
-  .article-head { width: min(50rem, 100%); margin-inline: auto; padding-bottom: 2rem; border-bottom: 1px solid var(--line); }
-  .article-title { margin: 1.15rem 0 1.2rem; font-size: clamp(2.25rem, 5.4vw, 4.1rem); font-weight: 680; line-height: 1.2; letter-spacing: -.045em; }
+  .article-head { position: relative; width: min(50rem, 100%); margin-inline: auto; padding: 1rem 0 2.2rem clamp(1.2rem, 3vw, 2.2rem); border-bottom: 1px solid var(--line); }
+  .article-head::before { content: ''; position: absolute; inset: 1rem auto 2.2rem 0; width: .35rem; background: linear-gradient(180deg, rgb(var(--spectrum-aqua-rgb)) 0 42%, rgb(var(--spectrum-coral-rgb)) 42% 61%, rgb(var(--spectrum-gold-rgb)) 61% 78%, rgb(var(--spectrum-violet-rgb)) 78%); }
+  .article-title { margin: 1.15rem 0 1.2rem; font-family: var(--font-display); font-size: clamp(2.4rem, 5.8vw, 4.7rem); font-weight: 640; line-height: 1.08; letter-spacing: -.055em; text-wrap: balance; }
   .article-description { max-width: 40rem; color: rgba(var(--text-rgb), .64); line-height: 1.9; }
   .article-cover, .column-cover { width: min(64rem, 100%); max-height: 38rem; margin: 2.5rem auto 0; border: 1px solid var(--line); object-fit: cover; }
   .article-meta { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin-top: 1.3rem; color: rgba(var(--text-rgb), .48); font-family: var(--font-mono); font-size: .65rem; }
   .article-meta a { color: rgb(var(--signal-rgb)); text-decoration: none; }
-  .article-chrome { padding: .12rem .42rem; border: 1px solid rgba(var(--signal-rgb), .4); border-radius: 2px; color: rgb(var(--signal-rgb)); }
 
   .article-grid { display: grid; grid-template-columns: minmax(0, 1fr) 11rem; gap: clamp(2rem, 6vw, 5rem); width: min(64rem, 100%); margin: 3.3rem auto 0; }
   .article-grid--no-toc { display: block; width: min(var(--reading), 100%); }
   .prose { width: min(var(--reading), 100%); font-family: var(--font-reading); font-size: calc(1.11rem * var(--reader-scale)); line-height: 1.95; }
   .prose > :first-child { margin-top: 0; }
   .prose p, .prose ul, .prose ol, .prose blockquote, .prose pre, .prose table { margin: 0 0 1.55em; }
-  .prose h2, .prose h3 { font-family: var(--font-ui); }
+  .prose h2, .prose h3 { font-family: var(--font-display); }
   .prose h2 { position: relative; margin: 2.8em 0 1em; padding-left: 1rem; font-size: 1.45em; line-height: 1.35; letter-spacing: -.02em; }
-  .prose h2::before { content: ''; position: absolute; top: .22em; bottom: .18em; left: 0; width: 3px; background: rgb(var(--accent-rgb)); }
-  .prose h3 { margin: 2.2em 0 .8em; color: rgb(var(--signal-rgb)); font-size: 1.1em; letter-spacing: -.01em; }
+  .prose h2::before { content: ''; position: absolute; top: .22em; bottom: .18em; left: 0; width: 3px; background: linear-gradient(rgb(var(--spectrum-coral-rgb)), rgb(var(--spectrum-gold-rgb))); }
+  .prose h3 { margin: 2.2em 0 .8em; color: rgb(var(--spectrum-violet-rgb)); font-size: 1.1em; letter-spacing: -.01em; }
   .prose a { color: rgb(var(--signal-rgb)); text-decoration-color: rgba(var(--signal-rgb), .42); text-underline-offset: .24em; }
   .prose strong { color: rgb(var(--accent-rgb)); }
   .prose ul, .prose ol { padding-left: 1.4em; }
   .prose li { margin-bottom: .55em; }
   .prose li::marker { color: rgb(var(--accent-rgb)); }
-  .prose blockquote { padding: 1.15rem 1.35rem; border-left: 2px solid rgb(var(--signal-rgb)); background: rgba(var(--signal-rgb), .045); color: rgba(var(--text-rgb), .8); }
+  .prose blockquote { padding: 1.15rem 1.35rem; border-left: 2px solid rgb(var(--spectrum-violet-rgb)); background: rgba(var(--spectrum-violet-rgb), .06); color: rgba(var(--text-rgb), .8); }
   .prose code:not(pre code) { padding: .1em .38em; border: 1px solid var(--line); border-radius: 2px; color: rgb(var(--accent-rgb)); background: rgb(var(--raised-rgb)); font-family: var(--font-mono); font-size: .84em; }
-  .prose pre { max-width: 100%; overflow: auto; padding: 1.25rem; border: 1px solid var(--line); border-radius: 2px; background: rgb(var(--surface-rgb)); }
+  .prose pre { max-width: 100%; overflow: auto; padding: 1.25rem; border: 1px solid var(--line); border-top: 2px solid rgb(var(--spectrum-aqua-rgb)); border-radius: 2px; background: rgb(var(--surface-rgb)); }
   .prose pre code { font-family: var(--font-mono); font-size: .78em; line-height: 1.8; }
   .prose table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-family: var(--font-ui); font-size: .85em; }
   .prose th, .prose td { padding: .72rem .8rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }

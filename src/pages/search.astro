@@ -1,16 +1,20 @@
 ---
-import SearchIndex from '../components/SearchIndex.astro';
 import FullShell from '../layouts/FullShell.astro';
 ---
 
-<FullShell title="站内搜索" description="搜索某人的小站全部公开文章、栏目与页面。">
+<FullShell title="站内搜索" description="搜索某人的小站全部公开文章、栏目与页面。" noindex>
   <div class="page-wrap search-page">
     <header class="page-intro">
-      <div><p class="eyebrow">FULL-TEXT SEARCH</p><h1 class="display-title">站内<br />搜索</h1></div>
-      <div class="page-intro__copy"><p>索引在构建时生成，支持中文分词；搜索发生在浏览器本地，不上传查询内容。</p></div>
+      <div><p class="eyebrow">SEARCH MOVED</p><h1 class="display-title">随处<br />搜索</h1></div>
+      <div class="page-intro__copy"><p>搜索已并入全站工具层，不再要求先离开当前阅读位置。它仍使用构建时生成的本地索引，不上传查询内容。</p><button class="open-search" type="button" data-search-trigger>打开搜索面板 <span aria-hidden="true">↗</span></button></div>
     </header>
-    <div class="section-block"><SearchIndex /></div>
   </div>
 </FullShell>
 
-<style>.search-page { padding-bottom: 5rem; }</style>
+<style>
+  .search-page { min-height: calc(100vh - var(--header)); padding-bottom: 5rem; }
+  .open-search { margin-top: 1.5rem; padding: .75rem 1rem; border: 1px solid var(--line-strong); border-radius: .55rem; color: rgb(var(--text-rgb)); background: rgba(var(--surface-rgb), .72); box-shadow: 0 .8rem 2rem rgba(0, 0, 0, .12); cursor: pointer; }
+  .open-search:hover { border-color: rgb(var(--spectrum-aqua-rgb)); transform: translateY(-2px); }
+</style>
+
+<script>addEventListener('DOMContentLoaded', () => document.querySelector<HTMLButtonElement>('.open-search')?.click(), { once: true });</script>

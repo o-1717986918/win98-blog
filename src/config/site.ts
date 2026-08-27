@@ -3,7 +3,7 @@ export const SITE = {
   description: '记录 Web 架构、图形学、阅读与工程实践的个人博客。',
   author: '某人',
   language: 'zh-CN',
-  defaultTheme: 'graphite',
+  defaultTheme: 'paper',
   defaultOgImage: '/og-default.svg',
 } as const;
 

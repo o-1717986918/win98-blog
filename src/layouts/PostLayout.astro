@@ -26,13 +26,12 @@ const socialImage = post.data.cover ? await getImage({ src: post.data.cover.src,
 <FullShell title={post.data.title} description={post.data.description} theme={post.data.theme} pageKind="post" image={socialImage?.src} published={post.data.date} updated={post.data.updated} tags={post.data.tags} noindex={post.data.noindex}>
   <article class:list={['article-page', 'page-wrap', { 'article-page--wide': post.data.wide }]}>
     <header class="article-head">
-      <p class="eyebrow">ARTICLE / {post.data.chrome.toUpperCase()}</p>
+      <p class="eyebrow">ARTICLE / FIELD NOTE</p>
       <h1 class="article-title">{post.data.title}</h1>
       <p class="article-description">{post.data.description}</p>
       <div class="article-meta">
         <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
         {post.data.minutes && <span>约 {post.data.minutes} 分钟</span>}
-        <span class="article-chrome">CHROME {post.data.chrome.toUpperCase()}</span>
         {columns.map((column) => <a href={`/columns/${column.id}/`}>{column.data.title}</a>)}
         {post.data.tags.map((tag) => <a href={tagPath(tag)}>#{tag}</a>)}
       </div>

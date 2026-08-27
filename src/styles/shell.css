@@ -49,11 +49,20 @@
   }
 
   .page-intro {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(16rem, .55fr);
     gap: clamp(2rem, 7vw, 7rem);
     padding: clamp(4rem, 9vh, 7rem) 0 clamp(3rem, 6vw, 5rem);
     border-bottom: 1px solid var(--line);
+  }
+  .page-intro::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: min(22rem, 58vw);
+    height: .35rem;
+    background: linear-gradient(90deg, rgb(var(--spectrum-aqua-rgb)) 0 40%, rgb(var(--spectrum-coral-rgb)) 40% 57%, rgb(var(--spectrum-gold-rgb)) 57% 79%, rgb(var(--spectrum-violet-rgb)) 79%);
   }
 
   .eyebrow {
@@ -71,8 +80,9 @@
 
   .display-title {
     max-width: 12ch;
+    font-family: var(--font-display);
     font-size: clamp(3.3rem, 8vw, 7rem);
-    font-weight: 680;
+    font-weight: 640;
     line-height: .98;
     letter-spacing: -.06em;
   }
@@ -107,9 +117,9 @@
     gap: 1rem;
     margin-bottom: 1.4rem;
   }
-  .section-heading h2 { font-size: clamp(1.3rem, 2.5vw, 1.7rem); letter-spacing: -.025em; }
+  .section-heading h2 { font-family: var(--font-display); font-size: clamp(1.3rem, 2.5vw, 1.8rem); font-weight: 620; letter-spacing: -.035em; }
   .section-heading span { color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .61rem; letter-spacing: .08em; }
-  .section-heading::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .section-heading::after { content: ''; width: clamp(2rem, 8vw, 6rem); height: 2px; margin-left: auto; background: linear-gradient(90deg, rgb(var(--spectrum-coral-rgb)), rgb(var(--spectrum-violet-rgb))); }
 
   .plain-link {
     color: rgb(var(--signal-rgb));

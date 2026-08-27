@@ -16,8 +16,8 @@
 | 栏目网页级自由 | `src/content/columns/lab/LabColumn.astro` 完整控制栏目页面 |
 | 站点结构 | 首页、归档、关于、404、RSS、sitemap、规范 URL |
 | 内容运营 | Git-first 脚手架、草稿/定时发布、审计、共置图片与更新元数据 |
-| 内容发现 | Pagefind 中文全文搜索与筛选、标签页、栏目、归档、相关文章 |
-| 配色与背景 | 四套语义令牌；提亮 graphite/indigo；可暂停、减弱和后台停转的 Canvas 场 |
+| 内容发现 | 任意 full 页面可唤起的 Pagefind 全文搜索；归档内文本/主题筛选；栏目、标签深链与相关文章 |
+| 配色与背景 | 默认冷雾明亮主题与三套可切换配色；保留原点线并扩展透视网格、远近粒子、光学体和指针视差 |
 | 阅读体验 | 目录、上下篇、进度、分享、字号、沉浸偏好、移动导航 |
 | SEO 与分发 | OG/Twitter、BlogPosting JSON-LD、RSS、robots、manifest、`llms.txt` |
 | 可选服务 | 默认零请求的 Giscus/Waline 与 Cloudflare/Umami 适配器、动态隐私页 |
@@ -35,3 +35,7 @@ Astro 对同一路由中静态导入的所有布局会聚合样式。为真正�
 - 公网域名、DNS 与托管账号属于站主外部状态；参考部署和回滚步骤见 `docs/operations/DEPLOYMENT.md`。
 
 冻结源资产和哈希见 `MIGRATION_MANIFEST.md`。
+
+## 当前视觉与功能方向
+
+`UI_REDESIGN_V3.md` 是当前 UI 决策。首页以最新文章的悬浮阅读台为唯一焦点，普通文章流与栏目退为后续路径；主导航不再把搜索和标签当作独立目的地。搜索由 `/`、`Ctrl/⌘ K` 或导航按钮打开并保持焦点闭环，归档页直接提供主题筛选。`/search/` 与 `/tags/` 仍保留兼容和深链接能力。
