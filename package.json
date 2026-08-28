@@ -27,7 +27,8 @@
     "@astrojs/mdx": "7.0.8",
     "@astrojs/rss": "4.0.19",
     "@astrojs/sitemap": "3.7.3",
-    "astro": "7.2.9"
+    "astro": "7.2.9",
+    "pixi.js": "8.20.1"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",

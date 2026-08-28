@@ -106,11 +106,25 @@ describe('blog-architecture contracts', () => {
 
   it('preserves the ambient field with user and system pause controls', async () => {
     const ambient = await read('src/components/AmbientField.astro');
-    expect(ambient).toContain('requestAnimationFrame');
+    const engine = await read('src/lib/pixi-field.ts');
+    expect(`${ambient}\n${engine}`).toContain('requestAnimationFrame');
     expect(ambient).toContain('data-motion-toggle');
     expect(ambient).toContain('prefers-reduced-motion');
     expect(ambient).toContain('visibilitychange');
     expect(ambient).toContain('someone-site:ambient-paused');
+    expect(engine).toContain("from 'pixi.js'");
+    expect(engine).toContain('pointermove');
+    expect(engine).toContain('pointerdown');
+  });
+
+  it('keeps the homepage intro session-scoped, skippable and motion-aware', async () => {
+    const intro = await read('src/components/SiteIntro.astro');
+    const shell = await read('src/layouts/FullShell.astro');
+    expect(intro).toContain('sessionStorage');
+    expect(intro).toContain('data-intro-skip');
+    expect(intro).toContain('prefers-reduced-motion');
+    expect(intro).toContain("event.key === 'Escape'");
+    expect(shell).toContain("Astro.url.pathname === '/'");
   });
 
   it('ships production operations and deployment documentation', async () => {

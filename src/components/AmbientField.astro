@@ -1,6 +1,5 @@
-<div class="ambient-field" aria-hidden="true" data-pagefind-ignore>
-  <div class="ambient-forms"><i></i><i></i><i></i></div>
-  <canvas data-ambient-canvas></canvas>
+<div class="ambient-field" aria-hidden="true" data-ambient-field data-pagefind-ignore>
+  <div class="pixi-mount" data-pixi-mount></div>
 </div>
 <button class="motion-toggle" type="button" data-motion-toggle data-pagefind-ignore aria-pressed="false">
   <i aria-hidden="true"></i><span>暂停背景动效</span>
@@ -14,40 +13,43 @@
     overflow: hidden;
     pointer-events: none;
     background:
-      radial-gradient(ellipse at 82% -8%, rgba(var(--secondary-rgb), .13), transparent 38rem),
-      radial-gradient(ellipse at -8% 62%, rgba(var(--signal-rgb), .07), transparent 34rem),
-      linear-gradient(180deg, rgba(var(--surface-rgb), .62), transparent 36rem),
+      radial-gradient(ellipse at 76% 4%, rgba(var(--field-secondary-rgb), .075), transparent 44rem),
+      linear-gradient(158deg, rgba(var(--field-primary-rgb), .028), transparent 42%),
       rgb(var(--bg-rgb));
   }
   .ambient-field::before {
     content: '';
     position: absolute;
-    inset: 0;
-    opacity: .2;
-    background-image:
-      linear-gradient(rgba(var(--text-rgb), .08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(var(--text-rgb), .08) 1px, transparent 1px);
-    background-size: 72px 72px;
-    -webkit-mask-image: linear-gradient(to bottom, black, transparent 78%);
-    mask-image: linear-gradient(to bottom, black, transparent 78%);
+    inset: -18%;
+    z-index: 2;
+    opacity: .055;
+    mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.84' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.58'/%3E%3C/svg%3E");
+    transform: rotate(3deg);
   }
   .ambient-field::after {
     content: '';
     position: absolute;
-    inset: -25%;
-    opacity: .82;
+    inset: 0;
+    z-index: 3;
     background:
-      radial-gradient(ellipse at 76% 12%, rgba(var(--secondary-rgb), .23), transparent 31%),
-      radial-gradient(ellipse at 18% 74%, rgba(var(--signal-rgb), .12), transparent 34%),
-      radial-gradient(ellipse at 58% 92%, rgba(var(--spectrum-gold-rgb), .075), transparent 28%);
+      linear-gradient(180deg, rgba(var(--bg-rgb), .02), transparent 28%, rgba(var(--bg-rgb), .10)),
+      radial-gradient(ellipse at 50% 42%, transparent 36%, rgba(var(--bg-rgb), .14) 100%);
   }
-  .ambient-forms { position: absolute; inset: 0; perspective: 900px; transform-style: preserve-3d; }
-  .ambient-forms i { position: absolute; display: block; border: 1px solid rgba(var(--text-rgb), .13); box-shadow: inset 0 1px rgba(255, 255, 255, .15), 0 2.8rem 7rem rgba(0, 0, 0, .12); animation: ambient-drift 18s ease-in-out infinite alternate; }
-  .ambient-forms i:nth-child(1) { top: 12%; right: 5%; width: clamp(16rem, 29vw, 29rem); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 33% 28%, rgba(255, 255, 255, .26), rgba(var(--spectrum-violet-rgb), .14) 30%, rgba(var(--spectrum-aqua-rgb), .07) 58%, transparent 72%); filter: blur(.2px); transform: translateZ(-80px); }
-  .ambient-forms i:nth-child(2) { top: 48%; left: -7rem; width: clamp(15rem, 25vw, 25rem); aspect-ratio: 1.25; border-radius: 3rem; background: linear-gradient(145deg, rgba(var(--spectrum-aqua-rgb), .13), rgba(var(--surface-rgb), .03)); filter: blur(1px); transform: rotate(28deg) translateZ(-140px); animation-delay: -7s; }
-  .ambient-forms i:nth-child(3) { right: 21%; bottom: 6%; width: clamp(6rem, 11vw, 11rem); aspect-ratio: 1; border-radius: 46% 54% 61% 39%; background: radial-gradient(circle at 38% 32%, rgba(255, 255, 255, .28), rgba(var(--spectrum-coral-rgb), .15) 35%, rgba(var(--spectrum-gold-rgb), .08) 64%, transparent 70%); filter: blur(.35px); transform: translateZ(-20px); animation-duration: 13s; animation-delay: -4s; }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .96; }
-  @keyframes ambient-drift { from { margin-top: -1rem; margin-left: -.5rem; } to { margin-top: 1.6rem; margin-left: 1.2rem; } }
+  .pixi-mount {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 1.2s cubic-bezier(.22, 1, .36, 1);
+  }
+  .ambient-field[data-ready='true'] .pixi-mount { opacity: .9; }
+  .pixi-mount :global(.pixi-field-canvas) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
   .motion-toggle {
     position: fixed;
     bottom: 1rem;
@@ -55,152 +57,64 @@
     z-index: 44;
     display: inline-flex;
     align-items: center;
-    gap: .48rem;
-    min-height: 2rem;
-    padding: .38rem .56rem;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    color: rgba(var(--text-rgb), .55);
-    background: rgba(var(--surface-rgb), .84);
+    gap: .5rem;
+    min-height: 2.15rem;
+    padding: .42rem .68rem;
+    border: 1px solid rgba(var(--text-rgb), .15);
+    border-radius: 999px;
+    color: rgba(var(--text-rgb), .62);
+    background: rgba(var(--surface-rgb), .66);
+    box-shadow: 0 .7rem 2rem rgba(var(--bg-rgb), .2), inset 0 1px rgba(255, 255, 255, .14);
     font-family: var(--font-mono);
     font-size: .55rem;
-    backdrop-filter: blur(12px);
+    letter-spacing: .04em;
+    backdrop-filter: blur(18px) saturate(150%);
     cursor: pointer;
+    transition: color .25s ease, border-color .25s ease, transform .25s ease, background .25s ease;
   }
-  .motion-toggle i { width: .45rem; height: .45rem; border-radius: 50%; background: rgb(var(--signal-rgb)); box-shadow: 0 0 0 3px rgba(var(--signal-rgb), .1); }
-  .motion-toggle[aria-pressed='true'] i { background: rgba(var(--text-rgb), .35); box-shadow: none; }
-  .motion-toggle:hover { border-color: rgb(var(--signal-rgb)); color: rgb(var(--signal-rgb)); }
-  @media (max-width: 520px) { .motion-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
-  @media (prefers-reduced-motion: reduce) { canvas { opacity: .72; } .ambient-forms i { animation: none; } }
+  .motion-toggle i {
+    width: .46rem;
+    height: .46rem;
+    border-radius: 50%;
+    background: rgb(var(--signal-rgb));
+    box-shadow: 0 0 0 3px rgba(var(--signal-rgb), .1), 0 0 1rem rgba(var(--signal-rgb), .34);
+  }
+  .motion-toggle[aria-pressed='true'] i { background: rgba(var(--text-rgb), .34); box-shadow: none; }
+  .motion-toggle:hover { border-color: rgba(var(--signal-rgb), .62); color: rgb(var(--signal-rgb)); transform: translateY(-2px); background: rgba(var(--surface-rgb), .82); }
+  .motion-toggle:focus-visible { outline: 2px solid rgb(var(--signal-rgb)); outline-offset: 3px; }
+  @media (max-width: 520px) {
+    .motion-toggle { padding-inline: .58rem; }
+    .motion-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pixi-mount { transition: none; opacity: .68; }
+    .motion-toggle { transition: none; }
+  }
 </style>
 
 <script>
-  type Point = { x: number; y: number; z: number; size: number; phase: number; hue: number };
+  import type { FieldController, FieldPalette, Rgb } from '../lib/pixi-field';
+
   const motionKey = 'someone-site:ambient-paused';
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let manualPause = localStorage.getItem(motionKey) === 'true';
   let hiddenPause = document.hidden;
-  let pointerTargetX = 0;
-  let pointerTargetY = 0;
-  let pointerX = 0;
-  let pointerY = 0;
+  let controller: FieldController | undefined;
+  let disposed = false;
 
-  const readRgb = (name: string): [number, number, number] => {
+  const readRgb = (name: string): Rgb => {
     const value = getComputedStyle(document.documentElement).getPropertyValue(name);
-    const parts = value.split(',').map(Number);
-    return [parts[0] ?? 255, parts[1] ?? 255, parts[2] ?? 255];
+    const parts = value.split(',').map((part) => Number(part.trim()) / 255);
+    return [parts[0] ?? 1, parts[1] ?? 1, parts[2] ?? 1];
   };
-  const rgba = (rgb: [number, number, number], alpha: number) => `rgba(${rgb.join(',')},${alpha})`;
-  const active = () => !manualPause && !hiddenPause && !reduced.matches;
-
-  document.querySelectorAll<HTMLCanvasElement>('[data-ambient-canvas]').forEach((canvas) => {
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    let frame = 0;
-    let previous = 0;
-    let width = 0;
-    let height = 0;
-    let points: Point[] = [];
-
-    const sizeCanvas = () => {
-      width = innerWidth;
-      height = innerHeight;
-      const dpr = Math.min(devicePixelRatio || 1, 2);
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
-      context.setTransform(dpr, 0, 0, dpr, 0, 0);
-      let seed = 92821;
-      const random = () => { seed = (seed * 48271) % 2147483647; return seed / 2147483647; };
-      const count = Math.min(96, Math.max(44, Math.floor(width * height / 18000)));
-      points = Array.from({ length: count }, (_, index) => ({
-        x: random() * width,
-        y: random() * height,
-        z: .15 + random() * .85,
-        size: random() > .86 ? 1.25 : .55,
-        phase: random() * Math.PI * 2,
-        hue: index % 17 === 0 ? 2 : index % 11 === 0 ? 1 : 0,
-      }));
-    };
-
-    const paint = (time = 0) => {
-      context.clearRect(0, 0, width, height);
-      const signal = readRgb('--signal-rgb');
-      const accent = readRgb('--accent-rgb');
-      const secondary = readRgb('--secondary-rgb');
-      const gold = readRgb('--spectrum-gold-rgb');
-      const text = readRgb('--text-rgb');
-      const drift = time * .00008;
-      pointerX += (pointerTargetX - pointerX) * .035;
-      pointerY += (pointerTargetY - pointerY) * .035;
-
-      const horizon = height * .5 + pointerY * 18;
-      const vanishingX = width * .56 + pointerX * 58;
-      context.save();
-      for (let index = 1; index <= 8; index += 1) {
-        const depth = index / 8;
-        const y = horizon + (height - horizon) * depth * depth;
-        context.beginPath();
-        context.moveTo(0, y);
-        context.lineTo(width, y);
-        context.strokeStyle = rgba(secondary, .018 + depth * .034);
-        context.stroke();
-      }
-      for (let index = -7; index <= 7; index += 1) {
-        context.beginPath();
-        context.moveTo(vanishingX, horizon);
-        context.lineTo(width * .5 + index * width / 6, height);
-        context.strokeStyle = rgba(index % 4 === 0 ? signal : secondary, .035);
-        context.stroke();
-      }
-      context.restore();
-
-      context.lineWidth = 1;
-      const waveColors = [signal, accent, secondary, gold];
-      for (let index = 0; index < 4; index += 1) {
-        const y = height * (.19 + index * .24);
-        const wave = Math.sin(drift + index * 1.8) * 34;
-        context.beginPath();
-        context.moveTo(-40, y + wave + pointerY * (index + 1) * 3);
-        context.bezierCurveTo(width * .24, y - 86 - wave, width * .64, y + 68 + wave, width + 40, y - 18 - wave + pointerX * 12);
-        context.strokeStyle = rgba(waveColors[index] ?? signal, .055 + index * .008);
-        context.stroke();
-      }
-      for (const point of points) {
-        const x = (point.x + Math.sin(drift * .8 + point.phase) * (4 + point.z * 7) + pointerX * point.z * 24 + width) % width;
-        const y = (point.y + Math.cos(drift + point.phase) * (3 + point.z * 5) + pointerY * point.z * 16 + height) % height;
-        const pulse = .07 + point.z * .12 + (Math.sin(drift * 3 + point.phase) + 1) * .055;
-        const color = point.hue === 2 ? secondary : point.hue === 1 ? signal : text;
-        context.fillStyle = rgba(color, pulse);
-        context.beginPath();
-        context.arc(x, y, point.size * (.55 + point.z * 1.25), 0, Math.PI * 2);
-        context.fill();
-      }
-    };
-
-    const loop = (time: number) => {
-      if (time - previous > 32) { paint(time); previous = time; }
-      frame = active() ? requestAnimationFrame(loop) : 0;
-    };
-    const sync = () => {
-      if (active() && !frame) frame = requestAnimationFrame(loop);
-      if (!active() && frame) { cancelAnimationFrame(frame); frame = 0; paint(previous); }
-    };
-    const resize = () => { sizeCanvas(); paint(previous); sync(); };
-    sizeCanvas();
-    paint();
-    sync();
-    addEventListener('resize', resize, { passive: true });
-    addEventListener('site:theme', () => paint(previous));
-    addEventListener('site:motion', sync);
-    reduced.addEventListener('change', sync);
+  const readPalette = (): FieldPalette => ({
+    primary: readRgb('--field-primary-rgb'),
+    secondary: readRgb('--field-secondary-rgb'),
+    warm: readRgb('--field-warm-rgb'),
+    light: getComputedStyle(document.documentElement).colorScheme.includes('light') ? 1 : 0,
   });
-
-  addEventListener('pointermove', (event) => {
-    pointerTargetX = event.clientX / Math.max(innerWidth, 1) - .5;
-    pointerTargetY = event.clientY / Math.max(innerHeight, 1) - .5;
-  }, { passive: true });
-  document.documentElement.addEventListener('mouseleave', () => { pointerTargetX = 0; pointerTargetY = 0; });
-
+  const active = () => !manualPause && !hiddenPause && !reduced.matches;
+  const syncController = () => controller?.setRunning(active());
   const syncButtons = () => {
     const paused = manualPause || reduced.matches;
     document.querySelectorAll<HTMLButtonElement>('[data-motion-toggle]').forEach((button) => {
@@ -210,18 +124,38 @@
       button.title = reduced.matches ? '系统已启用减弱动态' : (paused ? '启用背景动效' : '暂停背景动效');
     });
   };
+
   syncButtons();
+  document.querySelectorAll<HTMLElement>('[data-pixi-mount]').forEach((host) => {
+    import('../lib/pixi-field').then(async ({ mountPixiField }) => {
+      if (disposed) return;
+      controller = await mountPixiField(host, readPalette());
+      host.closest<HTMLElement>('[data-ambient-field]')?.setAttribute('data-ready', 'true');
+      syncController();
+    }).catch((error) => {
+      console.warn('[ambient-field] WebGL background unavailable; keeping the CSS color field.', error);
+    });
+  });
+
   document.querySelectorAll<HTMLButtonElement>('[data-motion-toggle]').forEach((button) => {
     button.addEventListener('click', () => {
       manualPause = button.getAttribute('aria-pressed') !== 'true';
       localStorage.setItem(motionKey, String(manualPause));
       syncButtons();
-      dispatchEvent(new CustomEvent('site:motion'));
+      syncController();
     });
   });
+  addEventListener('site:theme', () => controller?.setPalette(readPalette()));
   document.addEventListener('visibilitychange', () => {
     hiddenPause = document.hidden;
-    dispatchEvent(new CustomEvent('site:motion'));
+    syncController();
   });
-  reduced.addEventListener('change', syncButtons);
+  reduced.addEventListener('change', () => {
+    syncButtons();
+    syncController();
+  });
+  addEventListener('pagehide', () => {
+    disposed = true;
+    controller?.destroy();
+  }, { once: true });
 </script>

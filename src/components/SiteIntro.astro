@@ -1,0 +1,195 @@
+<div class="site-intro" data-site-intro data-state="idle" data-pagefind-ignore aria-label="进入某人的小站">
+  <div class="intro-grain" aria-hidden="true"></div>
+  <button class="intro-skip" type="button" data-intro-skip>跳过 <span>ESC</span></button>
+  <div class="intro-copy">
+    <p class="intro-index"><span>PERSONAL</span><span>TECHNICAL</span><span>NOTES</span></p>
+    <h1 aria-label="某人的小站">
+      <span style="--index: 0" aria-hidden="true">某</span><span style="--index: 1" aria-hidden="true">人</span><span style="--index: 2" aria-hidden="true">的</span><span style="--index: 3" aria-hidden="true">小</span><span style="--index: 4" aria-hidden="true">站</span>
+    </h1>
+    <div class="intro-status">
+      <p>记录，连接，继续生长。</p>
+      <span aria-hidden="true"><i></i></span>
+    </div>
+  </div>
+  <p class="intro-coordinate" aria-hidden="true">EST. 2026<br />31.2304° N / 121.4737° E</p>
+</div>
+
+<style>
+  :global(body.intro-active) { overflow: hidden; }
+  .site-intro {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    color: rgb(var(--text-rgb));
+    background: rgb(var(--bg-rgb));
+    isolation: isolate;
+    transition: opacity .62s var(--ease), clip-path .82s var(--ease);
+    clip-path: inset(0 0 0 0);
+  }
+  .site-intro[hidden] { display: none; }
+  .site-intro[data-state='leaving'] { opacity: 0; clip-path: inset(0 0 100% 0); pointer-events: none; }
+  .site-intro::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(ellipse at 64% 44%, rgba(var(--field-secondary-rgb), .075), transparent 35rem),
+      linear-gradient(128deg, transparent 16%, rgba(var(--field-primary-rgb), .035) 48%, transparent 76%);
+  }
+  .site-intro::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    background: linear-gradient(110deg, transparent 38%, rgba(var(--field-primary-rgb), .13) 49%, transparent 60%);
+    transform: translateX(-72%);
+  }
+  .site-intro[data-state='playing']::after { animation: intro-light 1.8s .38s var(--ease) both; }
+  .intro-grain {
+    position: absolute;
+    inset: -16%;
+    opacity: .055;
+    mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+    transform: rotate(2deg);
+  }
+  .intro-copy { width: min(76vw, 56rem); }
+  .intro-index {
+    display: flex;
+    gap: 1.2rem;
+    margin: 0 0 1.25rem;
+    color: rgba(var(--text-rgb), .42);
+    font-family: var(--font-mono);
+    font-size: clamp(.52rem, .8vw, .64rem);
+    letter-spacing: .13em;
+    opacity: 0;
+    transform: translateY(.7rem);
+  }
+  .site-intro[data-state='playing'] .intro-index { animation: intro-rise .65s .12s var(--ease) forwards; }
+  .intro-index span + span::before { content: '/'; margin-right: 1.2rem; color: rgba(var(--text-rgb), .18); }
+  h1 {
+    display: flex;
+    margin: 0;
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: clamp(3.7rem, 11vw, 10rem);
+    font-weight: 760;
+    line-height: .92;
+    letter-spacing: -.085em;
+  }
+  h1 span {
+    display: block;
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(108%);
+  }
+  .site-intro[data-state='playing'] h1 span { animation: intro-character .72s calc(.34s + var(--index) * .065s) var(--ease) forwards; }
+  .intro-status {
+    display: grid;
+    grid-template-columns: auto minmax(8rem, 1fr);
+    gap: 1.4rem;
+    align-items: center;
+    margin-top: 2rem;
+    opacity: 0;
+  }
+  .site-intro[data-state='playing'] .intro-status { animation: intro-rise .58s 1.02s var(--ease) forwards; }
+  .intro-status p { margin: 0; color: rgba(var(--text-rgb), .62); font-size: clamp(.74rem, 1.2vw, .92rem); letter-spacing: .08em; }
+  .intro-status > span { height: 1px; overflow: hidden; background: rgba(var(--text-rgb), .13); }
+  .intro-status i { display: block; width: 100%; height: 100%; background: rgb(var(--field-primary-rgb)); transform: scaleX(0); transform-origin: left; }
+  .site-intro[data-state='playing'] .intro-status i { animation: intro-progress 1.25s 1.05s var(--ease) forwards; }
+  .intro-skip {
+    position: absolute;
+    top: clamp(1.25rem, 4vw, 2.7rem);
+    right: clamp(1.25rem, 4vw, 3.25rem);
+    padding: .5rem .65rem;
+    border: 0;
+    color: rgba(var(--text-rgb), .48);
+    background: transparent;
+    font-family: var(--font-mono);
+    font-size: .58rem;
+    letter-spacing: .08em;
+    cursor: pointer;
+    opacity: 0;
+  }
+  .site-intro[data-state='playing'] .intro-skip { animation: intro-fade .4s .72s ease forwards; }
+  .intro-skip span { margin-left: .35rem; padding: .16rem .3rem; border: 1px solid rgba(var(--text-rgb), .16); border-radius: 2px; }
+  .intro-skip:hover { color: rgb(var(--text-rgb)); }
+  .intro-skip:focus-visible { outline: 2px solid rgb(var(--signal-rgb)); outline-offset: 3px; }
+  .intro-coordinate {
+    position: absolute;
+    right: clamp(1.25rem, 4vw, 3.25rem);
+    bottom: clamp(1.25rem, 4vw, 2.7rem);
+    margin: 0;
+    color: rgba(var(--text-rgb), .25);
+    font-family: var(--font-mono);
+    font-size: .5rem;
+    line-height: 1.8;
+    text-align: right;
+    letter-spacing: .08em;
+    opacity: 0;
+  }
+  .site-intro[data-state='playing'] .intro-coordinate { animation: intro-fade .5s .92s ease forwards; }
+  @keyframes intro-character { to { opacity: 1; filter: blur(0); transform: translateY(0); } }
+  @keyframes intro-rise { to { opacity: 1; transform: translateY(0); } }
+  @keyframes intro-fade { to { opacity: 1; } }
+  @keyframes intro-progress { to { transform: scaleX(1); } }
+  @keyframes intro-light { 0% { opacity: 0; transform: translateX(-72%); } 35% { opacity: 1; } 100% { opacity: 0; transform: translateX(72%); } }
+  @media (max-width: 640px) {
+    .intro-copy { width: calc(100vw - 2.5rem); }
+    .intro-index { gap: .6rem; }
+    .intro-index span + span::before { margin-right: .6rem; }
+    h1 { font-size: clamp(3.35rem, 19vw, 5.4rem); }
+    .intro-status { grid-template-columns: 1fr; gap: .8rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .site-intro { transition: opacity .15s linear; }
+    .site-intro[data-state='playing'] :is(.intro-index, h1 span, .intro-status, .intro-skip, .intro-coordinate) { animation-duration: .01ms; animation-delay: 0ms; }
+    .site-intro[data-state='playing']::after, .site-intro[data-state='playing'] .intro-status i { animation: none; }
+  }
+</style>
+
+<script>
+  const introKey = 'someone-site:intro-seen:v2';
+  const intro = document.querySelector<HTMLElement>('[data-site-intro]');
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (intro) {
+    const forceReplay = new URLSearchParams(location.search).has('intro');
+    const alreadySeen = sessionStorage.getItem(introKey) === 'true';
+    let leaveTimer = 0;
+    let removeTimer = 0;
+    const leave = () => {
+      if (intro.dataset.state === 'leaving' || intro.hidden) return;
+      intro.dataset.state = 'leaving';
+      clearTimeout(leaveTimer);
+      removeEventListener('keydown', onKeyDown);
+      removeTimer = window.setTimeout(() => {
+        intro.hidden = true;
+        document.body.classList.remove('intro-active');
+        dispatchEvent(new CustomEvent('site:intro-end'));
+      }, reducedMotion ? 160 : 840);
+    };
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' || event.key === 'Enter') leave();
+    }
+    if (alreadySeen && !forceReplay) {
+      intro.hidden = true;
+    } else {
+      sessionStorage.setItem(introKey, 'true');
+      document.body.classList.add('intro-active');
+      intro.dataset.state = 'playing';
+      dispatchEvent(new CustomEvent('site:intro-start'));
+      intro.querySelector<HTMLButtonElement>('[data-intro-skip]')?.addEventListener('click', leave, { once: true });
+      addEventListener('keydown', onKeyDown);
+      leaveTimer = window.setTimeout(leave, reducedMotion ? 80 : 2750);
+    }
+    addEventListener('pagehide', () => {
+      clearTimeout(leaveTimer);
+      clearTimeout(removeTimer);
+      removeEventListener('keydown', onKeyDown);
+    }, { once: true });
+  }
+</script>

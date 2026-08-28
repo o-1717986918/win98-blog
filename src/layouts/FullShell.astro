@@ -4,6 +4,7 @@ import '../styles/shell.css';
 import type { ThemeId } from '../config/site';
 import AmbientField from '../components/AmbientField.astro';
 import Analytics from '../components/Analytics.astro';
+import SiteIntro from '../components/SiteIntro.astro';
 import SiteFooter from '../components/chrome/SiteFooter.astro';
 import SiteHeader from '../components/chrome/SiteHeader.astro';
 import SearchOverlay from '../components/SearchOverlay.astro';
@@ -22,10 +23,12 @@ interface Props {
   noindex?: boolean | undefined;
 }
 const { title, description, theme = SITE.defaultTheme, pageKind = 'page', image, published, updated, tags, noindex } = Astro.props;
+const showIntro = Astro.url.pathname === '/';
 ---
 
 <BaseLayout title={title} description={description ?? SITE.description} theme={theme} pageKind={pageKind} {image} {published} {updated} {tags} {noindex}>
   <a class="skip-link" href="#main-content">跳到正文</a>
+  {showIntro && <SiteIntro />}
   <AmbientField />
   <SiteHeader />
   <main class="shell-main" id="main-content"><slot /></main>

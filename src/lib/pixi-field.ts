@@ -1,0 +1,252 @@
+import { Application, Sprite, Texture } from 'pixi.js';
+
+export type Rgb = [number, number, number];
+
+export interface FieldPalette {
+  primary: Rgb;
+  secondary: Rgb;
+  warm: Rgb;
+  light: number;
+}
+
+export interface FieldController {
+  setPalette: (palette: FieldPalette) => void;
+  setRunning: (running: boolean) => void;
+  destroy: () => void;
+}
+
+type Mote = {
+  sprite: Sprite;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  depth: number;
+  phase: number;
+  drift: number;
+  colorSlot: number;
+  alpha: number;
+  scale: number;
+};
+
+const tint = ([red, green, blue]: Rgb) => (
+  (Math.round(red * 255) << 16) | (Math.round(green * 255) << 8) | Math.round(blue * 255)
+);
+
+function makeMoteTexture(): Texture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const context = canvas.getContext('2d');
+  if (!context) return Texture.WHITE;
+  const glow = context.createRadialGradient(32, 32, 0, 32, 32, 31);
+  glow.addColorStop(0, 'rgba(255,255,255,1)');
+  glow.addColorStop(0.08, 'rgba(255,255,255,.92)');
+  glow.addColorStop(0.25, 'rgba(255,255,255,.28)');
+  glow.addColorStop(0.58, 'rgba(255,255,255,.055)');
+  glow.addColorStop(1, 'rgba(255,255,255,0)');
+  context.fillStyle = glow;
+  context.fillRect(0, 0, 64, 64);
+  return Texture.from(canvas);
+}
+
+export async function mountPixiField(host: HTMLElement, initialPalette: FieldPalette): Promise<FieldController> {
+  const compact = matchMedia('(max-width: 720px)').matches;
+  const app = new Application();
+  await app.init({
+    preference: 'webgl',
+    resizeTo: window,
+    backgroundAlpha: 0,
+    antialias: false,
+    autoDensity: true,
+    resolution: Math.min(devicePixelRatio || 1, compact ? 1 : 1.25),
+    powerPreference: 'low-power',
+    autoStart: false,
+  });
+
+  app.canvas.className = 'pixi-field-canvas';
+  app.canvas.setAttribute('aria-hidden', 'true');
+  host.replaceChildren(app.canvas);
+
+  const texture = makeMoteTexture();
+  const motes: Mote[] = [];
+  const count = compact ? 76 : Math.min(148, Math.max(104, Math.round(innerWidth * innerHeight / 10500)));
+  let seed = 421337;
+  const random = () => {
+    seed = (seed * 48271) % 2147483647;
+    return seed / 2147483647;
+  };
+
+  const paletteTints = [tint(initialPalette.primary), tint(initialPalette.secondary), tint(initialPalette.warm)];
+  for (let index = 0; index < count; index += 1) {
+    const depth = 0.14 + Math.pow(random(), 1.5) * 0.86;
+    const sprite = new Sprite(texture);
+    const scale = 0.045 + depth * depth * 0.17 + random() * 0.035;
+    const colorSlot = random() > 0.94 ? 2 : random() > 0.58 ? 1 : 0;
+    const alpha = (initialPalette.light ? 0.07 : 0.09) + depth * (initialPalette.light ? 0.18 : 0.27);
+    sprite.anchor.set(0.5);
+    sprite.scale.set(scale);
+    sprite.alpha = alpha;
+    sprite.tint = paletteTints[colorSlot] ?? paletteTints[0]!;
+    const x = random() * innerWidth;
+    const y = random() * innerHeight;
+    sprite.position.set(x, y);
+    app.stage.addChild(sprite);
+    motes.push({
+      sprite,
+      x,
+      y,
+      vx: 0,
+      vy: 0,
+      depth,
+      phase: random() * Math.PI * 2,
+      drift: random() > 0.5 ? 1 : -1,
+      colorSlot,
+      alpha,
+      scale,
+    });
+  }
+
+  let pointerX = innerWidth * 0.5;
+  let pointerY = innerHeight * 0.46;
+  let previousPointerX = pointerX;
+  let previousPointerY = pointerY;
+  let pointerEnergy = 0;
+  let pointerPresent = false;
+  let resizeFrame = 0;
+  let running = false;
+  let elapsed = 0;
+  let palette = initialPalette;
+
+  const layout = () => {
+    resizeFrame = 0;
+    for (const mote of motes) {
+      mote.x = Math.min(mote.x, innerWidth + 18);
+      mote.y = Math.min(mote.y, innerHeight + 18);
+    }
+  };
+  const onResize = () => {
+    if (!resizeFrame) resizeFrame = requestAnimationFrame(layout);
+  };
+  const readingAttenuation = (target: EventTarget | null) => (
+    target instanceof Element && target.closest('.prose, [data-reading-surface]') ? 0.28 : 1
+  );
+  const onPointerMove = (event: PointerEvent) => {
+    previousPointerX = pointerX;
+    previousPointerY = pointerY;
+    pointerX = event.clientX;
+    pointerY = event.clientY;
+    pointerPresent = true;
+    const speed = Math.hypot(pointerX - previousPointerX, pointerY - previousPointerY);
+    pointerEnergy = Math.min(1, pointerEnergy + speed * 0.018 * readingAttenuation(event.target));
+  };
+  const onPointerDown = (event: PointerEvent) => {
+    pointerX = event.clientX;
+    pointerY = event.clientY;
+    const attenuation = readingAttenuation(event.target);
+    for (const mote of motes) {
+      const dx = mote.x - pointerX;
+      const dy = mote.y - pointerY;
+      const distance = Math.max(18, Math.hypot(dx, dy));
+      if (distance > 280) continue;
+      const force = Math.pow(1 - distance / 280, 2) * (2.5 + mote.depth * 5.5) * attenuation;
+      mote.vx += dx / distance * force;
+      mote.vy += dy / distance * force;
+    }
+    pointerEnergy = Math.min(1, pointerEnergy + 0.46 * attenuation);
+  };
+  const onPointerLeave = () => {
+    pointerPresent = false;
+  };
+
+  app.ticker.maxFPS = compact ? 28 : 36;
+  app.ticker.add((ticker) => {
+    const delta = Math.min(ticker.deltaTime, 2.2);
+    elapsed += ticker.deltaMS * 0.001;
+    pointerEnergy *= Math.pow(0.9, delta);
+    const pointerDx = pointerX - previousPointerX;
+    const pointerDy = pointerY - previousPointerY;
+    previousPointerX += pointerDx * 0.14;
+    previousPointerY += pointerDy * 0.14;
+
+    for (const mote of motes) {
+      const idleX = Math.sin(elapsed * (0.11 + mote.depth * 0.07) + mote.phase) * mote.drift;
+      const idleY = Math.cos(elapsed * (0.09 + mote.depth * 0.05) + mote.phase * 1.37);
+      mote.vx += idleX * 0.0018 * mote.depth * delta;
+      mote.vy += idleY * 0.0014 * mote.depth * delta;
+
+      if (pointerPresent) {
+        const dx = pointerX - mote.x;
+        const dy = pointerY - mote.y;
+        const distance = Math.max(24, Math.hypot(dx, dy));
+        if (distance < 220) {
+          const proximity = Math.pow(1 - distance / 220, 2) * mote.depth;
+          const pull = proximity * (0.010 + pointerEnergy * 0.026) * delta;
+          const swirl = proximity * pointerEnergy * 0.018 * delta;
+          mote.vx += dx / distance * pull - dy / distance * swirl;
+          mote.vy += dy / distance * pull + dx / distance * swirl;
+          mote.vx += pointerDx * proximity * 0.0025;
+          mote.vy += pointerDy * proximity * 0.0025;
+          mote.sprite.alpha = Math.min(mote.alpha * 1.8, mote.alpha + proximity * 0.18);
+          mote.sprite.scale.set(mote.scale * (1 + proximity * 0.28));
+        } else {
+          mote.sprite.alpha += (mote.alpha - mote.sprite.alpha) * 0.035 * delta;
+          mote.sprite.scale.set(mote.sprite.scale.x + (mote.scale - mote.sprite.scale.x) * 0.035 * delta);
+        }
+      } else {
+        mote.sprite.alpha += (mote.alpha - mote.sprite.alpha) * 0.035 * delta;
+        mote.sprite.scale.set(mote.sprite.scale.x + (mote.scale - mote.sprite.scale.x) * 0.035 * delta);
+      }
+
+      mote.vx *= Math.pow(0.965, delta);
+      mote.vy *= Math.pow(0.965, delta);
+      mote.x += (0.022 + mote.depth * 0.045 + mote.vx) * delta;
+      mote.y += (mote.vy - 0.004 * mote.depth) * delta;
+      const margin = 26;
+      if (mote.x > innerWidth + margin) mote.x = -margin;
+      if (mote.x < -margin) mote.x = innerWidth + margin;
+      if (mote.y > innerHeight + margin) mote.y = -margin;
+      if (mote.y < -margin) mote.y = innerHeight + margin;
+      mote.sprite.position.set(mote.x, mote.y);
+      const twinkle = 0.94 + Math.sin(elapsed * (0.32 + mote.depth * 0.24) + mote.phase) * 0.06;
+      mote.sprite.alpha *= twinkle;
+    }
+  });
+
+  addEventListener('resize', onResize, { passive: true });
+  addEventListener('pointermove', onPointerMove, { passive: true });
+  addEventListener('pointerdown', onPointerDown, { passive: true });
+  document.documentElement.addEventListener('mouseleave', onPointerLeave);
+  layout();
+  app.render();
+
+  const setPalette = (nextPalette: FieldPalette) => {
+    palette = nextPalette;
+    const nextTints = [tint(palette.primary), tint(palette.secondary), tint(palette.warm)];
+    for (const mote of motes) {
+      mote.sprite.tint = nextTints[mote.colorSlot] ?? nextTints[0]!;
+      mote.alpha = (palette.light ? 0.07 : 0.09) + mote.depth * (palette.light ? 0.18 : 0.27);
+    }
+    if (!running) app.render();
+  };
+  const setRunning = (shouldRun: boolean) => {
+    if (running === shouldRun) return;
+    running = shouldRun;
+    if (running) app.start();
+    else {
+      app.stop();
+      app.render();
+    }
+  };
+  const destroy = () => {
+    if (resizeFrame) cancelAnimationFrame(resizeFrame);
+    removeEventListener('resize', onResize);
+    removeEventListener('pointermove', onPointerMove);
+    removeEventListener('pointerdown', onPointerDown);
+    document.documentElement.removeEventListener('mouseleave', onPointerLeave);
+    texture.destroy(true);
+    app.destroy({ removeView: true }, { children: true });
+  };
+
+  return { setPalette, setRunning, destroy };
+}
