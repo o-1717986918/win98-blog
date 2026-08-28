@@ -1,4 +1,4 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -76,6 +76,19 @@ describe('blog-architecture contracts', () => {
     expect(site).not.toMatch(/文书手记|文枢手记/);
   });
 
+  it('uses the supplied logo without deriving the independent dual-color system from it', async () => {
+    const header = await read('src/components/chrome/SiteHeader.astro');
+    const intro = await read('src/components/SiteIntro.astro');
+    const base = await read('src/layouts/BaseLayout.astro');
+    const manifest = await read('public/site.webmanifest');
+    const tokens = await read('src/styles/tokens.css');
+    const logo = await stat(join(root, 'public', 'brand', 'logo.jpg'));
+    for (const source of [header, intro, base, manifest]) expect(source).toContain('/brand/logo.jpg');
+    expect(logo.size).toBeGreaterThan(10_000);
+    expect(tokens).toContain('--brand-primary-rgb: 101, 169, 244;');
+    expect(tokens).toContain('--brand-secondary-rgb: 225, 139, 86;');
+  });
+
   it('keeps publication, discovery and content operations in the static build', async () => {
     const config = await read('src/content.config.ts');
     const routes = await read('src/integrations/content-routes.mjs');
@@ -127,6 +140,7 @@ describe('blog-architecture contracts', () => {
     expect(intro).toContain("event.key === 'Escape'");
     expect(intro).toContain('mountIntroParticles');
     expect(intro).toContain('6800');
+    expect(intro).not.toContain('clip-path: inset(0 100% 0 0)');
     expect(particles).toContain('sampleText');
     expect(particles).toContain('scatter');
     expect(shell).toContain("Astro.url.pathname === '/'");

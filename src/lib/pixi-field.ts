@@ -81,9 +81,9 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
   for (let index = 0; index < count; index += 1) {
     const depth = 0.14 + Math.pow(random(), 1.5) * 0.86;
     const sprite = new Sprite(texture);
-    const scale = 0.06 + depth * depth * 0.22 + random() * 0.045;
+    const scale = 0.065 + depth * depth * 0.235 + random() * 0.05;
     const colorSlot = random() > 0.94 ? 2 : random() > 0.58 ? 1 : 0;
-    const alpha = (initialPalette.light ? 0.085 : 0.12) + depth * (initialPalette.light ? 0.25 : 0.38);
+    const alpha = (initialPalette.light ? 0.12 : 0.14) + depth * (initialPalette.light ? 0.32 : 0.42);
     sprite.anchor.set(0.5);
     sprite.scale.set(scale);
     sprite.alpha = alpha;
@@ -225,7 +225,7 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
     const nextTints = [tint(palette.primary), tint(palette.secondary), tint(palette.warm)];
     for (const mote of motes) {
       mote.sprite.tint = nextTints[mote.colorSlot] ?? nextTints[0]!;
-      mote.alpha = (palette.light ? 0.085 : 0.12) + mote.depth * (palette.light ? 0.25 : 0.38);
+      mote.alpha = (palette.light ? 0.12 : 0.14) + mote.depth * (palette.light ? 0.32 : 0.42);
     }
     if (!running) app.render();
   };

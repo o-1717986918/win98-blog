@@ -4,7 +4,7 @@
   <div class="intro-scan" aria-hidden="true"></div>
 
   <header class="intro-header">
-    <p><span>SOMEONE'S SITE</span><i></i><span>SESSION / 001</span></p>
+    <p><img src="/brand/logo.jpg" alt="" width="640" height="640" decoding="async" /><span>SOMEONE'S SITE</span><i></i><span>SESSION / 001</span></p>
     <button class="intro-skip" type="button" data-intro-skip>跳过动画 <kbd>ESC</kbd></button>
   </header>
 
@@ -93,6 +93,7 @@
     letter-spacing: .14em;
     opacity: 0;
   }
+  .intro-header img { width: 1.65rem; height: 1.65rem; padding: 1px; border: 1px solid rgba(var(--brand-primary-rgb), .45); border-radius: .34rem; object-fit: cover; background: linear-gradient(145deg, rgba(var(--brand-primary-rgb), .55), rgba(var(--brand-secondary-rgb), .55)); box-shadow: 0 0 1.2rem rgba(var(--brand-primary-rgb), .12); }
   .intro-header i { display: block; width: 3rem; height: 1px; background: rgba(var(--text-rgb), .14); }
   .site-intro[data-state='playing'] .intro-header > p { animation: intro-rise .7s .18s var(--ease) forwards; }
   .intro-skip {
@@ -149,7 +150,6 @@
     opacity: 0;
     filter: blur(18px);
     transform: translateY(1.1rem) scale(.985);
-    clip-path: inset(0 100% 0 0);
     text-shadow: 0 0 2.8rem rgba(var(--field-primary-rgb), .16);
   }
   .site-intro[data-state='playing'] h1 { animation: intro-title 1.35s 2.4s var(--ease) forwards; }
@@ -180,7 +180,7 @@
   .intro-status span, .intro-status small { color: rgba(var(--text-rgb), .35); font-family: var(--font-mono); font-size: .5rem; letter-spacing: .1em; }
   .intro-status p { margin: 0; color: rgba(var(--text-rgb), .68); font-size: clamp(.72rem, 1vw, .88rem); letter-spacing: .08em; }
   .intro-progress { position: relative; height: 1px; overflow: visible; background: rgba(var(--text-rgb), .14); }
-  .intro-progress i { display: block; width: 100%; height: 100%; background: rgb(var(--field-primary-rgb)); box-shadow: 0 0 .9rem rgba(var(--field-primary-rgb), .45); transform: scaleX(0); transform-origin: left; }
+  .intro-progress i { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, rgb(var(--brand-primary-rgb)), rgb(var(--brand-secondary-rgb))); box-shadow: 0 0 .9rem rgba(var(--brand-primary-rgb), .45); transform: scaleX(0); transform-origin: left; }
   .intro-progress b { position: absolute; top: 50%; left: 0; width: .34rem; height: .34rem; border-radius: 50%; background: rgb(var(--text-rgb)); box-shadow: 0 0 1rem rgba(var(--field-primary-rgb), .7); transform: translate(-50%, -50%); }
   .site-intro[data-state='playing'] .intro-progress i { animation: intro-progress 3s 3.35s var(--ease) forwards; }
   .site-intro[data-state='playing'] .intro-progress b { animation: intro-progress-dot 3s 3.35s var(--ease) forwards; }
@@ -199,7 +199,7 @@
   .site-intro[data-state='dispersing'] :is(h1, .intro-echo, .intro-index, .intro-status) { opacity: 0; filter: blur(12px); transform: translateY(-.8rem) scale(1.012); transition: .48s ease; }
   @keyframes intro-rise { to { opacity: 1; transform: translateY(0); } }
   @keyframes intro-fade { to { opacity: 1; } }
-  @keyframes intro-title { 45% { opacity: 1; filter: blur(2px); } 100% { opacity: 1; filter: blur(0); transform: none; clip-path: inset(0 0 0 0); } }
+  @keyframes intro-title { 0% { opacity: 0; filter: blur(18px); transform: translateY(1.1rem) scale(.985); } 58% { opacity: 1; filter: blur(2px); } 100% { opacity: 1; filter: blur(0); transform: none; } }
   @keyframes intro-echo-back { 0% { opacity: 0; transform: translate(-1.4rem, .55rem); } 46% { opacity: .72; } 100% { opacity: .18; transform: translate(-.38rem, .14rem); } }
   @keyframes intro-echo-front { 0% { opacity: 0; transform: translate(1.4rem, -.5rem); } 42% { opacity: .55; } 100% { opacity: .12; transform: translate(.32rem, -.1rem); } }
   @keyframes intro-progress { to { transform: scaleX(1); } }

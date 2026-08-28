@@ -11,7 +11,7 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
 <header class="site-header" data-site-header data-pagefind-ignore>
   <div class="header-inner">
     <a class="site-brand" href="/" aria-label={`${SITE.title} · 返回首页`}>
-      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span class="brand-mark" aria-hidden="true"><img src="/brand/logo.jpg" alt="" width="640" height="640" decoding="async" /></span>
       <span>{SITE.title}<small>PERSONAL TECHNICAL BLOG</small></span>
     </a>
     <button class="menu-button" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="site-navigation" data-menu-button>
@@ -47,11 +47,9 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
   .header-inner { display: flex; align-items: center; width: min(100% - 2rem, 78rem); height: 100%; margin-inline: auto; }
   .site-brand { display: flex; align-items: center; gap: .72rem; margin-right: auto; color: rgb(var(--text-rgb)); font-family: var(--font-display); font-size: .88rem; font-weight: 680; letter-spacing: .06em; text-decoration: none; }
   .site-brand small { display: block; margin-top: .12rem; color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .49rem; font-weight: 500; letter-spacing: .12em; }
-  .brand-mark { display: grid; grid-template-columns: repeat(4, 1fr); align-items: end; gap: 2px; width: 1.75rem; height: 1.75rem; padding: .25rem; border: 1px solid var(--line-strong); }
-  .brand-mark i { display: block; height: 100%; background: rgb(var(--spectrum-aqua-rgb)); }
-  .brand-mark i:nth-child(2) { height: 54%; background: rgb(var(--spectrum-coral-rgb)); }
-  .brand-mark i:nth-child(3) { height: 78%; background: rgb(var(--spectrum-gold-rgb)); }
-  .brand-mark i:nth-child(4) { height: 37%; background: rgb(var(--spectrum-violet-rgb)); }
+  .brand-mark { position: relative; display: block; flex: 0 0 auto; width: 2rem; height: 2rem; padding: 2px; overflow: hidden; border: 1px solid rgba(var(--brand-primary-rgb), .52); border-radius: .42rem; background: linear-gradient(145deg, rgb(var(--brand-primary-rgb)), rgb(var(--brand-secondary-rgb))); box-shadow: 0 .35rem 1rem rgba(var(--bg-rgb), .18), 0 0 1.1rem rgba(var(--brand-primary-rgb), .08); }
+  .brand-mark::after { content: ''; position: absolute; inset: 2px; border: 1px solid rgba(255, 255, 255, .2); border-radius: .28rem; pointer-events: none; }
+  .brand-mark img { display: block; width: 100%; height: 100%; border-radius: .28rem; object-fit: cover; object-position: center; }
   .navigation-shell, .site-navigation { display: flex; align-items: center; }
   .navigation-shell { gap: 1.65rem; }
   .site-navigation { gap: 1.35rem; }

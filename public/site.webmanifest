@@ -8,6 +8,6 @@
   "background_color": "#deebed",
   "theme_color": "#deebed",
   "icons": [
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+    { "src": "/brand/logo.jpg", "sizes": "640x640", "type": "image/jpeg", "purpose": "any" }
   ]
 }
