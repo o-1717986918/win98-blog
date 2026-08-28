@@ -1,4 +1,5 @@
 <div class="ambient-field" aria-hidden="true" data-ambient-field data-pagefind-ignore>
+  <div class="ambient-lenses"><i></i><i></i><i></i></div>
   <div class="pixi-mount" data-pixi-mount></div>
 </div>
 <button class="motion-toggle" type="button" data-motion-toggle data-pagefind-ignore aria-pressed="false">
@@ -7,25 +8,45 @@
 
 <style>
   .ambient-field {
+    --view-x: 0;
+    --view-y: 0;
     position: fixed;
     inset: 0;
     z-index: 0;
     overflow: hidden;
     pointer-events: none;
-    background:
-      radial-gradient(ellipse at 76% 4%, rgba(var(--field-secondary-rgb), .075), transparent 44rem),
-      linear-gradient(158deg, rgba(var(--field-primary-rgb), .028), transparent 42%),
-      rgb(var(--bg-rgb));
+    background: rgb(var(--bg-rgb));
   }
+  .ambient-lenses {
+    position: absolute;
+    inset: -12%;
+    z-index: 0;
+    transform: perspective(900px)
+      rotateX(calc(var(--view-y) * -.55deg))
+      rotateY(calc(var(--view-x) * .7deg))
+      translate3d(calc(var(--view-x) * -1.2rem), calc(var(--view-y) * -.9rem), 0)
+      scale(1.035);
+    transform-origin: center;
+    transition: transform .42s cubic-bezier(.22, 1, .36, 1);
+    will-change: transform;
+  }
+  .ambient-lenses i { position: absolute; display: block; border-radius: 50%; filter: blur(3.6rem); }
+  .ambient-lenses i:nth-child(1) { top: -8%; left: 3%; width: min(48vw, 42rem); aspect-ratio: 1.35; background: rgba(var(--field-primary-rgb), .27); transform: rotate(-12deg); }
+  .ambient-lenses i:nth-child(2) { top: 18%; right: -8%; width: min(43vw, 36rem); aspect-ratio: 1.08; background: rgba(var(--field-secondary-rgb), .23); transform: rotate(18deg); }
+  .ambient-lenses i:nth-child(3) { bottom: -16%; left: 31%; width: min(46vw, 39rem); aspect-ratio: 1.55; background: rgba(var(--secondary-rgb), .16); transform: rotate(-8deg); }
+  :global(:root[data-theme='paper']) .ambient-lenses i:nth-child(1) { opacity: .88; }
+  :global(:root[data-theme='paper']) .ambient-lenses i:nth-child(2) { opacity: .82; }
+  :global(:root[data-theme='paper']) .ambient-lenses i:nth-child(3) { opacity: .7; }
   .ambient-field::before {
     content: '';
     position: absolute;
     inset: -18%;
     z-index: 2;
-    opacity: .055;
+    opacity: .05;
     mix-blend-mode: soft-light;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.84' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.58'/%3E%3C/svg%3E");
-    transform: rotate(3deg);
+    transform: translate3d(calc(var(--view-x) * .32rem), calc(var(--view-y) * .24rem), 0) rotate(3deg);
+    transition: transform .55s cubic-bezier(.22, 1, .36, 1);
   }
   .ambient-field::after {
     content: '';
@@ -83,10 +104,13 @@
   .motion-toggle:hover { border-color: rgba(var(--signal-rgb), .62); color: rgb(var(--signal-rgb)); transform: translateY(-2px); background: rgba(var(--surface-rgb), .82); }
   .motion-toggle:focus-visible { outline: 2px solid rgb(var(--signal-rgb)); outline-offset: 3px; }
   @media (max-width: 520px) {
+    .ambient-lenses { inset: -5% -30%; }
+    .ambient-lenses i { filter: blur(3rem); }
     .motion-toggle { padding-inline: .58rem; }
     .motion-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   }
   @media (prefers-reduced-motion: reduce) {
+    .ambient-lenses, .ambient-field::before { transition: none; transform: none; }
     .pixi-mount { transition: none; opacity: .68; }
     .motion-toggle { transition: none; }
   }

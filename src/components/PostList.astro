@@ -1,6 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
-import { formatDate, isPublished, tagPath, type PostEntry } from '../lib/content';
+import { formatDate, isPublished, type PostEntry } from '../lib/content';
 
 interface Props {
   posts: PostEntry[];
@@ -13,45 +13,43 @@ const columnMap = new Map(columns.map((column) => [column.id, column]));
 
 <div class="post-list">
   {posts.length === 0 ? <p class="empty-state">这个栏目还没有文章。</p> : posts.map((post) => (
-    <article class="post-row" data-post-row data-tags={post.data.tags.map((tag) => tag.toLowerCase()).join('|')} data-search={`${post.data.title} ${post.data.description} ${post.data.tags.join(' ')} ${post.data.columns.map((reference) => columnMap.get(reference.id)?.data.title ?? '').join(' ')}`.toLowerCase()}>
+    <a class="post-row" href={`/posts/${post.id}/`} data-post-row data-tags={post.data.tags.map((tag) => tag.toLowerCase()).join('|')} data-search={`${post.data.title} ${post.data.description} ${post.data.tags.join(' ')} ${post.data.columns.map((reference) => columnMap.get(reference.id)?.data.title ?? '').join(' ')}`.toLowerCase()}>
       <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
       <div class="post-copy">
-        <h3><a href={`/posts/${post.id}/`}>{post.data.title}</a></h3>
+        <h3>{post.data.title}</h3>
         {showDescription && <p>{post.data.description}</p>}
         <div class="post-taxonomy">
           {post.data.columns.map((reference) => {
             const column = columnMap.get(reference.id);
-            return column && <a href={`/columns/${column.id}/`}>{column.data.title}</a>;
+            return column && <span>{column.data.title}</span>;
           })}
-          {post.data.tags.map((tag) => <a href={tagPath(tag)}>#{tag}</a>)}
+          {post.data.tags.map((tag) => <span>#{tag}</span>)}
         </div>
       </div>
       <span class="post-arrow" aria-hidden="true">↗</span>
-    </article>
+    </a>
   ))}
 </div>
 
 <style>
-  .post-list { border-top: 1px solid var(--line); }
-  .post-row { --row-accent: var(--spectrum-aqua-rgb); position: relative; display: grid; grid-template-columns: 7.25rem minmax(0, 1fr) 1.5rem; gap: 1.5rem; margin-inline: -.65rem; padding: 1.65rem 1.25rem 1.65rem 1.55rem; border-bottom: 1px solid var(--line); border-radius: .65rem; transition: transform .22s var(--ease), background .22s var(--ease), box-shadow .22s var(--ease); }
-  .post-row:nth-child(4n + 2) { --row-accent: var(--spectrum-coral-rgb); }
-  .post-row:nth-child(4n + 3) { --row-accent: var(--spectrum-gold-rgb); }
-  .post-row:nth-child(4n + 4) { --row-accent: var(--spectrum-violet-rgb); }
-  .post-row::before { content: ''; position: absolute; inset: 1.4rem auto 1.4rem 0; width: 2px; background: rgb(var(--row-accent)); transform: scaleY(.18); transform-origin: top; transition: transform .3s var(--ease); }
-  .post-row:hover::before, .post-row:focus-within::before { transform: scaleY(1); }
-  .post-row:hover, .post-row:focus-within { z-index: 1; background: linear-gradient(110deg, rgba(var(--raised-rgb), .56), rgba(var(--surface-rgb), .26)); box-shadow: 0 1.1rem 2.8rem rgba(0, 0, 0, .11), inset 0 1px rgba(255, 255, 255, .07); transform: translateX(.4rem); }
+  .post-list { display: grid; gap: .72rem; }
+  .post-row { --row-accent: var(--spectrum-aqua-rgb); --row-surface: var(--card-cool-rgb); position: relative; isolation: isolate; display: grid; grid-template-columns: 7.25rem minmax(0, 1fr) 1.5rem; gap: 1.5rem; padding: 1.45rem 1.25rem 1.45rem 1.55rem; border: 1px solid rgba(var(--row-accent), .28); border-radius: .72rem; color: inherit; background: rgb(var(--row-surface)); box-shadow: 0 .85rem 2rem rgba(0, 0, 0, .09), inset 0 1px rgba(255, 255, 255, .07); text-decoration: none; transition: transform .22s var(--ease), background .22s var(--ease), box-shadow .22s var(--ease); cursor: pointer; }
+  .post-row:nth-child(4n + 2) { --row-accent: var(--spectrum-coral-rgb); --row-surface: var(--card-warm-rgb); }
+  .post-row:nth-child(4n + 3) { --row-accent: var(--spectrum-violet-rgb); --row-surface: var(--card-violet-rgb); }
+  .post-row:nth-child(4n + 4) { --row-accent: var(--spectrum-gold-rgb); --row-surface: var(--card-gold-rgb); }
+  .post-row::before { content: ''; position: absolute; top: 1.78rem; left: .34rem; width: .42rem; height: .42rem; border: 1px solid rgb(var(--row-accent)); border-radius: 50%; box-shadow: 0 0 0 .24rem rgba(var(--row-accent), .07), 0 0 .8rem rgba(var(--row-accent), .16); transition: transform .3s var(--ease), background .3s var(--ease); }
+  .post-row:hover::before, .post-row:focus-within::before { background: rgb(var(--row-accent)); transform: scale(1.2); }
+  .post-row:hover, .post-row:focus-visible { z-index: 1; border-color: rgba(var(--row-accent), .58); background: rgb(var(--row-surface)); box-shadow: .55rem .75rem 0 rgba(var(--row-accent), .1), 0 1.2rem 2.8rem rgba(0, 0, 0, .14), inset 0 1px rgba(255, 255, 255, .1); transform: translateX(.35rem) translateY(-2px); }
+  .post-row:focus-visible { outline: 2px solid rgb(var(--row-accent)); outline-offset: 3px; }
   time { padding-top: .28rem; color: rgb(var(--row-accent)); font-family: var(--font-mono); font-size: .61rem; }
   h3 { font-family: var(--font-display); font-size: clamp(1.18rem, 2.2vw, 1.55rem); font-weight: 610; line-height: 1.35; letter-spacing: -.032em; }
-  h3 a { text-decoration: none; }
-  h3 a:hover { color: rgb(var(--row-accent)); }
+  .post-row:hover h3, .post-row:focus-within h3 { color: rgb(var(--row-accent)); }
   p { max-width: 48rem; margin-top: .45rem; color: rgba(var(--text-rgb), .56); font-size: .82rem; line-height: 1.8; }
-  .post-taxonomy { display: flex; flex-wrap: wrap; gap: .4rem .75rem; margin-top: .75rem; color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .57rem; }
-  .post-taxonomy a { color: rgba(var(--text-rgb), .5); text-decoration: none; }
-  .post-taxonomy a:hover { color: rgb(var(--row-accent)); }
+  .post-taxonomy { display: flex; flex-wrap: wrap; gap: .4rem .75rem; margin-top: .75rem; color: rgba(var(--text-rgb), .5); font-family: var(--font-mono); font-size: .57rem; }
   .post-arrow { align-self: center; color: rgb(var(--row-accent)); opacity: .38; transition: opacity .2s var(--ease), transform .2s var(--ease); }
   .post-row:hover .post-arrow, .post-row:focus-within .post-arrow { opacity: 1; transform: translate(.15rem, -.15rem); }
   @media (max-width: 660px) {
-    .post-row { grid-template-columns: 1fr auto; gap: .55rem 1rem; padding: 1.35rem .35rem 1.35rem .75rem; }
+    .post-row { grid-template-columns: 1fr auto; gap: .55rem 1rem; padding: 1.35rem .8rem 1.35rem 1rem; }
     time { grid-column: 1; }
     .post-copy { grid-column: 1 / -1; }
     .post-arrow { grid-column: 2; grid-row: 1; }

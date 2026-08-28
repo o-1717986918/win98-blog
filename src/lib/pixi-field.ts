@@ -113,6 +113,10 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
   let previousPointerY = pointerY;
   let pointerEnergy = 0;
   let pointerPresent = false;
+  let viewTargetX = 0;
+  let viewTargetY = 0;
+  let viewX = 0;
+  let viewY = 0;
   let resizeFrame = 0;
   let running = false;
   let elapsed = 0;
@@ -137,6 +141,11 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
     pointerX = event.clientX;
     pointerY = event.clientY;
     pointerPresent = true;
+    viewTargetX = event.clientX / Math.max(innerWidth, 1) * 2 - 1;
+    viewTargetY = event.clientY / Math.max(innerHeight, 1) * 2 - 1;
+    const field = host.closest<HTMLElement>('[data-ambient-field]');
+    field?.style.setProperty('--view-x', viewTargetX.toFixed(3));
+    field?.style.setProperty('--view-y', viewTargetY.toFixed(3));
     const speed = Math.hypot(pointerX - previousPointerX, pointerY - previousPointerY);
     pointerEnergy = Math.min(1, pointerEnergy + speed * 0.018 * readingAttenuation(event.target));
   };
@@ -157,6 +166,11 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
   };
   const onPointerLeave = () => {
     pointerPresent = false;
+    viewTargetX = 0;
+    viewTargetY = 0;
+    const field = host.closest<HTMLElement>('[data-ambient-field]');
+    field?.style.setProperty('--view-x', '0');
+    field?.style.setProperty('--view-y', '0');
   };
 
   app.ticker.maxFPS = compact ? 28 : 36;
@@ -168,6 +182,8 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
     const pointerDy = pointerY - previousPointerY;
     previousPointerX += pointerDx * 0.14;
     previousPointerY += pointerDy * 0.14;
+    viewX += (viewTargetX - viewX) * Math.min(1, .045 * delta);
+    viewY += (viewTargetY - viewY) * Math.min(1, .045 * delta);
 
     for (const mote of motes) {
       const idleX = Math.sin(elapsed * (0.11 + mote.depth * 0.07) + mote.phase) * mote.drift;
@@ -207,7 +223,8 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
       if (mote.x < -margin) mote.x = innerWidth + margin;
       if (mote.y > innerHeight + margin) mote.y = -margin;
       if (mote.y < -margin) mote.y = innerHeight + margin;
-      mote.sprite.position.set(mote.x, mote.y);
+      const perspective = 7 + mote.depth * 27;
+      mote.sprite.position.set(mote.x + viewX * perspective, mote.y + viewY * perspective * .72);
       const twinkle = 0.94 + Math.sin(elapsed * (0.32 + mote.depth * 0.24) + mote.phase) * 0.06;
       mote.sprite.alpha *= twinkle;
     }

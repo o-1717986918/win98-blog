@@ -17,9 +17,9 @@
 
   :root,
   :root[data-theme='graphite'] {
-    --bg-rgb: 43, 57, 70;
-    --surface-rgb: 56, 74, 90;
-    --raised-rgb: 72, 92, 108;
+    --bg-rgb: 35, 40, 48;
+    --surface-rgb: 48, 56, 66;
+    --raised-rgb: 66, 75, 87;
     --text-rgb: 244, 247, 249;
     --muted-rgb: 179, 193, 203;
     --signal-rgb: 101, 169, 244;
@@ -34,6 +34,11 @@
     --field-primary-rgb: 96, 158, 224;
     --field-secondary-rgb: 215, 143, 94;
     --field-warm-rgb: 191, 168, 132;
+    --header-panel-rgb: 38, 57, 78;
+    --card-cool-rgb: 45, 62, 79;
+    --card-warm-rgb: 71, 57, 49;
+    --card-violet-rgb: 57, 55, 78;
+    --card-gold-rgb: 70, 63, 50;
     --danger-rgb: 231, 103, 79;
     --line: rgba(230, 235, 239, .13);
     --line-strong: rgba(230, 235, 239, .23);
@@ -41,9 +46,9 @@
   }
 
   :root[data-theme='paper'] {
-    --bg-rgb: 222, 235, 237;
-    --surface-rgb: 248, 251, 249;
-    --raised-rgb: 204, 223, 226;
+    --bg-rgb: 235, 237, 234;
+    --surface-rgb: 252, 250, 246;
+    --raised-rgb: 216, 226, 228;
     --text-rgb: 20, 43, 54;
     --muted-rgb: 78, 101, 110;
     --signal-rgb: 48, 95, 183;
@@ -58,6 +63,11 @@
     --field-primary-rgb: 55, 106, 188;
     --field-secondary-rgb: 183, 111, 67;
     --field-warm-rgb: 155, 133, 106;
+    --header-panel-rgb: 215, 230, 239;
+    --card-cool-rgb: 221, 232, 238;
+    --card-warm-rgb: 241, 225, 212;
+    --card-violet-rgb: 229, 225, 239;
+    --card-gold-rgb: 237, 230, 210;
     --danger-rgb: 174, 55, 37;
     --line: rgba(20, 43, 54, .16);
     --line-strong: rgba(20, 43, 54, .3);
@@ -65,9 +75,9 @@
   }
 
   :root[data-theme='night'] {
-    --bg-rgb: 7, 23, 29;
-    --surface-rgb: 13, 38, 45;
-    --raised-rgb: 22, 52, 60;
+    --bg-rgb: 8, 15, 23;
+    --surface-rgb: 17, 30, 41;
+    --raised-rgb: 30, 48, 60;
     --text-rgb: 237, 245, 244;
     --muted-rgb: 154, 177, 176;
     --signal-rgb: 96, 177, 244;
@@ -82,6 +92,11 @@
     --field-primary-rgb: 88, 164, 226;
     --field-secondary-rgb: 225, 139, 84;
     --field-warm-rgb: 188, 160, 122;
+    --header-panel-rgb: 11, 32, 50;
+    --card-cool-rgb: 16, 37, 53;
+    --card-warm-rgb: 51, 37, 31;
+    --card-violet-rgb: 33, 31, 53;
+    --card-gold-rgb: 49, 43, 30;
     --danger-rgb: 235, 95, 69;
     --line: rgba(237, 235, 228, .12);
     --line-strong: rgba(237, 235, 228, .22);
@@ -106,6 +121,11 @@
     --field-primary-rgb: 112, 164, 232;
     --field-secondary-rgb: 226, 149, 96;
     --field-warm-rgb: 196, 167, 128;
+    --header-panel-rgb: 43, 47, 78;
+    --card-cool-rgb: 48, 57, 87;
+    --card-warm-rgb: 78, 57, 50;
+    --card-violet-rgb: 60, 52, 91;
+    --card-gold-rgb: 73, 64, 49;
     --danger-rgb: 231, 105, 85;
     --line: rgba(234, 231, 241, .13);
     --line-strong: rgba(234, 231, 241, .24);

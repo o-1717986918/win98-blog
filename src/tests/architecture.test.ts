@@ -100,9 +100,11 @@ describe('blog-architecture contracts', () => {
     expect(scripts['content:new']).toBeTruthy();
     expect(scripts['content:audit']).toBeTruthy();
     expect(scripts.build).toContain('pagefind');
-    await expect(read('src/layouts/FullShell.astro')).resolves.toContain('SearchOverlay');
-    await expect(read('src/components/SearchOverlay.astro')).resolves.toContain('SearchIndex');
-    await expect(read('src/pages/search.astro')).resolves.toContain('data-search-trigger');
+    await expect(read('src/layouts/FullShell.astro')).resolves.not.toContain('SearchOverlay');
+    await expect(read('src/components/chrome/SiteHeader.astro')).resolves.toContain('SearchIndex');
+    await expect(read('src/components/SearchIndex.astro')).resolves.toContain('id="site-search"');
+    await expect(read('src/components/SearchIndex.astro')).resolves.not.toContain('search-filters');
+    await expect(read('src/pages/search.astro')).resolves.toContain('href="#site-search"');
     await expect(read('src/pages/tags/index.astro')).resolves.toContain('allTags');
   });
 
@@ -128,6 +130,17 @@ describe('blog-architecture contracts', () => {
     expect(engine).toContain("from 'pixi.js'");
     expect(engine).toContain('pointermove');
     expect(engine).toContain('pointerdown');
+    expect(engine).toContain('viewTargetX');
+    expect(ambient).toContain('--view-x');
+  });
+
+  it('makes the homepage article surfaces native whole-card links', async () => {
+    const home = await read('src/pages/index.astro');
+    const list = await read('src/components/PostList.astro');
+    expect(home).toContain('<a class="spotlight"');
+    expect(list).toContain('<a class="post-row"');
+    expect(home).not.toContain('spotlight-hitbox');
+    expect(list).not.toContain('post-hitbox');
   });
 
   it('keeps the homepage intro session-scoped, skippable and motion-aware', async () => {
