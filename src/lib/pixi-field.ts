@@ -70,7 +70,7 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
 
   const texture = makeMoteTexture();
   const motes: Mote[] = [];
-  const count = compact ? 76 : Math.min(148, Math.max(104, Math.round(innerWidth * innerHeight / 10500)));
+  const count = compact ? 108 : Math.min(246, Math.max(168, Math.round(innerWidth * innerHeight / 6500)));
   let seed = 421337;
   const random = () => {
     seed = (seed * 48271) % 2147483647;
@@ -81,9 +81,9 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
   for (let index = 0; index < count; index += 1) {
     const depth = 0.14 + Math.pow(random(), 1.5) * 0.86;
     const sprite = new Sprite(texture);
-    const scale = 0.045 + depth * depth * 0.17 + random() * 0.035;
+    const scale = 0.06 + depth * depth * 0.22 + random() * 0.045;
     const colorSlot = random() > 0.94 ? 2 : random() > 0.58 ? 1 : 0;
-    const alpha = (initialPalette.light ? 0.07 : 0.09) + depth * (initialPalette.light ? 0.18 : 0.27);
+    const alpha = (initialPalette.light ? 0.085 : 0.12) + depth * (initialPalette.light ? 0.25 : 0.38);
     sprite.anchor.set(0.5);
     sprite.scale.set(scale);
     sprite.alpha = alpha;
@@ -148,8 +148,8 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
       const dx = mote.x - pointerX;
       const dy = mote.y - pointerY;
       const distance = Math.max(18, Math.hypot(dx, dy));
-      if (distance > 280) continue;
-      const force = Math.pow(1 - distance / 280, 2) * (2.5 + mote.depth * 5.5) * attenuation;
+      if (distance > 340) continue;
+      const force = Math.pow(1 - distance / 340, 2) * (3.2 + mote.depth * 7.2) * attenuation;
       mote.vx += dx / distance * force;
       mote.vy += dy / distance * force;
     }
@@ -179,16 +179,16 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
         const dx = pointerX - mote.x;
         const dy = pointerY - mote.y;
         const distance = Math.max(24, Math.hypot(dx, dy));
-        if (distance < 220) {
-          const proximity = Math.pow(1 - distance / 220, 2) * mote.depth;
-          const pull = proximity * (0.010 + pointerEnergy * 0.026) * delta;
-          const swirl = proximity * pointerEnergy * 0.018 * delta;
+        if (distance < 285) {
+          const proximity = Math.pow(1 - distance / 285, 2) * mote.depth;
+          const pull = proximity * (0.014 + pointerEnergy * 0.038) * delta;
+          const swirl = proximity * pointerEnergy * 0.026 * delta;
           mote.vx += dx / distance * pull - dy / distance * swirl;
           mote.vy += dy / distance * pull + dx / distance * swirl;
-          mote.vx += pointerDx * proximity * 0.0025;
-          mote.vy += pointerDy * proximity * 0.0025;
-          mote.sprite.alpha = Math.min(mote.alpha * 1.8, mote.alpha + proximity * 0.18);
-          mote.sprite.scale.set(mote.scale * (1 + proximity * 0.28));
+          mote.vx += pointerDx * proximity * 0.0038;
+          mote.vy += pointerDy * proximity * 0.0038;
+          mote.sprite.alpha = Math.min(mote.alpha * 2.15, mote.alpha + proximity * 0.28);
+          mote.sprite.scale.set(mote.scale * (1 + proximity * 0.48));
         } else {
           mote.sprite.alpha += (mote.alpha - mote.sprite.alpha) * 0.035 * delta;
           mote.sprite.scale.set(mote.sprite.scale.x + (mote.scale - mote.sprite.scale.x) * 0.035 * delta);
@@ -225,7 +225,7 @@ export async function mountPixiField(host: HTMLElement, initialPalette: FieldPal
     const nextTints = [tint(palette.primary), tint(palette.secondary), tint(palette.warm)];
     for (const mote of motes) {
       mote.sprite.tint = nextTints[mote.colorSlot] ?? nextTints[0]!;
-      mote.alpha = (palette.light ? 0.07 : 0.09) + mote.depth * (palette.light ? 0.18 : 0.27);
+      mote.alpha = (palette.light ? 0.085 : 0.12) + mote.depth * (palette.light ? 0.25 : 0.38);
     }
     if (!running) app.render();
   };

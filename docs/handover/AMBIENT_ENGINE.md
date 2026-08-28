@@ -17,9 +17,10 @@
 
 - `AmbientField.astro`：CSS 静态降级、暂停按钮、主题/可见性/系统减弱动态联动；
 - `pixi-field.ts`：按需动态载入 PixiJS、粒子生成、景深、指针牵引、点击散射和资源销毁；
-- `SiteIntro.astro`：只在首页出现、每个浏览器会话播放一次，可用按钮、`Esc` 或 `Enter` 跳过；`?intro=1` 可供设计复核时强制重播；
+- `SiteIntro.astro` + `intro-particles.ts`：只在首页出现、每个浏览器会话播放一次；约 6.8 秒主体叙事以粒子从视口边缘聚合成站名，完成光学显影后散入主页。可用按钮、`Esc` 或 `Enter` 跳过，`?intro=1` 可供设计复核时强制重播；
 - 系统开启 `prefers-reduced-motion`、用户主动暂停或页面进入后台时，Ticker 停止；CSS 与最后一帧仍维持基本背景；
 - 移动端降低粒子数、设备像素比与最大帧率；桌面最大 36 FPS，移动端最大 28 FPS。
+- 开屏播放期间正式背景 Ticker 暂停，避免两个粒子系统同时占用 GPU；开屏结束后再恢复互动背景。
 
 PixiJS 是异步视觉增强，不改变静态 HTML 的可读性。构建预算按实际网络传输的 gzip 体积审计：单个 JavaScript 资产不超过 75 KiB gzip，全站 JavaScript 不超过 180 KiB gzip。
 

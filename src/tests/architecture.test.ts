@@ -119,11 +119,16 @@ describe('blog-architecture contracts', () => {
 
   it('keeps the homepage intro session-scoped, skippable and motion-aware', async () => {
     const intro = await read('src/components/SiteIntro.astro');
+    const particles = await read('src/lib/intro-particles.ts');
     const shell = await read('src/layouts/FullShell.astro');
     expect(intro).toContain('sessionStorage');
     expect(intro).toContain('data-intro-skip');
     expect(intro).toContain('prefers-reduced-motion');
     expect(intro).toContain("event.key === 'Escape'");
+    expect(intro).toContain('mountIntroParticles');
+    expect(intro).toContain('6800');
+    expect(particles).toContain('sampleText');
+    expect(particles).toContain('scatter');
     expect(shell).toContain("Astro.url.pathname === '/'");
   });
 

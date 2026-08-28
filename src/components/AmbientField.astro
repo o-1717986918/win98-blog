@@ -99,6 +99,7 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let manualPause = localStorage.getItem(motionKey) === 'true';
   let hiddenPause = document.hidden;
+  let introPause = Boolean(document.querySelector('[data-site-intro]:not([hidden])'));
   let controller: FieldController | undefined;
   let disposed = false;
 
@@ -113,7 +114,7 @@
     warm: readRgb('--field-warm-rgb'),
     light: getComputedStyle(document.documentElement).colorScheme.includes('light') ? 1 : 0,
   });
-  const active = () => !manualPause && !hiddenPause && !reduced.matches;
+  const active = () => !manualPause && !hiddenPause && !introPause && !reduced.matches;
   const syncController = () => controller?.setRunning(active());
   const syncButtons = () => {
     const paused = manualPause || reduced.matches;
@@ -146,6 +147,14 @@
     });
   });
   addEventListener('site:theme', () => controller?.setPalette(readPalette()));
+  addEventListener('site:intro-start', () => {
+    introPause = true;
+    syncController();
+  });
+  addEventListener('site:intro-end', () => {
+    introPause = false;
+    syncController();
+  });
   document.addEventListener('visibilitychange', () => {
     hiddenPause = document.hidden;
     syncController();
