@@ -44,7 +44,9 @@ describe('blog-architecture contracts', () => {
 
     const columnFiles = await contentFiles('columns');
     const columnRoot = join(root, 'src', 'content', 'columns');
-    const columnIds = new Set(columnFiles.map((file) => relative(columnRoot, file).split('\\').slice(0, -1).join('/')));
+    const columnIds = new Set(
+      columnFiles.map((file) => relative(columnRoot, file).split(/[\\/]/).slice(0, -1).join('/')),
+    );
     const postFiles = await contentFiles('posts');
     for (const file of postFiles) {
       const source = await readFile(file, 'utf8');
