@@ -6,7 +6,19 @@ const enabled = preference !== 'disabled' && (preference === 'enabled' || provid
 const giscus = enabled && provider === 'giscus' && import.meta.env.PUBLIC_GISCUS_REPO
   && import.meta.env.PUBLIC_GISCUS_REPO_ID && import.meta.env.PUBLIC_GISCUS_CATEGORY
   && import.meta.env.PUBLIC_GISCUS_CATEGORY_ID;
-const walineServer = enabled && provider === 'waline' ? import.meta.env.PUBLIC_WALINE_SERVER_URL : '';
+const walineCandidate = enabled && provider === 'waline' ? import.meta.env.PUBLIC_WALINE_SERVER_URL : '';
+let walineServer = '';
+if (walineCandidate) {
+  try {
+    const parsed = new URL(walineCandidate);
+    if (parsed.protocol !== 'https:') throw new Error('Waline server must use HTTPS');
+    walineServer = parsed.href.replace(/\/$/u, '');
+  } catch (error) {
+    throw new Error(`PUBLIC_WALINE_SERVER_URL 无效：${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+const safeWalineServer = JSON.stringify(walineServer).replaceAll('<', '\\u003c');
+const walineDocument = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta name="referrer" content="no-referrer"><link rel="stylesheet" href="https://unpkg.com/@waline/client@3.15.2/dist/waline.css"><style>html{color-scheme:light dark}body{margin:0;padding:2px;background:transparent}</style></head><body><div id="waline"></div><script type="module">import{init}from'https://unpkg.com/@waline/client@3.15.2/dist/waline.js';init({el:'#waline',serverURL:${safeWalineServer},path:${JSON.stringify(Astro.url.pathname)},lang:'zh-CN'});<\/script></body></html>`;
 ---
 
 {giscus && (
@@ -37,12 +49,14 @@ const walineServer = enabled && provider === 'waline' ? import.meta.env.PUBLIC_W
   <section class="comments" aria-labelledby="comments-heading" data-pagefind-ignore>
     <h2 id="comments-heading">讨论</h2>
     <p>评论由独立 Waline 服务处理，请先阅读本站隐私说明。</p>
-    <link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" />
-    <div id="waline"></div>
-    <script is:inline type="module" define:vars={{ walineServer }}>
-      import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
-      init({ el: '#waline', serverURL: walineServer, lang: 'zh-CN', dark: 'html[data-theme="graphite"], html[data-theme="night"], html[data-theme="indigo"]' });
-    </script>
+    <iframe
+      class="comments-frame"
+      title="文章评论"
+      sandbox="allow-scripts allow-forms"
+      referrerpolicy="no-referrer"
+      loading="lazy"
+      srcdoc={walineDocument}
+    ></iframe>
   </section>
 )}
 
@@ -50,4 +64,5 @@ const walineServer = enabled && provider === 'waline' ? import.meta.env.PUBLIC_W
   .comments { width: min(50rem, 100%); margin: 4rem auto 0; padding-top: 2rem; border-top: 1px solid var(--line); }
   h2 { font-size: 1.15rem; }
   p { margin: .45rem 0 1.2rem; color: rgba(var(--text-rgb), .5); font-size: .72rem; }
+  .comments-frame { display: block; width: 100%; min-height: 34rem; border: 0; background: transparent; }
 </style>

@@ -1,0 +1,74 @@
+---
+const nodes = [
+  { id:'book', type:'book', signal:'main', x:50, y:48, title:'雾港来信', status:'正式项目', brief:'三章十二场的海港悬疑长篇；母题是记忆如何被城市保存。', evidence:'project.yaml · revision 42', action:'打开作品总览' },
+  { id:'ch1', type:'chapter', signal:'main', x:25, y:31, title:'第一章 · 潮痕', status:'已晋升', brief:'主人公回到雾港，在废弃电台收到一封写给未来的信。', evidence:'chapter_0001 · 4/4 scenes', action:'聚焦章节' },
+  { id:'ch2', type:'chapter', signal:'main', x:56, y:23, title:'第二章 · 盲灯', status:'审查中', brief:'灯塔档案与失踪名单发生冲突，人物关系开始重新配对。', evidence:'chapter_0002 · review 1', action:'查看审查' },
+  { id:'ch3', type:'chapter', signal:'main', x:75, y:58, title:'第三章 · 回声', status:'规划就绪', brief:'尚未生成正文；章节义务、回报承诺与场景库存已经满足门禁。', evidence:'chapter_0003 · ready', action:'打开计划' },
+  { id:'s1', type:'scene', signal:'main', x:15, y:54, title:'雨夜返港', status:'正文', brief:'渡轮靠岸；一只没有寄件人的铁皮信箱出现在旧仓库。', evidence:'scene_0001 · 7,240 字', action:'阅读正文' },
+  { id:'s2', type:'scene', signal:'main', x:33, y:66, title:'电台试音', status:'正文', brief:'失真的频率里出现了主人公童年的报时口令。', evidence:'scene_0003 · canon clean', action:'阅读正文' },
+  { id:'s3', type:'scene', signal:'main', x:60, y:69, title:'灯塔档案', status:'待修订', brief:'审查发现时间线比角色年龄多出两年，需要回到候选区修复。', evidence:'scene_0007 · blocked', action:'打开修订任务' },
+  { id:'s4', type:'scene', signal:'main', x:84, y:34, title:'潮汐密室', status:'候选', brief:'分支候选，不会因为 Agent 已经写完就自动成为正式剧情。', evidence:'candidate · not promoted', action:'比较分支' },
+  { id:'c1', type:'character', signal:'main', x:38, y:17, title:'许澄', status:'主视角', brief:'声音修复师；相信记录可以校正记忆，却逐渐成为证据的一部分。', evidence:'character/xucheng.yaml', action:'查看人物档案' },
+  { id:'c2', type:'character', signal:'main', x:83, y:78, title:'友人 A', status:'关键关系', brief:'失踪名单中的名字，也是三封未来来信唯一共同的收件人。', evidence:'relation · confidence high', action:'查看关系' },
+  { id:'task', type:'task', signal:'extra', x:45, y:82, title:'场景 07 修订', status:'等待 Agent', brief:'任务包已签发，输出只能写入候选工作区，完成后仍需独立审查。', evidence:'task-042 · lease active', action:'打开任务' },
+  { id:'review', type:'evidence', signal:'extra', x:68, y:44, title:'连续性阻断', status:'BLOCKED', brief:'灯塔档案日期与人物年龄冲突；正式状态没有被修改。', evidence:'review-018 · fingerprint ok', action:'查看证据' },
+  { id:'style', type:'evidence', signal:'extra', x:19, y:79, title:'冷静近景 v3', status:'已挂载', brief:'风格包通过节奏与重复表达评测，仍不覆盖作品 Canon。', evidence:'style profile · mounted', action:'查看文风' },
+  { id:'reader', type:'evidence', signal:'extra', x:91, y:54, title:'读者承诺', status:'5 / 7 已兑现', brief:'第二章仍需回报“盲灯为何只在退潮时出现”。', evidence:'reader contract · open 2', action:'检查承诺' },
+];
+const relations: Array<[number, number]> = [[0,1],[0,2],[0,3],[1,4],[1,5],[2,6],[2,8],[3,7],[3,9],[6,10],[6,11],[5,12],[7,13]];
+---
+
+<section class="orrery-demo" data-orrery-demo data-relations={JSON.stringify(relations.map(([a,b]) => [nodes[a]!.id, nodes[b]!.id]))} aria-labelledby="orrery-demo-title">
+  <header>
+    <div><p>SIMULATED PROJECT / ACTUAL PIXI + 2.5D ROUTE</p><h2 id="orrery-demo-title">叙事星仪，作为一张可操作的作品读模型</h2><span>演示资料是模拟内容；WebGL 天穹、章节星核、黄金角场景簇、DOM 文字命中层、四元数轨道、深度缩放与语义焦点均按 ArcVellum 实际前端路线缩编。</span></div>
+    <dl><div><dt>SCENES</dt><dd>12</dd></div><div><dt>PROSE</dt><dd>86,420</dd></div><div><dt>REVIEWS</dt><dd>2 OPEN</dd></div><div><dt>REVISION</dt><dd>#42</dd></div></dl>
+  </header>
+
+  <div class="orrery-demo__bar">
+    <fieldset><legend>空间语法</legend><div>{['constellation','spine','braid','strata','loop','stage'].map((grammar, index) => <button type="button" data-grammar={grammar} aria-pressed={index === 0}>{grammar}</button>)}</div></fieldset>
+    <fieldset><legend>焦点层级</legend><div>{['all','book','chapter','scene','character'].map((level, index) => <button type="button" data-level={level} aria-pressed={index === 0}>{level}</button>)}</div></fieldset>
+    <fieldset><legend>信息密度</legend><div><button type="button" data-signal="main" aria-pressed="true">作品主脉</button><button type="button" data-signal="all" aria-pressed="false">全部事实</button></div></fieldset>
+  </div>
+
+  <div class="orrery-demo__workspace">
+    <div class="orrery-demo__stage" data-stage data-grammar="constellation" data-signal-mode="main">
+      <div class="orrery-demo__grid" aria-hidden="true"></div>
+      <div class="orrery-parallax-host" data-parallax-canvas aria-hidden="true"></div>
+      {nodes.map((node, index) => (
+        <button class:list={['orrery-node', `orrery-node--${node.type}`, { selected:index === 0 }]} type="button" style={`--x:${node.x};--y:${node.y};--i:${index}`} data-node={node.id} data-type={node.type} data-signal={node.signal} data-title={node.title} data-status={node.status} data-brief={node.brief} data-evidence={node.evidence} data-action={node.action} aria-label={`${node.type}：${node.title}，${node.status}`}>
+          <i aria-hidden="true"></i><span>{node.title}</span><small>{node.status}</small>
+        </button>
+      ))}
+      <div class="orrery-demo__camera" aria-hidden="true"><span>FIELD / 100%</span><i></i><b>REV 42</b></div>
+      <p class="orrery-demo__gesture">拖动空白天穹旋转 · 滚轮缩放 · 点击文字聚焦</p>
+    </div>
+
+    <aside class="orrery-demo__inspector" aria-live="polite">
+      <p>NODE DETAIL / READ-ONLY</p><span data-node-type>BOOK</span><h3 data-node-title>雾港来信</h3><b data-node-status>正式项目</b><div data-node-brief>三章十二场的海港悬疑长篇；母题是记忆如何被城市保存。</div>
+      <dl><div><dt>SOURCE EVIDENCE</dt><dd data-node-evidence>project.yaml · revision 42</dd></div><div><dt>PROJECTION</dt><dd>v4 / immutable read model</dd></div></dl>
+      <button type="button" data-node-action>打开作品总览 <span>↗</span></button>
+      <p class="orrery-demo__boundary">演示按钮不写 Canon。正式产品由 action port 把后端签发的动作交给既有 use case。</p>
+    </aside>
+  </div>
+
+  <details class="orrery-demo__list"><summary>无障碍列表视图 / ACCESSIBLE ALTERNATIVE</summary><ul>{nodes.filter(node => node.signal === 'main').map(node => <li><button type="button" data-list-node={node.id}><span>{node.type}</span><b>{node.title}</b><small>{node.status}</small></button></li>)}</ul></details>
+</section>
+
+<style>
+  .orrery-demo{--moss:#9db69f;--mineral:#d1b875;--clay:#d77a60;--ink:#dce5dc;--line:rgba(194,214,196,.2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#070d0b;color:var(--ink)}.orrery-demo>header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3rem;align-items:end;padding:clamp(3rem,7vw,6.5rem) clamp(1.2rem,5vw,6rem) 2rem}.orrery-demo>header p{color:var(--mineral);font:.6rem/1 ui-monospace,monospace;letter-spacing:.12em}.orrery-demo>header h2{max-width:18ch;margin:.8rem 0;font-family:'Songti SC',serif;font-size:clamp(2.3rem,4.8vw,5.4rem);font-weight:500;line-height:1.06;letter-spacing:-.055em}.orrery-demo>header span{display:block;max-width:47rem;color:#87968b;font-size:.8rem;line-height:1.8}.orrery-demo>header dl{display:grid;grid-template-columns:repeat(2,7rem);gap:1px;margin:0;background:var(--line)}.orrery-demo>header dl div{padding:.75rem;background:#0b1411}.orrery-demo dt{color:#708078;font:.5rem/1 ui-monospace,monospace}.orrery-demo dd{margin:.4rem 0 0;color:var(--mineral);font:.65rem/1 ui-monospace,monospace}.orrery-demo__bar{display:flex;flex-wrap:wrap;gap:1px;padding:0 clamp(1.2rem,5vw,6rem);border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--line)}.orrery-demo fieldset{display:flex;flex:1 1 auto;gap:1rem;align-items:center;min-width:0;margin:0;padding:.6rem;background:#0a1210;border:0}.orrery-demo legend{float:left;color:#66756d;font:.5rem/1 ui-monospace,monospace;white-space:nowrap}.orrery-demo fieldset>div{display:flex;flex-wrap:wrap;gap:.25rem}.orrery-demo__bar button{padding:.38rem .5rem;border:1px solid #273a31;color:#829289;background:transparent;font:.5rem/1 ui-monospace,monospace;cursor:pointer}.orrery-demo__bar button[aria-pressed='true']{border-color:var(--moss);color:#08100c;background:var(--moss)}
+  .orrery-demo__workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(17rem,.28fr);min-height:44rem}.orrery-demo__stage{position:relative;min-width:0;overflow:hidden;border-right:1px solid var(--line);background:radial-gradient(circle at 50% 48%,rgba(157,182,159,.11),transparent 18rem),#050a08}.orrery-demo__grid{position:absolute;inset:0;background:linear-gradient(rgba(183,206,185,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(183,206,185,.035) 1px,transparent 1px);background-size:6.25% 8.33%;mask-image:radial-gradient(circle,#000 20%,transparent 78%)}.orrery-demo__stage svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.orrery-demo__stage line{stroke:rgba(157,182,159,.29);stroke-width:.16;vector-effect:non-scaling-stroke;transition:opacity .3s}.orrery-node{position:absolute;z-index:2;left:calc(var(--x)*1%);top:calc(var(--y)*1%);width:max-content;max-width:10rem;padding:.35rem .5rem .4rem 1.55rem;border:0;color:#a9b9ac;background:transparent;text-align:left;transform:translate(-50%,-50%);cursor:pointer;transition:left .65s cubic-bezier(.2,.8,.2,1),top .65s cubic-bezier(.2,.8,.2,1),opacity .3s,transform .25s}.orrery-node>i{position:absolute;top:50%;left:.35rem;width:.65rem;height:.65rem;border:1px solid var(--moss);border-radius:50%;background:#0b1410;box-shadow:0 0 1rem rgba(157,182,159,.32);transform:translateY(-50%)}.orrery-node>span{display:block;overflow:hidden;font-family:'Songti SC',serif;font-size:.78rem;line-height:1.15;text-overflow:ellipsis;white-space:nowrap}.orrery-node>small{display:block;margin-top:.2rem;color:#66766d;font:.43rem/1 ui-monospace,monospace}.orrery-node--book>i{width:1.25rem;height:1.25rem;border-color:var(--mineral);box-shadow:0 0 2rem rgba(209,184,117,.5)}.orrery-node--book{padding-left:2.2rem}.orrery-node--book>span{color:var(--mineral);font-size:1.05rem}.orrery-node--chapter>i{width:.9rem;height:.9rem;border-color:var(--clay)}.orrery-node--character>i{border-radius:0;transform:translateY(-50%) rotate(45deg)}.orrery-node--task>i,.orrery-node--evidence>i{border-style:dashed}.orrery-node:hover,.orrery-node.selected{z-index:4;color:#fff;transform:translate(-50%,-50%) scale(1.08)}.orrery-node.selected{background:rgba(12,23,18,.86);outline:1px solid rgba(209,184,117,.42)}.orrery-demo__stage[data-signal-mode='main'] .orrery-node[data-signal='extra']{opacity:0;pointer-events:none}.orrery-demo__stage[data-signal-mode='main'] line[data-edge-a='task'],.orrery-demo__stage[data-signal-mode='main'] line[data-edge-b='task'],.orrery-demo__stage[data-signal-mode='main'] line[data-edge-a='review'],.orrery-demo__stage[data-signal-mode='main'] line[data-edge-b='review'],.orrery-demo__stage[data-signal-mode='main'] line[data-edge-a='style'],.orrery-demo__stage[data-signal-mode='main'] line[data-edge-b='style'],.orrery-demo__stage[data-signal-mode='main'] line[data-edge-a='reader'],.orrery-demo__stage[data-signal-mode='main'] line[data-edge-b='reader']{opacity:0}.orrery-demo__camera{position:absolute;right:1rem;bottom:1rem;display:flex;gap:.6rem;align-items:center;color:#63736a;font:.46rem/1 ui-monospace,monospace}.orrery-demo__camera i{width:4rem;height:1px;background:var(--moss)}.orrery-demo__camera b{color:var(--mineral);font-weight:500}
+  .orrery-demo__inspector{padding:clamp(1.2rem,3vw,2.5rem);background:#0b1310}.orrery-demo__inspector>p:first-child{color:var(--moss);font:.52rem/1 ui-monospace,monospace;letter-spacing:.1em}.orrery-demo__inspector>span{display:block;margin-top:3.5rem;color:var(--clay);font:.55rem/1 ui-monospace,monospace}.orrery-demo__inspector h3{margin:.6rem 0;font-family:'Songti SC',serif;font-size:clamp(1.8rem,3vw,3.2rem);font-weight:500;line-height:1.05}.orrery-demo__inspector>b{color:var(--mineral);font:.57rem/1 ui-monospace,monospace}.orrery-demo__inspector>div{min-height:8rem;margin-top:1.3rem;color:#93a198;font-size:.78rem;line-height:1.9}.orrery-demo__inspector dl{display:grid;gap:1px;margin:1rem 0;background:var(--line)}.orrery-demo__inspector dl div{padding:.8rem;background:#07100c}.orrery-demo__inspector button{display:flex;justify-content:space-between;width:100%;padding:.8rem;border:1px solid var(--mineral);color:#0a100d;background:var(--mineral);font:.65rem/1 ui-monospace,monospace;cursor:pointer}.orrery-demo__boundary{margin-top:1rem!important;color:#637168!important;font:.5rem/1.65 ui-monospace,monospace!important}.orrery-demo__list{border-top:1px solid var(--line);padding:1rem clamp(1.2rem,5vw,6rem)}.orrery-demo__list summary{color:#819188;font:.56rem/1.4 ui-monospace,monospace;cursor:pointer}.orrery-demo__list ul{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:1rem 0 0;padding:0;background:var(--line);list-style:none}.orrery-demo__list button{display:grid;width:100%;min-height:5rem;padding:.7rem;border:0;color:inherit;background:#0a1210;text-align:left;cursor:pointer}.orrery-demo__list span{color:var(--moss);font:.48rem/1 ui-monospace,monospace}.orrery-demo__list b{margin:.4rem 0;font-family:'Songti SC',serif;font-size:.82rem;font-weight:500}.orrery-demo__list small{color:#66766d;font:.46rem/1 ui-monospace,monospace}
+  .orrery-parallax-host{position:absolute;inset:0;z-index:1}.orrery-parallax-host :global(canvas){display:block;width:100%;height:100%;pointer-events:none}.orrery-demo__stage{cursor:grab;touch-action:none}.orrery-demo__stage:active{cursor:grabbing}.orrery-node{left:50%;top:50%;transform:translate(-50%,-50%) scale(var(--depth-scale,1));will-change:left,top,transform,opacity}.orrery-node:hover,.orrery-node.selected{transform:translate(-50%,-50%) scale(calc(var(--depth-scale,1)*1.08))}.orrery-node[data-lod='far']>span,.orrery-node[data-lod='far']>small,.orrery-node[data-lod='mid']>small{display:none}.orrery-demo__gesture{position:absolute;bottom:1rem;left:1rem;z-index:3;margin:0;color:#5f7067;font:.46rem/1 ui-monospace,monospace;pointer-events:none}.orrery-demo__grid{z-index:0}
+  @media(max-width:900px){.orrery-demo>header{grid-template-columns:1fr}.orrery-demo__workspace{grid-template-columns:1fr}.orrery-demo__stage{min-height:38rem;border-right:0;border-bottom:1px solid var(--line)}.orrery-demo__inspector>div{min-height:auto}.orrery-demo__list ul{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.orrery-demo>header dl{grid-template-columns:repeat(2,1fr)}.orrery-demo fieldset{display:grid}.orrery-demo__stage{min-height:31rem}.orrery-node>small{display:none}.orrery-node>span{max-width:5.8rem;font-size:.62rem}.orrery-demo__list ul{grid-template-columns:1fr}.orrery-demo__gesture{display:none}}
+</style>
+
+<script>
+  import { mountArcVellumOrrery } from '../../lib/arcvellum-orrery-demo';
+  const cleanups: Array<() => void> = [];
+  const mount = async () => {
+    for (const demo of document.querySelectorAll<HTMLElement>('[data-orrery-demo]')) cleanups.push(await mountArcVellumOrrery(demo));
+  };
+  void mount();
+  document.addEventListener('astro:page-load', mount);
+  document.addEventListener('astro:before-swap', () => { cleanups.splice(0).forEach((cleanup) => cleanup()); });
+</script>

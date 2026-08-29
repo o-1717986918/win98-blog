@@ -1,0 +1,76 @@
+---
+title: 一次昂贵任务怎样被反复救回来
+description: 从长时 Agent 任务的中断、错误输出与修复循环出发，追踪双工作区、租约心跳、输出白名单、预检和原子写回如何形成。
+date: 2026-08-28
+minutes: 14
+tags: [ArcVellum, Sandbox, Agent Runtime]
+columns: [arcvellum]
+cover:
+  src: ./cover.png
+  alt: ArcVellum Agent Runtime 执行中心真实界面
+chrome: none
+theme: abyss
+back: true
+---
+import cover from './cover.png'
+import ArcDocShell from '../../../components/arcvellum/ArcDocShell.astro'
+
+<ArcDocShell index="04" section="RUNTIME / TRUST" title="一次昂贵任务怎样被救回" deck="长时任务真正昂贵的不是一次调用，而是失败后丢失上下文、证据和可接续状态。双工作区与 Runtime 生命周期是在这些失败中被逼出来的。" image={cover} imageAlt="ArcVellum Agent Runtime 执行中心真实界面" nextHref="/posts/arcvellum-engineering-delivery/" nextLabel="安装包不是最后一步">
+
+仓库在 8 月 21 日到 22 日的密集提交，几乎都围绕长时任务的审查、修复、恢复和所有权。这不是因为 Agent 总是“笨”，而是一个几十分钟甚至更久的任务，必然会遇到进程退出、输出不全、重启、修复轮次和人工暂停。运行时若只保存一段对话，就无法证明下一次继续的仍是同一任务。
+
+## 一个工作区为什么不够
+
+如果把完整项目复制给 Agent，预检会方便，但权限边界消失：模型可以读到无关章节、审查答案、未来剧情或凭证痕迹，也可能意外修改正式资产。反过来，如果只给 Agent 最小上下文，CLI 又可能缺少 Schema、历史证据和命令拥有的中间文件，无法做完整验证。
+
+ArcVellum 因此在每个 run 下创建两个工作区：
+
+| 工作区 | 使用者 | 内容 | 权力 |
+|---|---|---|---|
+| `control-workspace/` | CLI 与确定性预检 | 完整 `source_paths`、命令输入、验证依赖与内核输出 | 可运行正式命令，不向 Agent 暴露 |
+| `workspace/` | Agent Runtime | `agent_source_paths`、精简参考、方向摘要与声明输出 | 只读写任务合同允许的集合 |
+
+同一任务由此拥有两种视野，而不是两份权威。正式项目仍在工作区之外，只有通过预检的声明输出才有机会写回。
+
+## 七步执行链
+
+`stage_task` 先把完整输入放进控制工作区；纯确定性命令只在那里运行。随后 Runtime 对命令拥有的文件做快照，再用精心挑选的 Agent 集合物化 `workspace/`。Agent 执行后，基线哈希检查所有变化，任何不在 `expected_outputs` 中的写入都会被拒绝。
+
+允许的输出被同步回控制视野，在那里做规范化、Schema、溯源、Lint 和差异预检。最后，系统展示预览并建立备份，以原子方式把声明产物导入正式项目，再经状态机提交和完成。
+
+这条链路的重要性质是失败关闭：缺输出可以是 Agent 尚未完成的正常状态；验证源缺失则是任务合同缺陷；意外写入不能靠“这次看起来没问题”被忽略。
+
+## 不要用扩大权限修复合同错误
+
+双工作区文档给出了一条非常实用的调试规则：
+
+1. 文件只被正式命令或预检需要，就放入控制源；
+2. Agent 必须基于其内容推理，才同时加入 Agent 源；
+3. Agent 应该创建的文件，进入 `expected_outputs`；
+4. 不要因为一次缺文件就暴露整个目录。
+
+这套规则把“缺什么就多给一点权限”的临时修复，改成对合同责任的定位。权限范围因此能随任务需求增长，而不是随故障次数膨胀。
+
+## Runner、模型连接与文学内核彼此独立
+
+Studio 默认使用内置 Pi Worker / OpenCode Runner，也保留 host-agent、Claude Code 等适配路径。Runner 身份与模型连接是不同合同：前端可以把凭证一次性转交给专用认证端点并选择模型，但凭证与供应商协议不会进入文学内核、项目文件、任务包、普通配置或事件日志。
+
+这使内核只关心“任务产物是否符合合同”，而不关心某个模型服务如何认证。模型切换影响未来空闲 Worker，不粗暴中断正在执行的任务。
+
+## 运行生命周期不是一段 SSE
+
+前端看到的是流式事件，但正式运行由 `ApplicationLifecycleManager` 管理：SQLite WAL 保存作业与事件，任务使用租约、心跳、幂等键和逐项目路线锁；事件先持久化，再投影到 SSE，因此重连可以用 cursor 回放，而不是假设浏览器一直在线。
+
+桌面壳在随机 localhost 端口启动冻结的应用服务 sidecar，以每次启动令牌换取 HttpOnly 本地会话。父进程监视器负责在桌面进程被强制结束时清理 Python 子进程，Tauri 还限制单实例并恢复窗口状态。这些细节决定“桌面应用”是否真的像应用，而不是一个偶尔遗留后台进程的网页包装。
+
+## 恢复机制的边界
+
+v0.99.0 把 Prompt 超限、修订超时、模型无活动、预检失败和工作流缺证据映射为稳定错误代码、中文影响说明与恢复动作；历史任务也有明确 `superseded` 终态，避免旧 sidecar 制造虚假待办。
+
+但恢复不等于无限重试。用户暂停、Provider 配额、确定性 Gate 失败、连续修订失败、无进展和恢复耗尽都应终止自动推进。一个可信 Runtime 的特征不是“永不停止”，而是停止时能说明停在哪里、保留什么、下一步由谁决定。
+
+## 可以继续收紧的地方
+
+任务 Schema 未来应把执行策略、人工门、Agent 角色和能力声明变成一等字段；命令应从受限字符串迁到结构化 argv；项目资源与包资源也应在 required reading 中显式区分。它们都会让 Runtime 的授权更容易静态审计，并减少适配器对隐含语义的推测。
+
+</ArcDocShell>

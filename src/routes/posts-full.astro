@@ -2,9 +2,9 @@
 import PostLayout from '../layouts/PostLayout.astro';
 import { loadPostRoute } from '../lib/route-content';
 
-const { post, Content, headings, columns, related, previous, next } = await loadPostRoute(Astro.url.pathname, 'full');
+const { post, Content, headings, columns, columnLookup, related, previous, next } = await loadPostRoute(Astro.url.pathname, 'full');
 ---
 
-<PostLayout post={post} columns={columns} headings={headings} related={related} previous={previous} next={next}>
+<PostLayout post={post} columns={columns} columnLookup={columnLookup} headings={headings} related={related} previous={previous} next={next}>
   <Content />
 </PostLayout>

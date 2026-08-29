@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>某人的小站 · Blog Studio</title><link rel="stylesheet" href="/studio.css"></head>
+<body>
+  <main class="workbench">
+    <header class="titlebar"><button class="brand" type="button" data-panel="explorer"><i></i><span>某人的小站</span><b>LOCAL BLOG STUDIO</b></button><nav aria-label="维护操作"><button type="button" data-create>新建</button><button type="button" data-save disabled>保存 <kbd>Ctrl S</kbd></button><button type="button" data-command="audit">审计</button><button type="button" data-command="build">构建</button></nav><span class="local-only">127.0.0.1 / LOCAL ONLY</span></header>
+    <div class="workbench__body">
+      <aside class="activity" aria-label="工作区"><button type="button" class="active" data-panel="explorer" title="内容资源管理器">文</button><button type="button" data-panel="notes" title="笔记同步">链</button><button type="button" data-panel="checks" title="工程检查">检</button><a href="http://127.0.0.1:4321/" target="_blank" rel="noreferrer" title="打开博客预览">↗</a></aside>
+      <aside class="sidebar">
+        <section data-view="explorer"><header><span>CONTENT EXPLORER</span><button type="button" data-refresh aria-label="刷新">↻</button></header><p class="sidebar-note">文章、主题与公开笔记。二进制媒体仍由文件系统管理。</p><div class="tree" data-tree><p>正在读取内容树…</p></div></section>
+        <section data-view="notes" hidden><header><span>NOTE BRIDGE</span></header><p class="sidebar-note">输入 Obsidian 或普通 Markdown 目录。只有 frontmatter 中 <code>publish: true</code> 的笔记会公开。</p><label class="field">本机目录<input type="text" data-note-source placeholder="D:\Knowledge\Vault"></label><label class="check"><input type="checkbox" data-dry-run checked>只演练，不写入</label><button class="wide" type="button" data-sync>同步笔记</button><small>附件会共置复制；Wiki 链接转换为稳定的站内笔记链接。源目录绝对路径不会写进博客。</small></section>
+        <section data-view="checks" hidden><header><span>QUALITY GATES</span></header><p class="sidebar-note">这里只能运行预设命令，浏览器不能执行任意 Shell。</p><div class="command-stack"><button type="button" data-command="covers"><b>封面审计</b><span>尺寸、比例、alt 与重复度</span></button><button type="button" data-command="test"><b>单元测试</b><span>架构和内容工具</span></button><button type="button" data-command="verify"><b>完整验收</b><span>测试、构建、索引与链接</span></button></div></section>
+      </aside>
+      <section class="editor-area">
+        <div class="tabs"><button type="button" class="active" data-tab-name><span>○</span> START.md</button><i></i></div>
+        <div class="welcome" data-welcome><div><p>LOCAL-FIRST / GIT-NATIVE</p><h1>写作、同步、<br>审查，保持在同一张工作台。</h1><span>选择左侧内容开始编辑，或建立新的文章、主题与私人笔记。保存动作只写入受限内容目录；发布仍由 Git 与部署流水线完成。</span></div><dl><div><dt>01</dt><dd>内容树</dd></div><div><dt>02</dt><dd>Markdown / MDX</dd></div><div><dt>03</dt><dd>只读预览</dd></div><div><dt>04</dt><dd>质量门</dd></div></dl></div>
+        <div class="split" data-editor-shell hidden><section class="source"><div class="ruler"><span data-line-count>1 LINE</span><span data-file-state>CLEAN</span></div><textarea data-editor spellcheck="false" aria-label="内容源文件"></textarea></section><section class="preview"><header><span>PREVIEW / TYPOGRAPHIC</span><small>结构预览，不执行 MDX 组件</small></header><article data-preview></article></section></div>
+        <section class="panel"><header><button class="active" type="button">OUTPUT</button><span data-running>IDLE</span></header><pre data-output>Blog Studio 已就绪。选择内容或运行一项检查。</pre></section>
+      </section>
+    </div>
+    <footer class="statusbar"><span><b>●</b> local workspace</span><span data-current>没有打开的文件</span><span>UTF-8 · LF · Markdown</span></footer>
+  </main>
+  <dialog data-create-dialog><form method="dialog"><header><p>NEW CONTENT</p><button value="cancel" aria-label="关闭">×</button></header><label class="field">类型<select name="kind"><option value="post">文章</option><option value="theme">主题</option><option value="note">学习笔记</option></select></label><label class="field">标题<input name="title" required></label><label class="field">slug<input name="slug" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required></label><footer><button value="cancel">取消</button><button value="create">建立草稿</button></footer></form></dialog>
+  <script type="module" src="/studio.js"></script>
+</body>
+</html>

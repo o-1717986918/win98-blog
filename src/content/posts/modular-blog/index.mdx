@@ -4,10 +4,16 @@ description: 从固定主题转向加法式页面装配，并让内容自由度�
 date: 2026-08-28
 minutes: 8
 tags: [架构, Astro, MDX]
-columns: [engineering, notes]
+columns: [blog-development]
+cover:
+  src: ./cover.png
+  alt: 内容、路由、页面外壳与视觉层被定位销分隔开的纸面架构模型
 chrome: full
-theme: graphite
+theme: abyss
 ---
+import Callout from '../../../components/content/Callout.astro'
+import DataChart from '../../../components/content/DataChart.astro'
+import CodePlayground from '../../../components/content/CodePlayground.astro'
 
 传统博客把文章塞进一个固定主题。这样做很省事，但一旦某篇文章需要更宽的图、专属交互或完整视口，作者只能绕过模板。问题不在 Markdown，而在于外壳被当成不可拆卸的默认值。
 
@@ -22,6 +28,22 @@ theme: graphite
 
 一篇标准长文可以嵌入复杂交互，一篇纯文字短记也可以完全脱离站点导航。两个选择互不推导。
 
+<Callout type="tip" title="建模原则">
+  外壳自由度和正文能力是两条轴；任何一条都不应暗中替另一条作决定。
+</Callout>
+
+<DataChart
+  title="标准阅读页的视觉色彩占比"
+  description="底色负责秩序，语义色只在信息结构发生变化的位置出现。"
+  unit="%"
+  data={[
+    { label: '中性底色', value: 76, color: 'aqua' },
+    { label: '主强调色', value: 14, color: 'coral' },
+    { label: '辅助谱色', value: 8, color: 'violet' },
+    { label: '警示色', value: 2, color: 'gold' },
+  ]}
+/>
+
 ## 加法式外壳
 
 `BaseLayout` 只提供 HTML 文档骨架、`head` 和插槽。完整文章页再显式加入导航、页脚、目录和阅读控制；`none` 页面没有可以“逃离”的重型模板，因为基础层从一开始就是空的。
@@ -34,8 +56,31 @@ const layouts = {
 }
 ```
 
-## 栏目不是文章等级
+## 主题不是文章等级
 
-栏目用于表达内容关系，例如“工程实践”或“阅读与界面”。文章外壳只表达页面需要多少站点部件。因此文章用 `columns[]` 引用栏目，两者分别声明自己的 `chrome`。
+主题用于表达内容关系，例如“工程实践”或“工具”。文章外壳只表达页面需要多少站点部件。因此文章用内部字段 `columns[]` 引用主题，两者分别声明自己的 `chrome`。
 
-这让分类和呈现都可以演进：开发者可以新增一个普通归档栏目，也可以把某个栏目升级成独立策展网页，而不迁移文章、不改文章 URL。
+这让分类和呈现都可以演进：开发者可以新增一个普通归档主题，也可以把某个主题升级成独立策展网页，而不迁移文章、不改文章 URL。
+
+<CodePlayground
+  title="文章内的隔离组件实验"
+  initialHtml={'<style>body{margin:0;padding:2rem;background:#182126;color:#edf3f1;font:16px system-ui}.mark{width:4rem;height:4rem;border:1px solid #55a0c4;transform:rotate(12deg);display:grid;place-items:center}</style><div class="mark">MDX</div>'}
+/>
+
+## 构建期路由比运行时大 switch 更适合静态博客
+
+文章与主题都由 Content Collection 保存稳定 ID。集成在构建开始时读取 frontmatter，根据 collection 与 `chrome` 注入唯一的 Astro 路由入口；每个入口只导入自己需要的布局。新增内容不需要修改中央路由表，改变外壳也不改变 `/posts/<id>/` 的永久地址。
+
+这种分派还有一个重要副作用：`none` 的隔离可以在产物层被证明。它不会先加载完整站点再用 CSS 隐藏导航，而是根本不导入 Header、Footer、ReaderControls 或 full shell 样式。独立实验因此能使用自己的 Canvas、DOM 和键盘协议，同时仍共享 canonical、主题初始化与默认返回桥。
+
+## 自由度必须和门禁一起增长
+
+允许 MDX 导入私有 Astro 组件，会把博客从纯文本仓库变成可执行前端项目。它带来真实求解器、数据图和 ArcVellum 星仪，也带来组件失效、图片路径错误、脚本污染和构建体积增长的风险。项目因此把 schema 校验、内容引用审计、封面审计、链接爬取、体积预算和三档外壳产物检查放进同一条 `verify`。
+
+自由度最高的页面不是“无需规范”，而是规范从统一视觉转向明确边界：谁拥有 DOM，哪些全站资源不得进入，怎样返回，怎样降级，怎样在移动端与减弱动态效果下存活。没有这些条件，网页级自由只是一次性演示许可。
+
+## 学习笔记为什么成为第三种内容集合
+
+学习笔记既不是普通主题，也不等同于长文。它有 `created / updated / aliases / publish / source`，需要本地目录同步、Wiki 链接转换和公开过滤，因此被建模为独立 collection。公开页面仍走静态构建；写入、同步和质量检查只发生在 loopback Blog Studio。
+
+这说明模块化不只是拆组件，还包括承认不同内容有不同生命周期。文章通过主题组织，主题策展文章，笔记从个人知识库选择性发布；三者共享搜索与构建，却不为追求“一个通用模型”而抹平差异。

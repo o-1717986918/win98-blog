@@ -1,5 +1,5 @@
 ---
-import { SITE, type ThemeId } from '../config/site';
+import { resolveTheme, SITE, type ThemeId } from '../config/site';
 import SeoHead from '../components/SeoHead.astro';
 
 interface Props {
@@ -27,16 +27,17 @@ const {
 } = Astro.props;
 const documentTitle = title === SITE.title ? title : `${title} · ${SITE.title}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const resolvedTheme = resolveTheme(theme);
 ---
 
 <!doctype html>
-<html lang={SITE.language} data-theme={theme}>
+<html lang={SITE.language} data-theme={resolvedTheme}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta name="color-scheme" content="dark light" />
-    <meta name="theme-color" content={theme === 'paper' ? '#deebed' : theme === 'night' ? '#07171d' : theme === 'indigo' ? '#262340' : '#2b3946'} />
+    <meta name="theme-color" content={resolvedTheme === 'mist' ? '#e7eceb' : '#091115'} />
     <link rel="canonical" href={canonical} />
     <link rel="alternate" type="application/rss+xml" title={`${SITE.title} RSS`} href="/rss.xml" />
     <link rel="icon" href="/brand/logo.jpg" type="image/jpeg" sizes="640x640" />

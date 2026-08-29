@@ -1,7 +1,9 @@
 ---
-import { formatDate, tagPath, type PostEntry } from '../lib/content';
-interface Props { posts: PostEntry[]; }
-const { posts } = Astro.props;
+import { formatDate, tagPath, type ColumnEntry, type PostEntry } from '../lib/content';
+import ContentCover from './ContentCover.astro';
+import { accentStyle, postAccent } from '../lib/visual';
+interface Props { posts: PostEntry[]; columnLookup: Map<string, ColumnEntry>; }
+const { posts, columnLookup } = Astro.props;
 ---
 
 {posts.length > 0 && (
@@ -9,7 +11,8 @@ const { posts } = Astro.props;
     <div class="related__head"><h2 id="related-heading">继续阅读</h2><span>RELATED</span></div>
     <div class="related__list">
       {posts.map((post) => (
-        <article>
+        <article style={accentStyle(postAccent(post, columnLookup))}>
+          <ContentCover className="related__cover" title={post.data.title} seed={post.id} kind="post" accent={postAccent(post, columnLookup)} cover={post.data.cover} variant="related" />
           <div class="related__meta"><time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time><span>{post.data.tags.slice(0, 2).map((tag) => <a href={tagPath(tag)}>#{tag}</a>)}</span></div>
           <h3><a href={`/posts/${post.id}/`}>{post.data.title}</a></h3>
           <span class="related__arrow" aria-hidden="true">↗</span>
@@ -25,15 +28,15 @@ const { posts } = Astro.props;
   .related__head h2 { font-size: 1.15rem; }
   .related__head span { color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .58rem; letter-spacing: .1em; }
   .related__list { border-top: 1px solid var(--line); }
-  article { --related-accent: var(--spectrum-aqua-rgb); position: relative; display: grid; grid-template-columns: 8rem minmax(0, 1fr) auto; gap: 1.5rem; align-items: center; min-width: 0; padding: 1.25rem .35rem; border-bottom: 1px solid var(--line); }
-  article:nth-child(2) { --related-accent: var(--spectrum-coral-rgb); }
-  article:nth-child(3) { --related-accent: var(--spectrum-violet-rgb); }
-  .related__meta { color: rgba(var(--text-rgb), .43); font-family: var(--font-mono); font-size: .57rem; }
+  article { position: relative; display: grid; grid-template-columns: 5.4rem 7rem minmax(0, 1fr) auto; gap: 1rem; align-items: center; min-width: 0; padding: .85rem .35rem .85rem .8rem; border-bottom: 1px solid var(--line); background: linear-gradient(90deg, rgba(var(--content-accent-rgb), .075), transparent 38%); }
+  :global(.related__cover) { aspect-ratio: 16 / 9; }
+  article::before { content: ''; position: absolute; inset: .78rem auto .78rem 0; width: 2px; background: rgb(var(--content-accent-rgb)); opacity: .82; }
+  .related__meta { color: rgba(var(--text-rgb), .64); font-family: var(--font-mono); font-size: .57rem; }
   .related__meta span { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .3rem; }
   h3 { font-family: var(--font-display); font-size: 1.03rem; line-height: 1.45; letter-spacing: -.025em; }
   h3 a { text-decoration: none; }
-  h3 a:hover { color: rgb(var(--related-accent)); }
-  .related__meta a { color: rgb(var(--related-accent)); text-decoration: none; }
-  .related__arrow { color: rgb(var(--related-accent)); }
-  @media (max-width: 620px) { article { grid-template-columns: 1fr auto; gap: .7rem 1rem; } .related__meta { grid-column: 1; } h3 { grid-column: 1 / -1; } .related__arrow { grid-column: 2; grid-row: 1; } }
+  h3 a:hover { color: rgb(var(--content-accent-rgb)); }
+  .related__meta a { color: rgb(var(--content-accent-rgb)); text-decoration: none; }
+  .related__arrow { color: rgb(var(--content-accent-rgb)); }
+  @media (max-width: 620px) { article { grid-template-columns: 4.6rem minmax(0, 1fr) auto; gap: .55rem .8rem; } :global(.related__cover) { grid-row: 1 / 3; } .related__meta { grid-column: 2; } h3 { grid-column: 2 / 4; } .related__arrow { grid-column: 3; grid-row: 1; } }
 </style>

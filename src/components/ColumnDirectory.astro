@@ -1,16 +1,19 @@
 ---
 import type { ColumnEntry, PostEntry } from '../lib/content';
+import ContentCover from './ContentCover.astro';
 import { belongsToColumn } from '../lib/content';
+import { accentStyle } from '../lib/visual';
 
-interface Props { columns: ColumnEntry[]; posts: PostEntry[]; }
-const { columns, posts } = Astro.props;
+interface Props { columns: ColumnEntry[]; posts: PostEntry[]; compact?: boolean; }
+const { columns, posts, compact = false } = Astro.props;
 ---
 
-<div class="column-directory">
+<div class:list={['column-directory', { 'column-directory--compact': compact }]}>
   {columns.map((column) => (
-    <a class="column-card" href={`/columns/${column.id}/`}>
+    <a class="column-card" href={`/columns/${column.id}/`} style={accentStyle(column.data.accent)}>
+      <ContentCover className="column-card__cover" title={column.data.title} seed={column.id} kind="column" accent={column.data.accent} cover={column.data.cover} variant="directory" />
       <div class="column-copy"><h3>{column.data.title}</h3><p>{column.data.description}</p></div>
-      <span class="column-meta">{posts.filter((post) => belongsToColumn(post, column.id)).length} 篇 · 进入栏目</span>
+      <span class="column-meta">{posts.filter((post) => belongsToColumn(post, column.id)).length} 篇 · 进入主题</span>
       <span class="column-arrow" aria-hidden="true">↗</span>
     </a>
   ))}
@@ -18,16 +21,33 @@ const { columns, posts } = Astro.props;
 
 <style>
   .column-directory { display: grid; gap: .65rem; }
-  .column-card { --column-accent: var(--spectrum-violet-rgb); --column-surface: var(--card-violet-rgb); position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; padding: 1.4rem 1rem 1.35rem 1.2rem; overflow: hidden; border: 1px solid rgba(var(--column-accent), .3); border-radius: .7rem; background: rgb(var(--column-surface)); box-shadow: 0 .8rem 1.8rem rgba(0, 0, 0, .08), inset 0 1px rgba(255, 255, 255, .08); text-decoration: none; transition: transform .22s var(--ease), box-shadow .22s var(--ease), border-color .22s var(--ease); }
-  .column-card:nth-child(4n + 2) { --column-accent: var(--spectrum-gold-rgb); --column-surface: var(--card-gold-rgb); }
-  .column-card:nth-child(4n + 3) { --column-accent: var(--spectrum-aqua-rgb); --column-surface: var(--card-cool-rgb); }
-  .column-card:nth-child(4n + 4) { --column-accent: var(--spectrum-coral-rgb); --column-surface: var(--card-warm-rgb); }
-  .column-card::before { content: ''; position: absolute; top: .85rem; right: .85rem; width: .5rem; height: .5rem; border: 1px solid rgb(var(--column-accent)); border-radius: 50%; box-shadow: 0 0 0 .25rem rgba(var(--column-accent), .08), 0 0 .85rem rgba(var(--column-accent), .2); }
+  .column-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .75rem 1rem; padding: .58rem .7rem .82rem; overflow: hidden; border: 1px solid rgba(var(--content-accent-rgb), .28); border-radius: .3rem; background: linear-gradient(145deg, rgba(var(--surface-rgb), .9), rgba(var(--content-accent-rgb), .12)); box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .05), inset 0 1px rgba(255, 255, 255, .09); text-decoration: none; transition: transform .22s var(--ease), box-shadow .22s var(--ease), border-color .22s var(--ease); }
+  .column-card::before { content: ''; position: absolute; top: 0; left: .7rem; z-index: 2; width: 2.6rem; height: .22rem; background: linear-gradient(90deg, rgb(var(--content-accent-rgb)) 0 62%, rgb(var(--content-secondary-rgb)) 62%); transition: width .3s var(--ease); }
+  .column-card::after { content: ''; position: absolute; right: .78rem; bottom: .72rem; width: .42rem; height: .42rem; border-right: 1px solid rgb(var(--content-accent-rgb)); border-bottom: 1px solid rgb(var(--content-accent-rgb)); opacity: .7; }
+  :global(.column-card__cover) { grid-column: 1 / -1; }
+  .column-copy { padding: .2rem .45rem 0; }
   h3 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 620; letter-spacing: -.035em; }
-  p { max-width: 28rem; margin-top: .4rem; color: rgba(var(--text-rgb), .55); font-size: .75rem; line-height: 1.7; }
-  .column-meta { grid-column: 1; color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .55rem; }
-  .column-arrow { grid-column: 2; grid-row: 1 / 3; align-self: center; color: rgb(var(--column-accent)); opacity: .5; transition: opacity .2s var(--ease), transform .2s var(--ease); }
-  .column-card:hover { z-index: 1; border-color: rgba(var(--column-accent), .58); box-shadow: .45rem .55rem 0 rgba(var(--column-accent), .1), 0 1.3rem 2.6rem rgba(0, 0, 0, .15), inset 0 1px rgba(255, 255, 255, .12); transform: translateY(-4px) scale(1.012); }
-  .column-card:hover h3 { color: rgb(var(--column-accent)); }
+  p { max-width: 28rem; margin-top: .4rem; color: rgba(var(--text-rgb), .68); font-size: .78rem; line-height: 1.7; }
+  .column-meta { grid-column: 1; padding-left: .45rem; color: rgba(var(--text-rgb), .7); font-family: var(--font-mono); font-size: .62rem; }
+  .column-arrow { grid-column: 2; grid-row: 2 / 4; align-self: center; padding-right: .35rem; color: rgb(var(--content-accent-rgb)); opacity: .72; transition: opacity .2s var(--ease), transform .2s var(--ease); }
+  .column-card:hover, .column-card:focus-visible { z-index: 1; border-color: rgba(var(--content-accent-rgb), .62); box-shadow: .35rem .42rem 0 rgba(var(--content-secondary-rgb), .11), 0 1rem 2.2rem rgba(0, 0, 0, .1); transform: translateY(-2px); }
+  .column-card:hover::before, .column-card:focus-visible::before { width: 5rem; }
+  .column-card:hover h3, .column-card:focus-visible h3 { color: rgb(var(--content-accent-rgb)); }
   .column-card:hover .column-arrow { opacity: 1; transform: translate(.15rem, -.15rem); }
+  .column-directory--compact { grid-auto-rows: minmax(10.6rem, auto); }
+  .column-directory--compact .column-card { grid-template-columns: minmax(13rem, 17rem) minmax(0, 1fr) 1rem; grid-template-rows: 1fr auto; gap: .45rem 1.35rem; min-height: 10.6rem; padding: .72rem; flex-shrink: 0; }
+  .column-directory--compact :global(.column-card__cover) { grid-column: 1; grid-row: 1 / 3; align-self: center; width: 100%; height: auto; min-height: 0; aspect-ratio: 16 / 9; }
+  .column-directory--compact .column-copy { grid-column: 2; grid-row: 1; align-self: end; min-width: 0; padding: .05rem 0 0; }
+  .column-directory--compact h3 { overflow: hidden; font-size: clamp(1.25rem,1.8vw,1.65rem); text-overflow: ellipsis; white-space: nowrap; }
+  .column-directory--compact p { display: -webkit-box; margin-top: .32rem; overflow: hidden; font-size: .78rem; line-height: 1.62; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+  .column-directory--compact .column-meta { grid-column: 2; grid-row: 2; padding-left: 0; font-size: .62rem; }
+  .column-directory--compact .column-arrow { grid-column: 3; grid-row: 1 / 3; padding-right: 0; }
+  @media (max-width: 1080px) {
+    .column-directory--compact .column-card { grid-template-columns: minmax(10rem, 13rem) minmax(0, 1fr) 1rem; }
+  }
+  @media (max-width: 430px) {
+    .column-directory--compact .column-card { grid-template-columns: 7.2rem minmax(0, 1fr) .8rem; min-height: 7.2rem; }
+    .column-directory--compact :global(.column-card__cover) { width: 7.2rem; }
+    .column-directory--compact p { -webkit-line-clamp: 2; }
+  }
 </style>

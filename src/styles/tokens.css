@@ -6,129 +6,77 @@
     --font-ui: 'Segoe UI Variable Text', Aptos, 'SF Pro Text', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
     --font-reading: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', STSong, SimSun, serif;
     --font-mono: 'Cascadia Code', 'SFMono-Regular', 'JetBrains Mono', Consolas, monospace;
-    --content: 72rem;
+    --content: 96rem;
     --reading: 40em;
     --header: 4.25rem;
     --radius: 3px;
     --ease: cubic-bezier(.22, 1, .36, 1);
     --reader-scale: 1;
+    --reader-leading: 1.95;
     color-scheme: dark;
   }
 
+  :root[data-reader-leading='compact'] { --reader-leading: 1.7; }
+  :root[data-reader-leading='normal'] { --reader-leading: 1.95; }
+  :root[data-reader-leading='relaxed'] { --reader-leading: 2.2; }
+
   :root,
-  :root[data-theme='graphite'] {
-    --bg-rgb: 35, 40, 48;
-    --surface-rgb: 48, 56, 66;
-    --raised-rgb: 66, 75, 87;
-    --text-rgb: 244, 247, 249;
-    --muted-rgb: 179, 193, 203;
-    --signal-rgb: 101, 169, 244;
-    --accent-rgb: 225, 139, 86;
-    --secondary-rgb: 154, 168, 211;
-    --spectrum-aqua-rgb: 101, 169, 244;
-    --spectrum-coral-rgb: 225, 139, 86;
-    --spectrum-gold-rgb: 209, 173, 120;
-    --spectrum-violet-rgb: 145, 151, 204;
-    --brand-primary-rgb: 101, 169, 244;
-    --brand-secondary-rgb: 225, 139, 86;
-    --field-primary-rgb: 96, 158, 224;
-    --field-secondary-rgb: 215, 143, 94;
-    --field-warm-rgb: 191, 168, 132;
-    --header-panel-rgb: 38, 57, 78;
-    --card-cool-rgb: 45, 62, 79;
-    --card-warm-rgb: 71, 57, 49;
-    --card-violet-rgb: 57, 55, 78;
-    --card-gold-rgb: 70, 63, 50;
+  :root[data-theme='abyss'] {
+    --bg-rgb: 27, 34, 38;
+    --surface-rgb: 36, 46, 51;
+    --raised-rgb: 49, 61, 67;
+    --text-rgb: 238, 243, 241;
+    --muted-rgb: 174, 190, 188;
+    --signal-rgb: 78, 145, 184;
+    --accent-rgb: 211, 120, 83;
+    --secondary-rgb: 136, 130, 171;
+    --spectrum-aqua-rgb: 78, 145, 184;
+    --spectrum-coral-rgb: 211, 120, 83;
+    --spectrum-gold-rgb: 182, 151, 92;
+    --spectrum-violet-rgb: 136, 130, 171;
+    --brand-primary-rgb: 78, 145, 184;
+    --brand-secondary-rgb: 211, 120, 83;
+    --field-primary-rgb: 67, 123, 151;
+    --field-secondary-rgb: 174, 100, 72;
+    --field-warm-rgb: 142, 125, 99;
+    --header-panel-rgb: 29, 42, 48;
+    --card-cool-rgb: 38, 49, 54;
+    --card-warm-rgb: 43, 49, 52;
+    --card-violet-rgb: 40, 48, 54;
+    --card-gold-rgb: 42, 49, 51;
     --danger-rgb: 231, 103, 79;
     --line: rgba(230, 235, 239, .13);
     --line-strong: rgba(230, 235, 239, .23);
     color-scheme: dark;
   }
 
-  :root[data-theme='paper'] {
-    --bg-rgb: 235, 237, 234;
-    --surface-rgb: 252, 250, 246;
-    --raised-rgb: 216, 226, 228;
-    --text-rgb: 20, 43, 54;
-    --muted-rgb: 78, 101, 110;
-    --signal-rgb: 48, 95, 183;
-    --accent-rgb: 178, 94, 47;
-    --secondary-rgb: 82, 83, 141;
-    --spectrum-aqua-rgb: 48, 102, 190;
-    --spectrum-coral-rgb: 187, 102, 54;
-    --spectrum-gold-rgb: 157, 127, 82;
-    --spectrum-violet-rgb: 96, 95, 153;
-    --brand-primary-rgb: 48, 95, 183;
-    --brand-secondary-rgb: 187, 102, 54;
-    --field-primary-rgb: 55, 106, 188;
-    --field-secondary-rgb: 183, 111, 67;
-    --field-warm-rgb: 155, 133, 106;
-    --header-panel-rgb: 215, 230, 239;
-    --card-cool-rgb: 221, 232, 238;
-    --card-warm-rgb: 241, 225, 212;
-    --card-violet-rgb: 229, 225, 239;
-    --card-gold-rgb: 237, 230, 210;
+  :root[data-theme='mist'] {
+    --bg-rgb: 231, 236, 235;
+    --surface-rgb: 247, 248, 244;
+    --raised-rgb: 216, 226, 224;
+    --text-rgb: 23, 38, 46;
+    --muted-rgb: 76, 96, 101;
+    --signal-rgb: 53, 121, 168;
+    --accent-rgb: 198, 106, 67;
+    --secondary-rgb: 111, 106, 155;
+    --spectrum-aqua-rgb: 53, 121, 168;
+    --spectrum-coral-rgb: 198, 106, 67;
+    --spectrum-gold-rgb: 162, 132, 73;
+    --spectrum-violet-rgb: 111, 106, 155;
+    --brand-primary-rgb: 53, 121, 168;
+    --brand-secondary-rgb: 198, 106, 67;
+    --field-primary-rgb: 70, 125, 152;
+    --field-secondary-rgb: 176, 104, 76;
+    --field-warm-rgb: 143, 130, 103;
+    --header-panel-rgb: 225, 234, 235;
+    --card-cool-rgb: 235, 241, 239;
+    --card-warm-rgb: 240, 240, 235;
+    --card-violet-rgb: 237, 239, 239;
+    --card-gold-rgb: 241, 241, 236;
     --danger-rgb: 174, 55, 37;
     --line: rgba(20, 43, 54, .16);
     --line-strong: rgba(20, 43, 54, .3);
     color-scheme: light;
   }
 
-  :root[data-theme='night'] {
-    --bg-rgb: 8, 15, 23;
-    --surface-rgb: 17, 30, 41;
-    --raised-rgb: 30, 48, 60;
-    --text-rgb: 237, 245, 244;
-    --muted-rgb: 154, 177, 176;
-    --signal-rgb: 96, 177, 244;
-    --accent-rgb: 238, 144, 82;
-    --secondary-rgb: 154, 159, 207;
-    --spectrum-aqua-rgb: 96, 177, 244;
-    --spectrum-coral-rgb: 238, 144, 82;
-    --spectrum-gold-rgb: 207, 171, 119;
-    --spectrum-violet-rgb: 143, 145, 207;
-    --brand-primary-rgb: 96, 177, 244;
-    --brand-secondary-rgb: 238, 144, 82;
-    --field-primary-rgb: 88, 164, 226;
-    --field-secondary-rgb: 225, 139, 84;
-    --field-warm-rgb: 188, 160, 122;
-    --header-panel-rgb: 11, 32, 50;
-    --card-cool-rgb: 16, 37, 53;
-    --card-warm-rgb: 51, 37, 31;
-    --card-violet-rgb: 33, 31, 53;
-    --card-gold-rgb: 49, 43, 30;
-    --danger-rgb: 235, 95, 69;
-    --line: rgba(237, 235, 228, .12);
-    --line-strong: rgba(237, 235, 228, .22);
-    color-scheme: dark;
-  }
-
-  :root[data-theme='indigo'] {
-    --bg-rgb: 38, 35, 64;
-    --surface-rgb: 51, 46, 80;
-    --raised-rgb: 65, 58, 98;
-    --text-rgb: 242, 239, 248;
-    --muted-rgb: 190, 181, 205;
-    --signal-rgb: 120, 176, 255;
-    --accent-rgb: 240, 155, 99;
-    --secondary-rgb: 195, 188, 226;
-    --spectrum-aqua-rgb: 120, 176, 255;
-    --spectrum-coral-rgb: 240, 155, 99;
-    --spectrum-gold-rgb: 213, 181, 133;
-    --spectrum-violet-rgb: 169, 164, 220;
-    --brand-primary-rgb: 120, 176, 255;
-    --brand-secondary-rgb: 240, 155, 99;
-    --field-primary-rgb: 112, 164, 232;
-    --field-secondary-rgb: 226, 149, 96;
-    --field-warm-rgb: 196, 167, 128;
-    --header-panel-rgb: 43, 47, 78;
-    --card-cool-rgb: 48, 57, 87;
-    --card-warm-rgb: 78, 57, 50;
-    --card-violet-rgb: 60, 52, 91;
-    --card-gold-rgb: 73, 64, 49;
-    --danger-rgb: 231, 105, 85;
-    --line: rgba(234, 231, 241, .13);
-    --line-strong: rgba(234, 231, 241, .24);
-    color-scheme: dark;
-  }
 }

@@ -22,7 +22,8 @@
 title: 工程实践
 description: 架构、构建与维护记录。
 chrome: full
-theme: graphite
+theme: abyss
+accent: aqua
 nav: true
 navLabel: 工程
 order: 10
@@ -42,6 +43,8 @@ columns: [engineering, field-notes]
 
 引用由 Content Collections 在构建期验证。栏目只改变发现关系，不改变文章 URL、RSS 身份或文章自身 chrome。
 
+`accent` 可取 `aqua / coral / violet / gold`，省略时为 `aqua`。它是栏目的稳定视觉身份：文章列表、重点文章和相关文章继承文章首个栏目的 accent，因此调整 `columns` 顺序也会改变文章的主要策展色。不要依靠列表位置制造交替配色。
+
 ## 让栏目获得网页级自由
 
 栏目正文、私有组件、样式、脚本和媒体与 `index.mdx` 放在同一目录。升级顺序仍为 `full → minimal → none`。
@@ -59,7 +62,7 @@ src/content/columns/field-notes/
 title: 现场笔记
 description: 一组可以独立编排的观察记录。
 chrome: none
-theme: night
+theme: abyss
 back: true
 nav: true
 order: 30
@@ -73,7 +76,7 @@ import FieldIndex from './FieldIndex.astro'
 
 ## 字段
 
-- 栏目：`title`、`description`、`chrome`、`theme`、`back`、`nav`、`navLabel`、`order`、`showPosts`、`draft`；
+- 栏目：`title`、`description`、`chrome`、`theme`、`accent`、`back`、`nav`、`navLabel`、`order`、`showPosts`、`draft`；
 - 文章：`title`、`description`、`date`、`tags`、`columns[]`、`chrome`、`theme`、`back`、`wide`、`hideToc`、`draft`。
 
 新增或调整后运行 `pnpm verify`；测试会检查引用有效性、三档代表页、路由分派和 `none` 产物隔离。

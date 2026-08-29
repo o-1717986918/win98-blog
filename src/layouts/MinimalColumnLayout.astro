@@ -2,26 +2,30 @@
 import '../styles/tokens.css';
 import '../styles/minimal.css';
 import '../styles/prose.css';
-import { Image } from 'astro:assets';
+import { getImage } from 'astro:assets';
 import AmbientField from '../components/AmbientField.astro';
 import Analytics from '../components/Analytics.astro';
+import ContentCover from '../components/ContentCover.astro';
 import PostList from '../components/PostList.astro';
 import BackBadge from '../components/chrome/BackBadge.astro';
 import type { ColumnEntry, PostEntry } from '../lib/content';
+import { accentStyle } from '../lib/visual';
+import { socialImagePath } from '../lib/social-image';
 import BaseLayout from './BaseLayout.astro';
 
 interface Props { column: ColumnEntry; posts: PostEntry[]; }
 const { column, posts } = Astro.props;
+const socialImage = column.data.cover ? (await getImage({ src: column.data.cover.src, width: 1200, format: 'webp' })).src : socialImagePath('columns', column.id);
 ---
 
-<BaseLayout title={column.data.title} description={column.data.description} theme={column.data.theme} pageKind="column">
+<BaseLayout title={column.data.title} description={column.data.description} theme={column.data.theme} pageKind="column" image={socialImage}>
   <AmbientField />
-  {column.data.back && <BackBadge />}
-  <main class="minimal-main minimal-column">
-    <header><p class="eyebrow">INDEPENDENT COLUMN</p><h1>{column.data.title}</h1><p class="lead">{column.data.description}</p></header>
-    {column.data.cover && <Image class="column-cover" src={column.data.cover.src} alt={column.data.cover.alt} widths={[640, 960, 1280]} sizes="(max-width: 800px) 100vw, 928px" />}
+  <BackBadge />
+  <main class="minimal-main minimal-column" style={accentStyle(column.data.accent)}>
+    <header><p class="eyebrow">A SMALL COLLECTION</p><h1>{column.data.title}</h1><p class="lead">{column.data.description}</p></header>
+    <ContentCover className="column-cover" title={column.data.title} seed={column.id} kind="column" accent={column.data.accent} cover={column.data.cover} variant="hero" eager />
     <div class="prose column-copy"><slot /></div>
-    {column.data.showPosts && <section><h2>栏目文章</h2><PostList posts={posts} /></section>}
+    {column.data.showPosts && <section><h2>主题文章</h2><PostList posts={posts} /></section>}
   </main>
   <Analytics />
 </BaseLayout>
@@ -32,7 +36,7 @@ const { column, posts } = Astro.props;
   h1 { font-size: clamp(3rem, 9vw, 6.5rem); line-height: .98; letter-spacing: -.06em; }
   .lead { max-width: 36rem; margin-top: 1.5rem; color: rgba(var(--text-rgb), .64); line-height: 1.9; }
   .column-copy { margin-top: 3rem; }
-  .column-cover { width: 100%; max-height: 34rem; margin-top: 2rem; border: 1px solid var(--line); object-fit: cover; }
+  .column-cover { width: 100%; height: auto; margin-top: 2rem; border: 1px solid var(--line); object-fit: contain; }
   section { margin-top: 4.5rem; }
   section > h2 { margin-bottom: 1.2rem; font-size: 1.3rem; }
 </style>

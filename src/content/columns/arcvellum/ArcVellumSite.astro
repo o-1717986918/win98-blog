@@ -1,0 +1,135 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import { belongsToColumn, isPublished, sortPosts } from '../../../lib/content';
+import { arcDocs as docs } from '../../../components/arcvellum/docs';
+import ArcVellumOrreryDemo from '../../../components/arcvellum/ArcVellumOrreryDemo.astro';
+import hero from './cover.png';
+import reader from './reader.png';
+import runtime from './runtime.png';
+
+const posts = sortPosts((await getCollection('posts')).filter(isPublished).filter((post) => belongsToColumn(post, 'arcvellum')));
+const available = new Map(posts.map((post) => [post.id, post]));
+---
+
+<main class="arc-site" data-pagefind-body>
+  <nav class="arc-nav" aria-label="ArcVellum 主题导航">
+    <a class="arc-brand" href="/columns/arcvellum/"><i aria-hidden="true">AV</i><span>ARC VELLUM</span></a>
+    <div><a href="#evidence">BETA 状态</a><a href="https://github.com/o-1717986918/arcvellum" rel="noreferrer">源码</a><a href="https://github.com/o-1717986918/arcvellum/releases" rel="noreferrer">发行版</a></div>
+    <a class="arc-exit" href="/">返回小站 ↗</a>
+  </nav>
+
+  <header class="arc-hero" data-orbit-hero>
+    <div class="arc-hero__copy">
+      <p class="arc-overline">LOCAL-FIRST · LITERARY ENGINEERING · BETA</p>
+      <h1>让 Agent 创作，<br /><em>让系统记得。</em></h1>
+      <p class="arc-deck">ArcVellum 把小说、剧本与伪记录作品从一段不断变长的聊天，变成有 Canon、任务、审查证据与正式正文的长期项目。</p>
+      <div class="arc-actions">
+        <a href="https://github.com/o-1717986918/arcvellum/releases" rel="noreferrer">查看 Windows 发行版 <span>↗</span></a>
+        <a href="/posts/arcvellum-release/">从产品导览开始</a>
+      </div>
+      <dl>
+        <div><dt>当前发布线</dt><dd>v0.99.x Beta</dd></div>
+        <div><dt>正式路线</dt><dd>4 条</dd></div>
+        <div><dt>运行边界</dt><dd>LOCAL / SANDBOXED</dd></div>
+      </dl>
+    </div>
+    <figure class="arc-hero__visual">
+      <Image src={hero} alt="ArcVellum 叙事星仪界面，展示章节锚点与作品关系线" widths={[640, 960, 1280]} sizes="(max-width: 850px) 100vw, 58vw" loading="eager" />
+      <figcaption><span>LIVE PROJECT PROJECTION</span><b>叙事星仪不是背景；节点来自项目正式状态。</b></figcaption>
+      <div class="arc-reticle" aria-hidden="true"></div>
+    </figure>
+  </header>
+
+  <ArcVellumOrreryDemo />
+
+  <section class="arc-thesis" id="system">
+    <p>THE SYSTEM, NOT THE CHAT</p>
+    <h2>创作智能可以发散；<br />项目权力必须收敛。</h2>
+    <div class="arc-thesis__grid">
+      <article><b>01</b><h3>模型负责提出候选</h3><p>推演、写作、审查与建议都可以由不同 Agent 完成，但候选不因此自动成为事实。</p></article>
+      <article><b>02</b><h3>内核负责签发许可</h3><p>CLI 状态机决定下一项合法任务，以 Schema、指纹、Lint 与证据门禁验证晋升。</p></article>
+      <article><b>03</b><h3>界面负责解释状态</h3><p>星仪、阅读器与任务面板投影同一份已验证项目状态，不用演示数据伪造“智能感”。</p></article>
+    </div>
+  </section>
+
+  <section class="arc-system" aria-labelledby="arc-system-title">
+    <div class="arc-section-head"><p>ARCHITECTURE / 01</p><h2 id="arc-system-title">一条可复查的创作路线</h2><span>从创作者意图到干净交付，权力只沿正式路径移动。</span></div>
+    <div class="arc-pipeline" role="img" aria-label="ArcVellum 从写作者、桌面端、服务层、CLI 内核、双工作区到正式项目的架构流程">
+      <div class="arc-node arc-node--writer"><small>AUTHOR</small><strong>方向与批准</strong></div><i>→</i>
+      <div class="arc-node"><small>TAURI / VUE</small><strong>Studio</strong></div><i>→</i>
+      <div class="arc-node"><small>FASTAPI / SSE</small><strong>应用服务</strong></div><i>→</i>
+      <div class="arc-node arc-node--core"><small>PYTHON CLI</small><strong>唯一权威</strong></div><i>→</i>
+      <div class="arc-node"><small>DUAL WORKSPACE</small><strong>受控执行</strong></div><i>→</i>
+      <div class="arc-node arc-node--canon"><small>CANON / PROSE</small><strong>正式项目</strong></div>
+    </div>
+  </section>
+
+  <section class="arc-surfaces" id="evidence">
+    <div class="arc-surface">
+      <Image src={reader} alt="ArcVellum 正文阅读器真实界面" widths={[480, 960, 1280]} sizes="(max-width: 850px) 100vw, 52vw" />
+      <div><p>FORMAL MANUSCRIPT</p><h2>一本只收录已晋升正文的书</h2><span>候选稿、审查记录和流程痕迹不会混进读者看到的正文。</span></div>
+    </div>
+    <div class="arc-surface">
+      <Image src={runtime} alt="ArcVellum Agent Runtime 执行中心真实界面" widths={[480, 960, 1280]} sizes="(max-width: 850px) 100vw, 43vw" />
+      <div><p>BOUNDARY AS INTERFACE</p><h2>执行中心展示事件，不制造权威</h2><span>任务租约、心跳、事件回放和恢复动作都由应用生命周期层持久化。</span></div>
+    </div>
+  </section>
+
+  <section class="arc-docs" id="documents">
+    <aside class="arc-docs__sidebar"><p>DEVELOPMENT LEDGER / 02</p><h2>文章放到侧边，让发布页继续讲产品。</h2><span>文档按产品、文学内核、Agent 工作流、空间前端与交付证据分层；这里展示已完成文章，完整模块选题与来源映射见编辑清单。</span><a href="/posts/arcvellum-module-atlas/">打开模块文章地图 ↗</a></aside>
+    <div class="arc-doc-list" aria-label="ArcVellum 开发手记目录">
+      {docs.map((doc) => {
+        const post = available.get(doc.id);
+        return <a href={post ? `/posts/${doc.id}/` : '#'} aria-disabled={!post}><span>{doc.no}</span><small>{doc.label}</small><strong>{doc.title}</strong><p>{doc.note}</p><i>打开文档 ↗</i></a>;
+      })}
+    </div>
+  </section>
+
+  <section class="arc-proof">
+    <div><p>RELEASE EVIDENCE</p><strong>30,080</strong><span>v0.99.0 正式闭环中的中文内容字符</span></div>
+    <div><p>FORMAL GATES</p><strong>295</strong><span>四条发布路线检查项合计</span></div>
+    <div><p>VUE ASSERTIONS</p><strong>200</strong><span>v0.99.1 模块化审计记录</span></div>
+    <div><p>HONEST LIMIT</p><strong>BETA</strong><span>真实闭环不等于全题材、全供应商证明</span></div>
+  </section>
+
+  <footer class="arc-footer"><span>ARC VELLUM / FIELD EDITION</span><p>资料依据仓库 README、正式架构文档与 v0.99.x 发布记录整理。</p><a href="https://github.com/o-1717986918/arcvellum" rel="noreferrer">GitHub ↗</a></footer>
+</main>
+
+<style>
+  :global(html) { scroll-behavior: smooth; background: #0c1311; }
+  :global(body) { margin: 0; background: #0c1311; color: #dce3d9; font-family: Inter, 'Segoe UI', 'PingFang SC', sans-serif; }
+  :global(*) { box-sizing: border-box; }
+  .arc-site { --ink:#dce3d9; --moss:#91ad92; --mineral:#b69d65; --clay:#c36d55; --line:rgba(194,211,193,.19); min-height:100vh; overflow:hidden; background:radial-gradient(circle at 77% 9%,rgba(116,145,115,.11),transparent 27rem),repeating-linear-gradient(90deg,transparent 0 79px,rgba(202,220,204,.025) 80px),#0c1311; }
+  .arc-nav { position:relative; z-index:5; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; height:4.5rem; padding:0 clamp(1rem,4vw,4.5rem); border-bottom:1px solid var(--line); font:.68rem/1 ui-monospace,SFMono-Regular,Consolas,monospace; letter-spacing:.12em; }
+  .arc-nav a { color:inherit; text-decoration:none; }.arc-brand{display:flex;gap:.8rem;align-items:center}.arc-brand i{display:grid;width:2.1rem;height:2.1rem;place-items:center;border:1px solid var(--mineral);border-radius:50%;color:var(--mineral);font-style:normal;letter-spacing:0}.arc-nav>div{display:flex;gap:2rem;color:#9daaa0}.arc-nav>div a:hover{color:var(--moss)}.arc-exit{justify-self:end;color:#9daaa0!important}
+  .arc-hero{display:grid;grid-template-columns:minmax(25rem,.72fr) minmax(32rem,1.28fr);min-height:calc(100vh - 4.5rem);border-bottom:1px solid var(--line)}.arc-hero__copy{display:flex;flex-direction:column;justify-content:center;padding:clamp(4rem,9vw,9rem) clamp(2rem,5vw,6.5rem);border-right:1px solid var(--line)}
+  .arc-overline,.arc-section-head>p,.arc-thesis>p,.arc-surface p,.arc-proof p{color:var(--moss);font:.67rem/1.5 ui-monospace,monospace;letter-spacing:.13em}.arc-hero h1{margin:1.6rem 0 1.5rem;font-family:'Songti SC',SimSun,serif;font-size:clamp(3.8rem,7vw,7.8rem);font-weight:500;line-height:.97;letter-spacing:-.075em}.arc-hero h1 em{color:var(--mineral);font-style:normal}.arc-deck{max-width:34rem;color:#aab6ac;font-size:clamp(.95rem,1.15vw,1.12rem);line-height:2}
+  .arc-actions{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:2.2rem}.arc-actions a{padding:.85rem 1rem;border:1px solid var(--moss);color:var(--ink);font-size:.77rem;text-decoration:none}.arc-actions a:first-child{background:var(--moss);color:#0b1410}.arc-actions a:hover span{display:inline-block;transform:translate(.15rem,-.15rem)}
+  .arc-hero dl{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:auto 0 0;padding-top:3rem;border-top:1px solid var(--line)}.arc-hero dt{color:#738177;font:.58rem/1.5 ui-monospace,monospace}.arc-hero dd{margin:.35rem 0 0;color:var(--mineral);font:.72rem/1.4 ui-monospace,monospace}
+  .arc-hero__visual{position:relative;display:grid;min-width:0;margin:0;overflow:hidden;background:#050a08}.arc-hero__visual::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,19,17,.38),transparent 22%),repeating-linear-gradient(0deg,transparent 0 3px,rgba(204,222,206,.022) 4px);pointer-events:none}.arc-hero__visual :global(img){align-self:center;width:100%;height:auto;object-fit:contain;object-position:center;filter:saturate(.78) contrast(1.08);transition:transform .8s cubic-bezier(.2,.8,.2,1)}.arc-hero[data-pointer='true'] .arc-hero__visual :global(img){transform:scale(1.015) translate3d(calc(var(--arc-x,0) * 5px),calc(var(--arc-y,0) * 5px),0)}
+  .arc-hero__visual figcaption{position:absolute;z-index:2;right:clamp(1rem,3vw,3rem);bottom:clamp(1rem,3vw,3rem);width:min(21rem,calc(100% - 2rem));padding:1rem 1.2rem;border:1px solid rgba(182,157,101,.48);background:rgba(8,14,12,.86);backdrop-filter:blur(12px)}.arc-hero__visual figcaption span{display:block;color:var(--mineral);font:.58rem/1.4 ui-monospace,monospace;letter-spacing:.12em}.arc-hero__visual figcaption b{display:block;margin-top:.5rem;font-family:'Songti SC',serif;font-size:.92rem;font-weight:500;line-height:1.6}.arc-reticle{position:absolute;z-index:2;top:2rem;right:2rem;width:5rem;height:5rem;border:1px solid rgba(145,173,146,.45);border-radius:50%}.arc-reticle::before,.arc-reticle::after{content:'';position:absolute;background:rgba(145,173,146,.5)}.arc-reticle::before{left:50%;top:-.6rem;width:1px;height:6.2rem}.arc-reticle::after{top:50%;left:-.6rem;height:1px;width:6.2rem}
+  .arc-thesis{display:grid;grid-template-columns:.65fr 1.35fr;gap:3rem;padding:clamp(5rem,10vw,10rem) clamp(1.2rem,6vw,7rem);border-bottom:1px solid var(--line)}.arc-thesis>h2{margin:0;max-width:17ch;font-family:'Songti SC',serif;font-size:clamp(2.4rem,5vw,5.7rem);font-weight:500;line-height:1.12;letter-spacing:-.055em}.arc-thesis__grid{grid-column:2;display:grid;grid-template-columns:repeat(3,1fr);margin-top:2rem;border-top:1px solid var(--line);border-left:1px solid var(--line)}.arc-thesis__grid article{min-height:16rem;padding:1.3rem;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}.arc-thesis__grid b{color:var(--clay);font:1rem/1 ui-monospace,monospace}.arc-thesis__grid h3{margin:4rem 0 1rem;font-family:'Songti SC',serif;font-size:1.35rem;font-weight:500}.arc-thesis__grid p{color:#91a097;font-size:.82rem;line-height:1.8}
+  .arc-system{padding:clamp(5rem,9vw,9rem) clamp(1.2rem,6vw,7rem);border-bottom:1px solid var(--line)}.arc-docs{display:grid;grid-template-columns:minmax(16rem,.42fr) minmax(0,1.58fr);gap:clamp(2rem,7vw,7rem);padding:clamp(5rem,9vw,9rem) clamp(1.2rem,6vw,7rem);border-bottom:1px solid var(--line)}.arc-docs__sidebar{position:sticky;top:2rem;align-self:start}.arc-docs__sidebar>p,.arc-section-head>p{color:var(--moss);font:.67rem/1.5 ui-monospace,monospace;letter-spacing:.13em}.arc-docs__sidebar h2,.arc-section-head h2{margin:1rem 0;font-family:'Songti SC',serif;font-size:clamp(2rem,4vw,4.4rem);font-weight:500;line-height:1.1;letter-spacing:-.05em}.arc-docs__sidebar span,.arc-section-head span{color:#8e9b92;font-size:.82rem;line-height:1.8}.arc-section-head{display:grid;grid-template-columns:.55fr 1fr .7fr;gap:2rem;align-items:end;margin-bottom:3rem}
+  .arc-pipeline{display:grid;grid-template-columns:repeat(5,minmax(8rem,1fr) auto) minmax(8rem,1fr);gap:.55rem;align-items:center;padding:2.5rem;overflow-x:auto;border:1px solid var(--line);background:rgba(4,10,8,.52)}.arc-pipeline>i{color:#66766b;font-style:normal}.arc-node{min-height:8.5rem;padding:1rem;border:1px solid rgba(145,173,146,.32)}.arc-node small{display:block;color:#78877d;font:.55rem/1.4 ui-monospace,monospace}.arc-node strong{display:block;margin-top:3rem;font-family:'Songti SC',serif;font-size:1rem;font-weight:500}.arc-node--core{border-color:var(--mineral);box-shadow:inset 0 -.25rem var(--mineral)}.arc-node--writer{border-color:var(--moss)}.arc-node--canon{border-color:var(--clay)}
+  .arc-surfaces{display:grid;grid-template-columns:1.15fr .85fr;border-bottom:1px solid var(--line)}.arc-surface{display:grid;grid-template-rows:minmax(22rem,60vh) auto;min-width:0;border-right:1px solid var(--line);background:#070d0b}.arc-surface:last-child{border-right:0}.arc-surface :global(img){align-self:center;width:100%;height:auto;max-height:60vh;object-fit:contain;object-position:center;filter:saturate(.75)}.arc-surface>div{padding:1.6rem clamp(1.2rem,3vw,3rem) 2rem;border-top:1px solid var(--line)}.arc-surface h2{margin:.65rem 0;font-family:'Songti SC',serif;font-size:clamp(1.6rem,2.7vw,3rem);font-weight:500;letter-spacing:-.04em}.arc-surface span{color:#8f9d94;font-size:.8rem;line-height:1.7}
+  .arc-docs__sidebar>a{display:inline-block;margin-top:1.3rem;color:var(--mineral);font:.6rem/1.4 ui-monospace,monospace;text-decoration:none}
+  .arc-doc-list{border-top:1px solid var(--line)}.arc-doc-list a{display:grid;grid-template-columns:3rem 7rem 1fr 1fr auto;gap:1rem;align-items:center;min-height:6.5rem;padding:.9rem .3rem;border-bottom:1px solid var(--line);color:inherit;text-decoration:none;transition:padding .2s,background .2s}.arc-doc-list a:hover{padding-inline:1rem;background:rgba(145,173,146,.06)}.arc-doc-list>a>span{color:var(--clay);font:1rem/1 ui-monospace,monospace}.arc-doc-list small{color:var(--moss);font:.58rem/1 ui-monospace,monospace;letter-spacing:.1em}.arc-doc-list strong{font-family:'Songti SC',serif;font-size:1.2rem;font-weight:500}.arc-doc-list p{color:#7f8d83;font-size:.75rem}.arc-doc-list i{color:var(--mineral);font:normal .65rem/1 ui-monospace,monospace}
+  .arc-proof{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}.arc-proof>div{min-height:14rem;padding:1.5rem;border-right:1px solid var(--line)}.arc-proof>div:last-child{border-right:0}.arc-proof strong{display:block;margin:2.5rem 0 .8rem;color:var(--mineral);font:clamp(2.3rem,4.5vw,5rem)/1 ui-monospace,monospace;letter-spacing:-.08em}.arc-proof span{color:#87958c;font-size:.72rem;line-height:1.7}.arc-footer{display:grid;grid-template-columns:1fr 2fr auto;gap:2rem;align-items:center;min-height:8rem;padding:1rem clamp(1.2rem,6vw,7rem);color:#7f8d84;font:.62rem/1.6 ui-monospace,monospace}.arc-footer a{color:var(--moss);text-decoration:none}
+  @media(max-width:900px){.arc-nav{grid-template-columns:1fr auto}.arc-nav>div{display:none}.arc-hero{grid-template-columns:1fr}.arc-hero__copy{min-height:85vh;border-right:0}.arc-hero__visual{min-height:56vw}.arc-thesis{grid-template-columns:1fr}.arc-thesis__grid{grid-column:1}.arc-section-head{grid-template-columns:1fr}.arc-surfaces{grid-template-columns:1fr}.arc-surface{border-right:0;border-bottom:1px solid var(--line)}.arc-docs{grid-template-columns:1fr}.arc-docs__sidebar{position:static}.arc-doc-list a{grid-template-columns:2.5rem 5.5rem 1fr auto}.arc-doc-list p{display:none}.arc-proof{grid-template-columns:repeat(2,1fr)}.arc-proof>div:nth-child(2){border-right:0}.arc-proof>div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+  @media(max-width:620px){.arc-nav{height:3.8rem}.arc-brand span{display:none}.arc-hero__copy{min-height:calc(100vh - 3.8rem);padding:4.5rem 1.2rem 2rem}.arc-hero h1{font-size:clamp(3.35rem,17vw,5.2rem)}.arc-hero dl{grid-template-columns:1fr}.arc-hero__visual{min-height:75vw}.arc-thesis__grid{grid-template-columns:1fr}.arc-thesis__grid article{min-height:12rem}.arc-thesis__grid h3{margin-top:2.5rem}.arc-pipeline{padding:1rem}.arc-doc-list a{grid-template-columns:2rem 1fr auto}.arc-doc-list small{display:none}.arc-doc-list strong{font-size:1rem}.arc-proof{grid-template-columns:1fr}.arc-proof>div{min-height:10rem;border-right:0;border-bottom:1px solid var(--line)!important}.arc-footer{grid-template-columns:1fr}.arc-surface{grid-template-rows:minmax(15rem,58vw) auto}}
+</style>
+
+<script>
+  const hero = document.querySelector<HTMLElement>('[data-orbit-hero]');
+  if (hero && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    hero.addEventListener('pointermove', (event) => {
+      if (event.pointerType === 'touch') return;
+      const rect = hero.getBoundingClientRect();
+      hero.style.setProperty('--arc-x', String((event.clientX - rect.left) / rect.width - .5));
+      hero.style.setProperty('--arc-y', String((event.clientY - rect.top) / rect.height - .5));
+      hero.dataset.pointer = 'true';
+    });
+    hero.addEventListener('pointerleave', () => { hero.dataset.pointer = 'false'; });
+  }
+</script>

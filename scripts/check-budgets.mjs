@@ -19,6 +19,7 @@ const authoredJs = files.filter((file) => file.path.endsWith('.js') && (
   file.path.includes(`${join('dist', '_astro')}`) || file.path.includes(`${join('dist', 'scripts')}`)
 ));
 const css = files.filter((file) => file.path.endsWith('.css') && !file.path.includes(`${join('dist', 'pagefind')}`));
+const html = files.filter((file) => file.path.endsWith('.html'));
 const media = files.filter((file) => /\.(?:avif|webp|png|jpe?g)$/i.test(file.path));
 const total = (items) => items.reduce((sum, file) => sum + file.size, 0);
 const transferredJs = await Promise.all(authoredJs.map(async (file) => ({
@@ -26,10 +27,24 @@ const transferredJs = await Promise.all(authoredJs.map(async (file) => ({
   gzipSize: gzipSync(await readFile(file.path)).length,
 })));
 const totalGzip = (items) => items.reduce((sum, file) => sum + file.gzipSize, 0);
+const cssByPublicPath = new Map(css.map((file) => [
+  `/${file.path.slice(dist.length + 1).replaceAll('\\', '/')}`,
+  file.size,
+]));
+const routeCss = await Promise.all(html.map(async (file) => {
+  const source = await readFile(file.path, 'utf8');
+  const references = [...new Set([...source.matchAll(/href="([^"]+\.css)"/gu)].map((match) => match[1]))];
+  return {
+    path: file.path,
+    size: references.reduce((sum, reference) => sum + (cssByPublicPath.get(reference) ?? 0), 0),
+  };
+}));
+const heaviestRoute = routeCss.sort((a, b) => b.size - a.size)[0] ?? { path: '', size: 0 };
 const failures = [];
 if (transferredJs.some((file) => file.gzipSize > 75 * 1024)) failures.push('a JavaScript asset exceeds 75 KiB gzip');
 if (totalGzip(transferredJs) > 180 * 1024) failures.push(`site JavaScript is ${Math.ceil(totalGzip(transferredJs) / 1024)} KiB gzip (budget 180 KiB)`);
-if (total(css) > 160 * 1024) failures.push(`site CSS is ${Math.ceil(total(css) / 1024)} KiB (budget 160 KiB)`);
+if (heaviestRoute.size > 72 * 1024) failures.push(`a page loads ${Math.ceil(heaviestRoute.size / 1024)} KiB CSS (budget 72 KiB): ${heaviestRoute.path}`);
+if (total(css) > 192 * 1024) failures.push(`site-wide route-isolated CSS is ${Math.ceil(total(css) / 1024)} KiB (maintenance budget 192 KiB)`);
 if (media.some((file) => file.size > 700 * 1024)) failures.push('an optimized media asset exceeds 700 KiB');
 
 if (failures.length) {
@@ -37,5 +52,5 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exitCode = 1;
 } else {
-  console.log(`Performance budgets passed: ${Math.ceil(totalGzip(transferredJs) / 1024)} KiB gzip JS, ${Math.ceil(total(css) / 1024)} KiB CSS.`);
+  console.log(`Performance budgets passed: ${Math.ceil(totalGzip(transferredJs) / 1024)} KiB gzip JS, max ${Math.ceil(heaviestRoute.size / 1024)} KiB CSS/page, ${Math.ceil(total(css) / 1024)} KiB route-isolated CSS.`);
 }

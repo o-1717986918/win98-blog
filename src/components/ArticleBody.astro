@@ -1,0 +1,55 @@
+---
+import type { MarkdownHeading } from 'astro';
+import ArticleTools from './ArticleTools.astro';
+import Comments from './Comments.astro';
+import ContentCover from './ContentCover.astro';
+import RelatedPosts from './RelatedPosts.astro';
+import TableOfContents from './chrome/TableOfContents.astro';
+import { formatDate, tagPath, type ColumnEntry, type PostEntry } from '../lib/content';
+import { accentStyle, postAccent } from '../lib/visual';
+
+interface Props {
+  post: PostEntry;
+  columns: ColumnEntry[];
+  columnLookup: Map<string, ColumnEntry>;
+  headings: MarkdownHeading[];
+  related: PostEntry[];
+  eyebrow: string;
+  previous?: PostEntry | undefined;
+  next?: PostEntry | undefined;
+}
+
+const { post, columns, columnLookup, headings, related, eyebrow, previous, next } = Astro.props;
+const showToc = !post.data.hideToc && headings.filter((heading) => heading.depth === 2 || heading.depth === 3).length > 1;
+const accent = postAccent(post, columnLookup);
+const style = accentStyle(accent);
+---
+
+<article class:list={['article-page', { 'article-page--wide': post.data.wide }]} style={style}>
+  <header class="article-head">
+    <p class="eyebrow">{eyebrow}</p>
+    <h1 class="article-title">{post.data.title}</h1>
+    <p class="article-description">{post.data.description}</p>
+    <div class="article-meta">
+      <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+      {post.data.minutes && <span>约 {post.data.minutes} 分钟</span>}
+      {columns.map((column) => <a href={`/columns/${column.id}/`}>{column.data.title}</a>)}
+      {post.data.tags.map((tag) => <a href={tagPath(tag)}>#{tag}</a>)}
+    </div>
+  </header>
+  <ContentCover className="article-cover" title={post.data.title} seed={post.id} kind="post" {accent} cover={post.data.cover} variant="hero" eager />
+  <div class:list={['article-grid', { 'article-grid--no-toc': !showToc }]}>
+    <div class="prose" data-pagefind-body data-reading-surface><slot /></div>
+    {showToc && <TableOfContents headings={headings} />}
+  </div>
+  <ArticleTools />
+  {(previous || next) && (
+    <nav class="post-navigation" aria-label="相邻文章">
+      {previous ? <a href={`/posts/${previous.id}/`}><small>上一篇</small><span>{previous.data.title}</span></a> : <span></span>}
+      {next ? <a href={`/posts/${next.id}/`}><small>下一篇</small><span>{next.data.title}</span></a> : <span></span>}
+    </nav>
+  )}
+  <RelatedPosts posts={related} {columnLookup} />
+  <Comments preference={post.data.comments} />
+  <p class="article-license">本文采用 {post.data.license} 许可；转载时请保留作者与原文链接。</p>
+</article>

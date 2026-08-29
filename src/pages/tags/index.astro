@@ -10,7 +10,7 @@ const tags = allTags(posts);
   <div class="page-wrap tags-page">
     <header class="page-intro">
       <div><p class="eyebrow">TAGS</p><h1 class="display-title">文章<br />标签</h1></div>
-      <div class="page-intro__copy"><p>标签描述文章涉及的主题，栏目负责更长期的策展；二者互不替代。</p><div class="page-intro__meta"><span><b>{tags.length}</b> 个标签</span><span><b>{posts.length}</b> 篇文章</span></div></div>
+      <div class="page-intro__copy"><p>从一个词出发，看看它在不同文章里如何反复出现。</p><div class="page-intro__meta"><span><b>{tags.length}</b> 个标签</span><span><b>{posts.length}</b> 篇文章</span></div></div>
     </header>
     <nav class="tag-cloud section-block" aria-label="全部标签">
       {tags.map((tag) => <a href={tagPath(tag.name)}><span>#{tag.name}</span><b>{tag.count}</b></a>)}

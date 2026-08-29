@@ -10,21 +10,26 @@
 | 全量验证 | `pnpm verify` |
 | 生产预览 | `pnpm preview` |
 | 上线前域名/服务检查 | `pnpm deploy:check` |
+| Cloudflare 配置与构建门禁 | `pnpm deploy:prepare` |
+| Pages 预览发布 | `pnpm deploy:pages:preview` |
+| Pages 生产发布（PowerShell） | `$env:CONFIRM_PRODUCTION='YES'; pnpm deploy:pages:production` |
 
 `pnpm build` 依次执行工作区冻结资产检查、内容审计、Astro 类型检查、静态构建、Pagefind 索引、产物契约、内部链接和体积预算。
+
+`pnpm deploy:check` 会通过 Node 的 `--env-file-if-exists=.env` 加载本机部署变量，再以同一环境执行全量验证并检查最终 canonical。`deploy:prepare` 额外确认 Cloudflare 项目、账号与 token，但不会上传。正式发布步骤和验收表分别见 `DEPLOYMENT.md`、`PRODUCTION_CHECKLIST.md`。
 
 ## 监控目标
 
 - 以真实用户 75 分位为准：LCP ≤ 2.5 秒、INP ≤ 200 毫秒、CLS ≤ 0.1；
 - 构建预算：单个自有 JS ≤ 90 KiB、站点 CSS 总计 ≤ 160 KiB、单个优化媒体 ≤ 700 KiB；
 - 无统计 provider 时用浏览器 Lighthouse 或托管平台的按需报告，不为监控强制引入追踪；
-- Pagefind 是按需加载，搜索失败不影响导航、栏目、标签、归档或正文阅读。
+- Pagefind 是按需加载，搜索失败不影响导航、主题、标签、归档或正文阅读。
 
 ## 故障处理
 
 ### 构建失败
 
-先运行 `pnpm content:audit`。最常见原因是失效栏目引用、错误 slug、`updated` 早于 `date`、图片缺少 alt 或内部链接不存在。依赖问题使用 `pnpm install --frozen-lockfile` 复现 CI。
+先运行 `pnpm content:audit`。最常见原因是失效主题引用、错误 slug、`updated` 早于 `date`、图片缺少 alt 或内部链接不存在。依赖问题使用 `pnpm install --frozen-lockfile` 复现 CI。
 
 ### 搜索失败
 

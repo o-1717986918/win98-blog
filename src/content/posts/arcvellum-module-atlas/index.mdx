@@ -1,0 +1,66 @@
+---
+title: 把一百多份开发记录整理成文章地图
+description: ArcVellum 的技术文章不能只按“前端、后端、Agent”粗分；这份地图从模块所有权、正式路线与真实开发债务出发，建立可持续扩展的五层文档体系。
+date: 2026-08-29T00:00:00+08:00
+minutes: 14
+tags: [ArcVellum, 架构, 文档工程]
+columns: [arcvellum]
+cover:
+  src: ./cover.png
+  alt: ArcVellum 项目总控真实界面，展示项目状态、正文与工作流入口
+chrome: none
+theme: abyss
+back: true
+---
+import cover from './cover.png'
+import ArcDocShell from '../../../components/arcvellum/ArcDocShell.astro'
+
+<ArcDocShell index="09" section="MODULE ATLAS" title="把开发记录整理成文章地图" deck="仓库里有上百份阶段记录、架构评审和发布证据。真正困难的不是找到足够多的材料，而是阻止文章重新退化成文件清单。" image={cover} imageAlt="ArcVellum 项目总控真实界面" nextHref="/posts/arcvellum-narrative-projection/" nextLabel="星仪看到的不是数据库，而是一份只读宇宙">
+
+ArcVellum 的文档数量很容易造成一种错觉：既然每一阶段都记录过，就已经拥有完整技术文档。实际并非如此。阶段记录回答“这次改了什么”，模块文档回答“这部分现在由谁负责”，博客文章还要回答另一个问题：一个真实的设计判断怎样在失败、迁移和验证中成立。
+
+## 为什么旧的八篇文章还不够
+
+原来的产品、前端、内核、Runtime、交付、长篇调试、模块化和 Beta 账本，足以让第一次接触项目的人建立全景，却会把许多独立机制揉在一篇文章里。比如“内核负责权威”至少包含 Workflow State、Task Package、Context Trace、Prompt Registry、Review CI、Candidate Promotion 和 Canon 写回。任何一个模块都值得单独说明输入、输出、失败条件与证据。
+
+另一方面，按语言或目录分篇也不合适。`Python 后端` 会同时跨越文学真相、应用用例、HTTP 适配、持久化和 Runtime；`Vue 前端` 会把星仪、阅读器、设置与作品档案混成一个层。技术文章需要沿责任边界组织，而不是沿文件扩展名组织。
+
+## 五层文章谱系
+
+我最终把文章分成五层。
+
+| 层 | 读者先问什么 | 典型模块 |
+|---|---|---|
+| 产品与使用 | 这套系统如何进入真实创作 | 项目建立、正式闭环、阅读器、交付、Beta 边界 |
+| 文学内核 | 什么可以成为作品事实 | Canon、Character、Scene、Style、Reader Contract、Word Budget |
+| Agent 与工作流 | 模型怎样被允许做下一步 | Tasking、Context、Prompt Registry、Review、Promotion、Runtime |
+| 空间前端 | 复杂项目如何被看见和操作 | Narrative Projection、Orrery、Layout、Relation、Window、Reader Link |
+| 工程与发布 | 模块怎样长期维护并交付 | Ports、Adapters、Persistence、API/SSE、Tauri、Updater、Architecture Audit |
+
+层级不是导航装饰。它决定一篇文章应当引用哪些源材料，也决定哪些问题不能越界回答。写星仪布局时，可以讨论坐标、碰撞和语义缩放，不能把可见节点当作正式状态；写 Review CI 时，可以讨论晋升门禁，不能把前端的绿色状态徽标当作通过证据。
+
+## 模块目录比全仓搜索更重要
+
+v0.99 的 `module-catalog.md` 给出一条很严格的开发入口：先确定唯一主模块，再读公开合同与测试，只有被阻断时才展开内部。全局依赖方向也被明确固定：Vue Feature 经过自己的 client / command bus 到 HTTP/SSE 适配，再到 Studio application use case；Studio 通过 Engine public API 使用文学真相；Engine 不能反向依赖 Studio、FastAPI、Vue 或 Provider SDK。
+
+这条纪律同样适用于写文章。如果一篇文章不能说清主模块，它大概率只是在描述项目表面。如果它为了“讲完整”不断跳进相邻模块的实现，读者也会失去真正的边界。
+
+## 阶段记录怎样变成真实开发叙事
+
+仓库的 94 份 Engine 阶段记录不是按序复制进博客。它们更适合作为时间证据：某个抽象是在什么症状之后出现，后来又为什么被降级或替换。
+
+例如，项目早期尝试在本地重建 Creative Director、对话记忆、工具循环和 Provider 调度，后来明确把平台 Agent 视为项目总监，而仓库退回 Skill、合同、模板和确定性 CLI。这不是“删功能”，而是责任重新分配。写这段历史时，应同时展示被保留的 Context Pack、Style Compiler、Canon Lint 和场景闭环，以及被降级为可选集成的 Director Chat、LangGraph、Dify 和 FastAPI 交互路线。
+
+## 清单不是承诺已经完成
+
+完整的编辑清单已经写入站点项目的 `docs/handover/ARCVELLUM_EDITORIAL_BACKLOG.md`。其中“待写”仍然是待写：它们不会因为标题已经列出就进入文章导航。每篇文章只有在具备真实正文、来源映射、版本数字、视觉证据与债务说明后，才会加入 ArcVellum 侧边目录。
+
+这也避免另一种文档膨胀：把同一机制拆成许多薄文，标题看似全面，每篇却只重复“它很重要”。Context Trace 与 Prompt Registry 可以先合写，因为二者共同回答“Agent 根据什么执行”；当材料足以分别解释 Schema、CLI、失败修复和演化史时，再拆成独立文章。
+
+## 下一批最值得写什么
+
+优先级最高的不是继续写宏大产品愿景，而是三组能帮助维护者判断的文章：Narrative Projection 如何在后端事实与前端空间之间建立只读合同；Context Trace 与 Prompt Registry 如何约束一次 Agent 工作；Workflow State 和 Review CI 为什么拒绝把“文件存在”当作完成。
+
+它们分别代表 ArcVellum 最有辨识度的三个工程判断：视觉可以自由，但不能制造真相；Agent 可以创作，但必须留下来源；文件可以生成，但只有正式状态机能够签发完成。
+
+</ArcDocShell>

@@ -2,9 +2,9 @@
 import MinimalPostLayout from '../layouts/MinimalPostLayout.astro';
 import { loadPostRoute } from '../lib/route-content';
 
-const { post, Content, headings, columns, related } = await loadPostRoute(Astro.url.pathname, 'minimal');
+const { post, Content, headings, columns, columnLookup, related } = await loadPostRoute(Astro.url.pathname, 'minimal');
 ---
 
-<MinimalPostLayout post={post} columns={columns} headings={headings} related={related}>
+<MinimalPostLayout post={post} columns={columns} columnLookup={columnLookup} headings={headings} related={related}>
   <Content />
 </MinimalPostLayout>

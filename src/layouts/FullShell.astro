@@ -5,6 +5,7 @@ import type { ThemeId } from '../config/site';
 import AmbientField from '../components/AmbientField.astro';
 import Analytics from '../components/Analytics.astro';
 import SiteIntro from '../components/SiteIntro.astro';
+import BackBadge from '../components/chrome/BackBadge.astro';
 import SiteFooter from '../components/chrome/SiteFooter.astro';
 import SiteHeader from '../components/chrome/SiteHeader.astro';
 import { SITE } from '../config/site';
@@ -30,6 +31,7 @@ const showIntro = Astro.url.pathname === '/';
   {showIntro && <SiteIntro />}
   <AmbientField />
   <SiteHeader />
+  {!showIntro && <BackBadge />}
   <main class="shell-main" id="main-content"><slot /></main>
   <SiteFooter />
   <Analytics />

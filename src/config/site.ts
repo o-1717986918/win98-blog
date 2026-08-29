@@ -3,12 +3,15 @@ export const SITE = {
   description: '记录 Web 架构、图形学、阅读与工程实践的个人博客。',
   author: '某人',
   language: 'zh-CN',
-  defaultTheme: 'paper',
+  defaultTheme: 'mist',
   defaultOgImage: '/og-default.svg',
 } as const;
 
-export const THEMES = ['graphite', 'paper', 'night', 'indigo'] as const;
+export const THEMES = ['mist', 'abyss'] as const;
 export type ThemeId = (typeof THEMES)[number];
+
+export const resolveTheme = (theme: string | null | undefined): ThemeId =>
+  theme === 'mist' || theme === 'paper' ? 'mist' : 'abyss';
 
 export const CHROME_LEVELS = ['full', 'minimal', 'none'] as const;
 export type ChromeLevel = (typeof CHROME_LEVELS)[number];

@@ -1,0 +1,31 @@
+---
+interface Props { title: string; initialHtml: string; }
+const { title, initialHtml } = Astro.props;
+---
+
+<section class="code-playground" data-code-playground aria-label={title}>
+  <header><h3>{title}</h3><button type="button" data-code-run>运行预览</button></header>
+  <label>HTML 与 CSS<textarea spellcheck="false" data-code-source>{initialHtml}</textarea></label>
+  <iframe title={`${title}的隔离预览`} sandbox="allow-scripts" referrerpolicy="no-referrer" data-code-preview srcdoc={initialHtml}></iframe>
+</section>
+
+<style>
+  .code-playground { margin: 2.2rem 0; overflow: hidden; border: 1px solid rgba(var(--spectrum-aqua-rgb), .38); background: rgb(var(--surface-rgb)); }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem .8rem; border-bottom: 1px solid var(--line); background: linear-gradient(90deg, rgba(var(--spectrum-aqua-rgb), .13), transparent); }
+  h3 { margin: 0; font-family: var(--font-mono); font-size: .67rem; letter-spacing: .05em; }
+  button { padding: .42rem .65rem; border: 1px solid rgba(var(--spectrum-aqua-rgb), .55); color: rgb(var(--text-rgb)); background: transparent; font-family: var(--font-mono); font-size: .6rem; cursor: pointer; }
+  button:hover, button:focus-visible { color: rgb(var(--surface-rgb)); background: rgb(var(--spectrum-aqua-rgb)); }
+  label { display: grid; gap: .4rem; padding: .8rem; color: rgba(var(--text-rgb), .58); font-family: var(--font-mono); font-size: .58rem; letter-spacing: .04em; }
+  textarea { width: 100%; min-height: 9rem; resize: vertical; padding: .8rem; border: 1px solid var(--line); color: rgb(var(--text-rgb)); background: rgb(var(--bg-rgb)); font-family: var(--font-mono); font-size: .7rem; line-height: 1.65; tab-size: 2; }
+  iframe { display: block; width: 100%; min-height: 10rem; border: 0; border-top: 1px solid var(--line); background: white; }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-code-playground]').forEach((playground) => {
+    const source = playground.querySelector<HTMLTextAreaElement>('[data-code-source]');
+    const preview = playground.querySelector<HTMLIFrameElement>('[data-code-preview]');
+    playground.querySelector('[data-code-run]')?.addEventListener('click', () => {
+      if (source && preview) preview.srcdoc = source.value;
+    });
+  });
+</script>

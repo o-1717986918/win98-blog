@@ -30,13 +30,13 @@
     transition: transform .42s cubic-bezier(.22, 1, .36, 1);
     will-change: transform;
   }
-  .ambient-lenses i { position: absolute; display: block; border-radius: 50%; filter: blur(3.6rem); }
-  .ambient-lenses i:nth-child(1) { top: -8%; left: 3%; width: min(48vw, 42rem); aspect-ratio: 1.35; background: rgba(var(--field-primary-rgb), .27); transform: rotate(-12deg); }
-  .ambient-lenses i:nth-child(2) { top: 18%; right: -8%; width: min(43vw, 36rem); aspect-ratio: 1.08; background: rgba(var(--field-secondary-rgb), .23); transform: rotate(18deg); }
-  .ambient-lenses i:nth-child(3) { bottom: -16%; left: 31%; width: min(46vw, 39rem); aspect-ratio: 1.55; background: rgba(var(--secondary-rgb), .16); transform: rotate(-8deg); }
-  :global(:root[data-theme='paper']) .ambient-lenses i:nth-child(1) { opacity: .88; }
-  :global(:root[data-theme='paper']) .ambient-lenses i:nth-child(2) { opacity: .82; }
-  :global(:root[data-theme='paper']) .ambient-lenses i:nth-child(3) { opacity: .7; }
+  .ambient-lenses i { position: absolute; display: block; border-radius: 9rem 1rem 12rem 2rem; filter: blur(5rem); }
+  .ambient-lenses i:nth-child(1) { top: -21%; left: -12%; width: min(31vw, 27rem); aspect-ratio: .7; background: rgba(var(--field-primary-rgb), .18); transform: rotate(-9deg); }
+  .ambient-lenses i:nth-child(2) { top: 24%; right: -15%; width: min(29vw, 24rem); aspect-ratio: .62; background: rgba(var(--field-secondary-rgb), .14); transform: rotate(7deg); }
+  .ambient-lenses i:nth-child(3) { bottom: -27%; left: 8%; width: min(42vw, 36rem); aspect-ratio: 2.2; background: rgba(var(--secondary-rgb), .1); transform: rotate(-3deg); }
+  :global(:root[data-theme='mist']) .ambient-lenses i:nth-child(1) { opacity: .68; }
+  :global(:root[data-theme='mist']) .ambient-lenses i:nth-child(2) { opacity: .61; }
+  :global(:root[data-theme='mist']) .ambient-lenses i:nth-child(3) { opacity: .52; }
   .ambient-field::before {
     content: '';
     position: absolute;
@@ -94,11 +94,11 @@
     transition: color .25s ease, border-color .25s ease, transform .25s ease, background .25s ease;
   }
   .motion-toggle i {
-    width: .46rem;
-    height: .46rem;
-    border-radius: 50%;
+    width: .72rem;
+    height: 2px;
+    border-radius: 0;
     background: rgb(var(--signal-rgb));
-    box-shadow: 0 0 0 3px rgba(var(--signal-rgb), .1), 0 0 1rem rgba(var(--signal-rgb), .34);
+    box-shadow: .22rem .22rem 0 rgba(var(--signal-rgb), .32);
   }
   .motion-toggle[aria-pressed='true'] i { background: rgba(var(--text-rgb), .34); box-shadow: none; }
   .motion-toggle:hover { border-color: rgba(var(--signal-rgb), .62); color: rgb(var(--signal-rgb)); transform: translateY(-2px); background: rgba(var(--surface-rgb), .82); }
@@ -106,8 +106,9 @@
   @media (max-width: 520px) {
     .ambient-lenses { inset: -5% -30%; }
     .ambient-lenses i { filter: blur(3rem); }
-    .motion-toggle { padding-inline: .58rem; }
+    .motion-toggle { bottom: max(.65rem, env(safe-area-inset-bottom)); left: .65rem; min-height: 2rem; padding-inline: .55rem; }
     .motion-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    :global(body:has(.site-header)) .motion-toggle { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     .ambient-lenses, .ambient-field::before { transition: none; transform: none; }
@@ -125,6 +126,7 @@
   let hiddenPause = document.hidden;
   let introPause = Boolean(document.querySelector('[data-site-intro]:not([hidden])'));
   let controller: FieldController | undefined;
+  let controllerPromise: Promise<void> | undefined;
   let disposed = false;
 
   const readRgb = (name: string): Rgb => {
@@ -139,7 +141,26 @@
     light: getComputedStyle(document.documentElement).colorScheme.includes('light') ? 1 : 0,
   });
   const active = () => !manualPause && !hiddenPause && !introPause && !reduced.matches;
-  const syncController = () => controller?.setRunning(active());
+  const ensureController = () => {
+    if (controller || controllerPromise || !active() || disposed) return controllerPromise;
+    const host = document.querySelector<HTMLElement>('[data-pixi-mount]');
+    if (!host) return undefined;
+    controllerPromise = import('../lib/pixi-field').then(async ({ mountPixiField }) => {
+      if (disposed || !active()) return;
+      controller = await mountPixiField(host, readPalette());
+      if (disposed) { controller.destroy(); controller = undefined; return; }
+      host.closest<HTMLElement>('[data-ambient-field]')?.setAttribute('data-ready', 'true');
+      controller.setRunning(active());
+    }).catch((error) => {
+      console.warn('[ambient-field] WebGL background unavailable; keeping the CSS color field.', error);
+    }).finally(() => { controllerPromise = undefined; });
+    return controllerPromise;
+  };
+  const syncController = () => {
+    if (disposed) return;
+    if (active()) ensureController();
+    controller?.setRunning(active());
+  };
   const syncButtons = () => {
     const paused = manualPause || reduced.matches;
     document.querySelectorAll<HTMLButtonElement>('[data-motion-toggle]').forEach((button) => {
@@ -151,16 +172,7 @@
   };
 
   syncButtons();
-  document.querySelectorAll<HTMLElement>('[data-pixi-mount]').forEach((host) => {
-    import('../lib/pixi-field').then(async ({ mountPixiField }) => {
-      if (disposed) return;
-      controller = await mountPixiField(host, readPalette());
-      host.closest<HTMLElement>('[data-ambient-field]')?.setAttribute('data-ready', 'true');
-      syncController();
-    }).catch((error) => {
-      console.warn('[ambient-field] WebGL background unavailable; keeping the CSS color field.', error);
-    });
-  });
+  syncController();
 
   document.querySelectorAll<HTMLButtonElement>('[data-motion-toggle]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -170,7 +182,9 @@
       syncController();
     });
   });
-  addEventListener('site:theme', () => controller?.setPalette(readPalette()));
+  addEventListener('site:theme', () => {
+    if (!disposed) controller?.setPalette(readPalette());
+  });
   addEventListener('site:intro-start', () => {
     introPause = true;
     syncController();
@@ -189,6 +203,8 @@
   });
   addEventListener('pagehide', () => {
     disposed = true;
-    controller?.destroy();
+    const activeController = controller;
+    controller = undefined;
+    activeController?.destroy();
   }, { once: true });
 </script>

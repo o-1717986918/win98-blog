@@ -11,10 +11,11 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
 
 <header class="site-header" data-site-header data-pagefind-ignore>
   <div class="header-inner">
-    <a class="site-brand" href="/" aria-label={`${SITE.title} · 返回首页`}>
+    <button class="site-brand" type="button" aria-haspopup="dialog" aria-controls="profile-dialog" aria-label={`${SITE.title} · 打开个人资料`} data-profile-open>
       <span class="brand-mark" aria-hidden="true"><img src="/brand/logo.jpg" alt="" width="640" height="640" decoding="async" /></span>
-      <span>{SITE.title}<small>PERSONAL TECHNICAL BLOG</small></span>
-    </a>
+      <span>{SITE.title}<small>ESSAYS · NOTES · EXPERIMENTS</small></span>
+      <i class="brand-open" aria-hidden="true">＋</i>
+    </button>
     <button class="menu-button" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="site-navigation" data-menu-button>
       <i></i><i></i>
     </button>
@@ -23,7 +24,7 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
         <a href="/" aria-current={current('/') ? 'page' : undefined}>首页</a>
         <a href="/archive/" aria-current={current('/archive/') ? 'page' : undefined}>文章</a>
         <details class="column-menu">
-          <summary data-current={current('/columns/') ? 'true' : undefined}>栏目 <span aria-hidden="true">⌄</span></summary>
+          <summary data-current={current('/columns/') ? 'true' : undefined}>主题 <span aria-hidden="true">⌄</span></summary>
           <div class="column-menu__panel">
             {columns.map((column) => (
               <a href={`/columns/${column.id}/`} aria-current={current(`/columns/${column.id}/`) ? 'page' : undefined}>
@@ -32,27 +33,55 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
             ))}
           </div>
         </details>
+        <a href="/notes/" aria-current={current('/notes/') ? 'page' : undefined}>笔记</a>
         <a href="/about/" aria-current={current('/about/') ? 'page' : undefined}>关于</a>
       </nav>
-      <SearchIndex />
+      <div class="header-search-slot"><SearchIndex /></div>
+      <button class="header-motion" type="button" data-motion-toggle aria-pressed="false"><i aria-hidden="true"></i><span>暂停背景动效</span></button>
       <button class="theme-button" type="button" data-theme-button aria-label="切换配色">
-        <span data-theme-name>AERO</span>
-        <span class="theme-orbit" aria-hidden="true"><i></i><i></i></span>
+        <span data-theme-name>MIST</span>
+        <span class="theme-register" aria-hidden="true"><i></i><i></i></span>
       </button>
     </div>
   </div>
 </header>
 
+<dialog class="profile-dialog" id="profile-dialog" aria-labelledby="profile-title" data-profile-dialog>
+  <div class="profile-dialog__sheet">
+    <div class="profile-dialog__rail" aria-hidden="true"><span>PERSON / 001</span><i></i><b>2026</b></div>
+    <div class="profile-dialog__main">
+      <button class="profile-dialog__close" type="button" aria-label="关闭个人资料" data-profile-close>×</button>
+      <div class="profile-dialog__identity">
+        <img src="/brand/logo.jpg" alt="某人的小站头像" width="640" height="640" decoding="async" />
+        <div><p>AUTHOR / BUILDER</p><h2 id="profile-title">某人</h2><span>在文学工程、可视化交互、求解系统与个人知识工具之间持续做项目。</span></div>
+      </div>
+      <p class="profile-dialog__statement">这里不是一张固定履历卡，而是作者与项目之间的入口。公开文章保留判断和工程证据，独立项目则允许形成自己的视觉与叙事语言。</p>
+      <dl>
+        <div><dt>NOW</dt><dd>ArcVellum · Blog Studio · 求解器</dd></div>
+        <div><dt>BASE</dt><dd>本地优先 / 人在回路 / 可验证交付</dd></div>
+      </dl>
+      <nav aria-label="个人链接">
+        <a href="https://github.com/o-1717986918" rel="me noreferrer"><span>GitHub</span><b>o-1717986918</b><i aria-hidden="true">↗</i></a>
+        <a href="/about/"><span>站内介绍</span><b>关于这个网站</b><i aria-hidden="true">→</i></a>
+      </nav>
+      <p class="profile-dialog__extensible">更多身份与联络方式可以在这里继续扩展，而不挤占主导航。</p>
+    </div>
+  </div>
+</dialog>
+
 <style>
   .site-header { position: fixed; inset: 0 0 auto; z-index: 50; height: var(--header); border-bottom: 1px solid rgba(var(--brand-primary-rgb), .34); background: rgba(var(--header-panel-rgb), .96); box-shadow: 0 .8rem 2.6rem rgba(4, 12, 22, .16); backdrop-filter: blur(18px); }
-  .header-inner { display: flex; align-items: center; width: min(100% - 2rem, 78rem); height: 100%; margin-inline: auto; }
-  .site-brand { display: flex; align-items: center; gap: .72rem; margin-right: auto; padding-right: 1rem; border-right: 1px solid rgba(var(--brand-primary-rgb), .38); color: rgb(var(--text-rgb)); font-family: var(--font-display); font-size: .88rem; font-weight: 680; letter-spacing: .06em; text-decoration: none; }
+  .header-inner { position: relative; display: flex; align-items: center; width: min(var(--content), calc(100% - clamp(2.5rem, 5vw, 6rem))); height: 100%; margin-inline: auto; }
+  .site-brand { display: flex; align-items: center; gap: .72rem; margin-right: auto; padding: 0 1rem 0 0; border: 0; border-right: 1px solid rgba(var(--brand-primary-rgb), .38); color: rgb(var(--text-rgb)); background: transparent; font-family: var(--font-display); font-size: .88rem; font-weight: 680; letter-spacing: .06em; text-align: left; cursor: pointer; }
   .site-brand small { display: block; margin-top: .12rem; color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .49rem; font-weight: 500; letter-spacing: .12em; }
   .brand-mark { position: relative; display: block; flex: 0 0 auto; width: 2rem; height: 2rem; padding: 2px; overflow: hidden; border: 1px solid rgba(var(--brand-primary-rgb), .52); border-radius: .42rem; background: linear-gradient(145deg, rgb(var(--brand-primary-rgb)), rgb(var(--brand-secondary-rgb))); box-shadow: 0 .35rem 1rem rgba(var(--bg-rgb), .18), 0 0 1.1rem rgba(var(--brand-primary-rgb), .08); }
   .brand-mark::after { content: ''; position: absolute; inset: 2px; border: 1px solid rgba(255, 255, 255, .2); border-radius: .28rem; pointer-events: none; }
   .brand-mark img { display: block; width: 100%; height: 100%; border-radius: .28rem; object-fit: cover; object-position: center; }
+  .brand-open { color: rgb(var(--brand-primary-rgb)); font: normal .8rem/1 var(--font-mono); transition: transform .2s var(--ease); }
+  .site-brand:hover .brand-open, .site-brand:focus-visible .brand-open { transform: rotate(90deg); }
   .navigation-shell, .site-navigation { display: flex; align-items: center; }
-  .navigation-shell { gap: 1rem; }
+  .navigation-shell { gap: 1rem; margin-left: auto; }
+  .header-search-slot { position: absolute; left: 50%; width: max-content; transform: translateX(-50%); }
   .site-navigation { gap: 1.1rem; }
   .site-navigation > a, .column-menu > summary { position: relative; padding: .6rem 0; border: 0; color: rgba(var(--text-rgb), .56); background: transparent; font-size: .78rem; text-decoration: none; cursor: pointer; }
   .column-menu { position: relative; }
@@ -69,15 +98,16 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
   .site-navigation > a:hover, .site-navigation > a[aria-current='page'], .column-menu > summary:hover, .column-menu > summary[data-current='true'] { color: rgb(var(--text-rgb)); }
   .site-navigation a:hover::after, .site-navigation a[aria-current='page']::after { transform: scaleX(1); }
   .theme-button { display: inline-flex; align-items: center; gap: .7rem; min-width: 7.4rem; padding: .48rem .58rem; border: 1px solid rgba(var(--brand-secondary-rgb), .4); border-radius: .48rem; color: rgb(var(--text-rgb)); background: rgb(var(--card-warm-rgb)); font-family: var(--font-mono); font-size: .56rem; letter-spacing: .06em; cursor: pointer; }
-  .theme-orbit { position: relative; width: 1.45rem; height: 1rem; margin-left: auto; border: 1px solid rgba(var(--brand-primary-rgb), .38); border-radius: 50%; transform: rotate(-18deg); }
-  .theme-orbit i { position: absolute; top: 50%; width: .34rem; height: .34rem; border-radius: 50%; transform: translateY(-50%); }
-  .theme-orbit i:first-child { left: -.12rem; background: rgb(var(--brand-primary-rgb)); box-shadow: 0 0 .65rem rgba(var(--brand-primary-rgb), .45); }
-  .theme-orbit i:last-child { right: -.12rem; background: rgb(var(--brand-secondary-rgb)); box-shadow: 0 0 .65rem rgba(var(--brand-secondary-rgb), .42); }
+  .header-motion { display: none; }
+  .theme-register { display: grid; grid-template-columns: .72rem .42rem; gap: .18rem; align-items: center; width: 1.35rem; height: .8rem; margin-left: auto; }
+  .theme-register i { display: block; width: 100%; height: 2px; border-radius: 0; }
+  .theme-register i:first-child { background: rgb(var(--brand-primary-rgb)); transform: translateY(-.13rem); }
+  .theme-register i:last-child { background: rgb(var(--brand-secondary-rgb)); transform: translateY(.14rem); }
   .menu-button { display: none; width: 2.35rem; height: 2.35rem; border: 1px solid var(--line); border-radius: var(--radius); background: transparent; cursor: pointer; }
   .menu-button i { display: block; width: 1rem; height: 1px; margin: .28rem auto; background: currentColor; transition: transform .22s var(--ease); }
   .menu-button[aria-expanded='true'] i:first-child { transform: translateY(.145rem) rotate(45deg); }
   .menu-button[aria-expanded='true'] i:last-child { transform: translateY(-.145rem) rotate(-45deg); }
-  @media (max-width: 860px) {
+  @media (max-width: 1100px) {
     .menu-button { display: block; }
     .navigation-shell { position: fixed; top: calc(var(--header) + .5rem); right: 1rem; left: 1rem; display: block; padding: .5rem; border: 1px solid var(--line-strong); border-radius: .65rem; background: rgb(var(--header-panel-rgb)); opacity: 0; visibility: hidden; transform: translateY(-.5rem); pointer-events: none; transition: .22s var(--ease); }
     .navigation-shell[data-open='true'] { opacity: 1; visibility: visible; transform: none; pointer-events: auto; }
@@ -86,22 +116,58 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
     .site-navigation a::after { display: none; }
     .column-menu__panel { position: static; min-width: 0; padding: 0 0 0 .65rem; border: 0; border-bottom: 1px solid var(--line); background: transparent; box-shadow: none; transform: none; }
     .column-menu__panel a { padding: .65rem .75rem; border-left: 1px solid var(--line); }
+    .header-search-slot { position: static; width: 100%; transform: none; }
     .theme-button { width: 100%; margin-top: .5rem; padding: .72rem; }
+    .header-motion { display: flex; align-items: center; gap: .55rem; width: 100%; margin-top: .5rem; padding: .72rem; border: 1px solid var(--line); color: rgba(var(--text-rgb), .68); background: transparent; font-family: var(--font-mono); font-size: .6rem; cursor: pointer; }
+    .header-motion i { width: .72rem; height: 2px; background: rgb(var(--signal-rgb)); box-shadow: .22rem .22rem 0 rgba(var(--signal-rgb), .32); }
+    .header-motion[aria-pressed='true'] i { background: rgba(var(--text-rgb), .34); box-shadow: none; }
   }
   @media (max-width: 430px) { .site-brand small { display: none; } }
+
+  .profile-dialog { width: min(41rem, calc(100% - 1.5rem)); max-width: none; max-height: min(43rem, calc(100vh - 2rem)); margin: auto; padding: 0; overflow: auto; border: 1px solid rgba(var(--brand-primary-rgb), .54); color: rgb(var(--text-rgb)); background: rgb(var(--surface-rgb)); box-shadow: 1rem 1rem 0 rgba(var(--brand-secondary-rgb), .13), 0 2rem 7rem rgba(0, 0, 0, .34); }
+  .profile-dialog::backdrop { background: rgba(5, 10, 17, .64); backdrop-filter: blur(8px); }
+  .profile-dialog__sheet { display: grid; grid-template-columns: 3rem minmax(0, 1fr); min-height: 32rem; }
+  .profile-dialog__rail { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 1rem 0; border-right: 1px solid var(--line); color: rgb(var(--spectrum-violet-rgb)); font: .5rem/1 var(--font-mono); writing-mode: vertical-rl; }
+  .profile-dialog__rail i { width: 1px; flex: 1; margin: .8rem 0; background: linear-gradient(rgb(var(--spectrum-violet-rgb)), transparent); }
+  .profile-dialog__main { position: relative; padding: clamp(1.3rem, 4vw, 3rem); }
+  .profile-dialog__close { position: absolute; top: .75rem; right: .8rem; display: grid; width: 2.3rem; height: 2.3rem; place-items: center; border: 1px solid var(--line); background: transparent; font: 1.1rem/1 var(--font-mono); cursor: pointer; }
+  .profile-dialog__identity { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 1.4rem; align-items: end; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
+  .profile-dialog__identity img { width: 7.5rem; height: 7.5rem; aspect-ratio: 1; overflow: hidden; border: 1px solid var(--line-strong); object-fit: cover; object-position: center 18%; }
+  .profile-dialog__identity p { color: rgb(var(--brand-primary-rgb)); font: .58rem/1 var(--font-mono); letter-spacing: .1em; }
+  .profile-dialog__identity h2 { margin-top: .5rem; font: 650 clamp(2.4rem, 7vw, 4.3rem)/.9 var(--font-display); letter-spacing: -.07em; }
+  .profile-dialog__identity span { display: block; margin-top: .75rem; color: rgba(var(--text-rgb), .62); font-size: .76rem; line-height: 1.7; }
+  .profile-dialog__statement { margin: 1.5rem 0; color: rgba(var(--text-rgb), .76); font-size: .9rem; line-height: 1.95; }
+  .profile-dialog dl { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 0 0 1.2rem; background: var(--line); }
+  .profile-dialog dl div { padding: .8rem; background: rgb(var(--raised-rgb)); }
+  .profile-dialog dt { color: rgb(var(--spectrum-coral-rgb)); font: .52rem/1 var(--font-mono); }
+  .profile-dialog dd { margin: .42rem 0 0; color: rgba(var(--text-rgb), .7); font-size: .67rem; line-height: 1.55; }
+  .profile-dialog nav { display: grid; border-top: 1px solid var(--line); }
+  .profile-dialog nav a { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: .85rem .2rem; border-bottom: 1px solid var(--line); text-decoration: none; }
+  .profile-dialog nav a:hover { color: rgb(var(--brand-primary-rgb)); }
+  .profile-dialog nav span { color: rgba(var(--text-rgb), .48); font: .55rem/1 var(--font-mono); }
+  .profile-dialog nav b { font-size: .78rem; font-weight: 600; }
+  .profile-dialog nav i { color: rgb(var(--spectrum-coral-rgb)); font-style: normal; }
+  .profile-dialog__extensible { margin-top: 1rem; color: rgba(var(--text-rgb), .42); font: .55rem/1.7 var(--font-mono); }
+  @media (max-width: 560px) {
+    .profile-dialog__sheet { grid-template-columns: 1.7rem minmax(0, 1fr); }
+    .profile-dialog__identity { grid-template-columns: 4.8rem minmax(0, 1fr); gap: .8rem; align-items: start; }
+    .profile-dialog__identity img { width: 4.8rem; height: 4.8rem; }
+    .profile-dialog dl { grid-template-columns: 1fr; }
+  }
 </style>
 
 <script>
-  const themeIds = ['graphite', 'paper', 'night', 'indigo'] as const;
+  const themeIds = ['mist', 'abyss'] as const;
   type ThemeId = (typeof themeIds)[number];
   const root = document.documentElement;
   const stored = localStorage.getItem('someone-site:theme');
-  if (stored && themeIds.includes(stored as ThemeId)) root.dataset.theme = stored;
+  const compatibleStored = stored === 'paper' ? 'mist' : stored === 'graphite' || stored === 'night' || stored === 'indigo' ? 'abyss' : stored;
+  if (compatibleStored && themeIds.includes(compatibleStored as ThemeId)) root.dataset.theme = compatibleStored;
 
-  const themeNames: Record<ThemeId, string> = { graphite: 'AERO', paper: 'MIST', night: 'ABYSS', indigo: 'IRIS' };
+  const themeNames: Record<ThemeId, string> = { mist: 'MIST', abyss: 'ABYSS' };
   const syncThemeLabel = () => {
-    const name = (root.dataset.theme ?? 'graphite') as ThemeId;
-    document.querySelectorAll<HTMLElement>('[data-theme-name]').forEach((node) => { node.textContent = themeNames[name] ?? 'AERO'; });
+    const name = (root.dataset.theme ?? 'mist') as ThemeId;
+    document.querySelectorAll<HTMLElement>('[data-theme-name]').forEach((node) => { node.textContent = themeNames[name] ?? 'MIST'; });
   };
   syncThemeLabel();
 
@@ -125,18 +191,31 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
       button.setAttribute('aria-label', open ? '关闭导航' : '打开导航');
     });
     themeButton.addEventListener('click', () => {
-      const current = themeIds.indexOf((root.dataset.theme ?? 'graphite') as ThemeId);
-      const next = themeIds[(current + 1) % themeIds.length] ?? 'graphite';
+      const current = themeIds.indexOf((root.dataset.theme ?? 'mist') as ThemeId);
+      const next = themeIds[(current + 1) % themeIds.length] ?? 'mist';
       root.dataset.theme = next;
       localStorage.setItem('someone-site:theme', next);
       syncThemeLabel();
       dispatchEvent(new CustomEvent('site:theme'));
       close();
     });
+    header.querySelector('[data-motion-toggle]')?.addEventListener('click', close);
     header.querySelectorAll('a').forEach((control) => control.addEventListener('click', close));
     document.addEventListener('click', (event) => { if (!header.contains(event.target as Node)) close(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
   });
+
+  const profileDialog = document.querySelector<HTMLDialogElement>('[data-profile-dialog]');
+  const profileOpen = document.querySelector<HTMLButtonElement>('[data-profile-open]');
+  const profileClose = profileDialog?.querySelector<HTMLButtonElement>('[data-profile-close]');
+  if (profileDialog && profileOpen && profileClose) {
+    profileOpen.addEventListener('click', () => profileDialog.showModal());
+    profileClose.addEventListener('click', () => profileDialog.close());
+    profileDialog.addEventListener('click', (event) => {
+      if (event.target === profileDialog) profileDialog.close();
+    });
+    profileDialog.addEventListener('close', () => profileOpen.focus());
+  }
 
   document.addEventListener('keydown', (event) => {
     const editable = event.target instanceof HTMLElement && Boolean(event.target.closest('input, textarea, select, [contenteditable="true"]'));

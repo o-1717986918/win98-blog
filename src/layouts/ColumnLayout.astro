@@ -1,23 +1,27 @@
 ---
 import '../styles/prose.css';
-import { Image } from 'astro:assets';
+import ContentCover from '../components/ContentCover.astro';
+import { getImage } from 'astro:assets';
 import PostList from '../components/PostList.astro';
 import type { ColumnEntry, PostEntry } from '../lib/content';
+import { accentStyle } from '../lib/visual';
+import { socialImagePath } from '../lib/social-image';
 import FullShell from './FullShell.astro';
 
 interface Props { column: ColumnEntry; posts: PostEntry[]; }
 const { column, posts } = Astro.props;
+const socialImage = column.data.cover ? (await getImage({ src: column.data.cover.src, width: 1200, format: 'webp' })).src : socialImagePath('columns', column.id);
 ---
 
-<FullShell title={column.data.title} description={column.data.description} theme={column.data.theme} pageKind="column">
-  <div class="page-wrap">
+<FullShell title={column.data.title} description={column.data.description} theme={column.data.theme} pageKind="column" image={socialImage}>
+  <div class="page-wrap" style={accentStyle(column.data.accent)}>
     <header class="page-intro column-intro">
-      <div><p class="eyebrow">CURATED COLUMN</p><h1 class="display-title">{column.data.title}</h1></div>
-      <div class="page-intro__copy"><p>{column.data.description}</p><div class="page-intro__meta"><span><b>{posts.length}</b> 篇文章</span><span>网页外壳可独立配置</span></div></div>
+      <div><p class="eyebrow">READING TRAIL</p><h1 class="display-title">{column.data.title}</h1></div>
+      <div class="page-intro__copy"><p>{column.data.description}</p><div class="page-intro__meta"><span><b>{posts.length}</b> 篇文章</span><span>持续更新</span></div></div>
     </header>
-    {column.data.cover && <Image class="column-cover" src={column.data.cover.src} alt={column.data.cover.alt} widths={[640, 960, 1280]} sizes="(max-width: 800px) 100vw, 1152px" />}
-    <section class="section-block column-copy" aria-label="栏目说明"><div class="prose"><slot /></div></section>
-    {column.data.showPosts && <section class="section-block"><div class="section-heading"><h2>栏目文章</h2><span>POSTS IN COLUMN</span></div><PostList posts={posts} /></section>}
+    <ContentCover className="column-cover" title={column.data.title} seed={column.id} kind="column" accent={column.data.accent} cover={column.data.cover} variant="hero" eager />
+    <section class="section-block column-copy" aria-label="主题说明"><div class="prose"><slot /></div></section>
+    {column.data.showPosts && <section class="section-block"><div class="section-heading"><h2>主题文章</h2><span>MORE IN THIS SERIES</span></div><PostList posts={posts} /></section>}
   </div>
 </FullShell>
 

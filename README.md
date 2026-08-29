@@ -1,19 +1,21 @@
 # 某人的小站
 
-一个静态优先、允许文章与栏目逐级获得网页级自由的个人博客。仓库从 `C:\Users\26532\.zcode\workspace\default` 的原项目接手而来；外部源目录保持不动，原型和架构文档以固定 SHA-256 保留为接手证据。
+一个静态优先、允许文章与主题逐级获得网页级自由的个人博客。仓库从 `C:\Users\26532\.zcode\workspace\default` 的原项目接手而来；外部源目录保持不动，原型和架构文档以固定 SHA-256 保留为接手证据。
 
 ## 已交付能力
 
 - Astro 7 + TypeScript + MDX Content Collections + 原生 CSS，输出纯静态站点；
-- 首页、栏目、归档、全局中文全文搜索、归档内主题筛选、关于、隐私、RSS、sitemap、robots 与 `llms.txt`；
-- 文章和栏目各自支持 `full / minimal / none`，两者的档位互不推导；
-- 栏目是开发者可新增的一等内容集合，可拥有私有 Astro 组件、样式、脚本和媒体；
+- 首页、主题、学习笔记、归档、中文文章正文搜索、归档内主题筛选、关于、隐私、RSS、sitemap、robots 与 `llms.txt`；
+- 文章和主题各自支持 `full / minimal / none`，两者的档位互不推导；
+- 主题是开发者可新增的一等内容集合，可拥有私有 Astro 组件、样式、脚本和媒体；
 - 构建期路由分派保证 `none` 产物不包含站点 Header、Footer、阅读控件或全站样式；
 - 草稿/定时发布、内容脚手架与审计、相关文章、阅读进度、分享、许可信息与封面图片；
-- Open Graph、Twitter Card、BlogPosting JSON-LD、Expressive Code 与 Astro 图片管线；
-- 可暂停的 PixiJS 离散景深粒子、指针牵引与点击散射、首页会话级粒子开屏、四套低饱和语义配色及独立的离子蓝—铜橙双主色；品牌图不用于主题取色，标准正文无 JavaScript 也可阅读；
+- 内容 ID 与主题 accent 驱动的确定性默认封面；提供真实共置图片时自动进入 Astro 图片优化管线；构建期同时生成主题化 1200×630 PNG 分享图；
+- mist/abyss 双主题、Open Graph、Twitter Card、BlogPosting JSON-LD、Expressive Code 与 Astro 图片管线；
+- 可暂停的 PixiJS 页边批注粒子、克制的指针扰动、约 3.8 秒的首页会话级粒子开屏，以及按主题数据稳定归属的四种低饱和 accent；品牌图不用于主题取色，标准正文无 JavaScript 也可阅读；
 - 评论和统计是默认关闭的可选适配器，不配置时没有第三方请求；
-- CI、内部链接检查、静态产物契约、体积预算与部署前检查。
+- Callout、可访问数据图与沙箱代码预览组件，行距/续读偏好以及 full/minimal 跨页过渡；
+- Vitest + Playwright CI、封面/内部链接检查、静态产物契约、体积预算与部署前检查。
 
 ## 快速开始
 
@@ -31,21 +33,21 @@ pnpm dev
 
 ```powershell
 pnpm content:new post my-post "文章标题"
-pnpm content:new column my-column "栏目标题"
+pnpm content:new column my-column "主题标题"
 pnpm content:audit
 ```
 
-编辑、发布与资源共置见 `docs/operations/CONTENT_WORKFLOW.md`；Cloudflare Pages、通用静态主机和上线检查见 `docs/operations/DEPLOYMENT.md`。
+编辑、发布与资源共置见 `docs/operations/CONTENT_WORKFLOW.md`；可执行的 Cloudflare Pages 发布路径见 `docs/operations/DEPLOYMENT.md`，逐项上线验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。
 
 ## 目录
 
 ```text
 src/
-├── content/columns/        # 栏目正文与栏目私有组件
+├── content/columns/        # 主题正文与主题私有组件（内部稳定名）
 ├── content/posts/          # 文章正文与文章私有组件
 ├── integrations/           # 构建期 chrome 路由分派
 ├── layouts/                # Base + full/minimal/none 装配
-├── routes/                 # 六个文章/栏目构建入口
+├── routes/                 # 六个文章/主题构建入口
 ├── pages/                  # 首页、搜索、标签、归档、隐私、RSS、404
 └── styles/                 # 语义主题、站点外壳与长文排版
 docs/source/                # 原项目的确定性架构结论
@@ -54,7 +56,7 @@ experiments/                # 不属于生产主轴的历史视觉实验
 prototype/                  # 冻结的原版单文件原型
 ```
 
-新增栏目与关联文章见 `docs/handover/COLUMN_MODEL.md`。项目级约束见 `AGENTS.md`，日常运维见 `docs/operations/OPERATIONS.md`。
+新增主题与关联文章见 `docs/handover/COLUMN_MODEL.md`。项目级约束见 `AGENTS.md`，日常运维见 `docs/operations/OPERATIONS.md`。
 
 ## 权威顺序
 

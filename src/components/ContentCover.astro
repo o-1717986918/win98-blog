@@ -1,0 +1,142 @@
+---
+import { Image } from 'astro:assets';
+import { accentStyle, type AccentId } from '../lib/visual';
+
+interface CoverData { src: ImageMetadata | string; alt: string; }
+interface Props {
+  title: string;
+  seed: string;
+  kind: 'post' | 'column';
+  accent: AccentId;
+  cover?: CoverData | undefined;
+  variant?: 'spotlight' | 'list' | 'directory' | 'hero' | 'related';
+  className?: string;
+  eager?: boolean;
+}
+
+const {
+  title,
+  seed,
+  kind,
+  accent,
+  cover,
+  variant = 'list',
+  className,
+  eager = false,
+} = Astro.props;
+const importedCover: { src: ImageMetadata; alt: string } | undefined = cover && typeof cover.src !== 'string'
+  ? { src: cover.src, alt: cover.alt }
+  : undefined;
+
+let hash = 2166136261;
+for (const character of `${kind}:${seed}`) {
+  hash ^= character.codePointAt(0) ?? 0;
+  hash = Math.imul(hash, 16777619);
+}
+const normalized = hash >>> 0;
+const cut = 18 + normalized % 19;
+const windowX = 42 + (normalized >>> 5) % 17;
+const windowY = 16 + (normalized >>> 9) % 18;
+const slope = 58 + (normalized >>> 13) % 21;
+const sizes = variant === 'hero'
+  ? '(max-width: 800px) 100vw, 1024px'
+  : variant === 'spotlight'
+    ? '(max-width: 900px) 100vw, 760px'
+    : variant === 'directory'
+      ? '(max-width: 900px) 100vw, 420px'
+      : '(max-width: 620px) 128px, 224px';
+---
+
+<figure
+  class:list={['content-cover', `content-cover--${variant}`, className, { 'content-cover--image': importedCover }]}
+  style={accentStyle(accent)}
+  data-content-cover
+  data-default-cover={!importedCover ? 'true' : undefined}
+>
+  {importedCover ? (
+    <Image
+      class="content-cover__image"
+      src={importedCover.src}
+      alt={importedCover.alt}
+      widths={[320, 640, 960, 1280]}
+      {sizes}
+      loading={eager ? 'eager' : 'lazy'}
+    />
+  ) : (
+    <svg viewBox="0 0 800 450" preserveAspectRatio="none" role="img" aria-label={`${title}的默认封面`}>
+      <rect class="proof-base" width="800" height="450" />
+      <rect class="proof-primary" x="0" y="0" width={250 + cut * 3} height="450" />
+      <path class="proof-secondary" d={`M ${slope * 4} 0 H 800 V 450 H ${Math.max(330, slope * 3)} Z`} />
+      <rect class="proof-tertiary" x={635 - cut} y="0" width={32 + cut} height="450" />
+      <rect class="proof-window" x={windowX * 6} y={windowY * 4} width="214" height="166" />
+      <path class="proof-rule" d={`M 42 ${92 + cut} H ${280 + slope * 2} M 42 ${118 + cut} H ${206 + slope} M ${windowX * 6 + 20} ${windowY * 4 + 35} H ${windowX * 6 + 174}`} />
+      <path class="proof-crop" d="M42 42h48M42 42v48M758 360v48M710 408h48" />
+      <g class="proof-register">
+        <rect x="58" y="362" width="72" height="8" />
+        <rect x="58" y="380" width="46" height="8" />
+        <rect x="58" y="398" width="24" height="8" />
+      </g>
+      <rect class="proof-stamp" x={706 - cut} y={46 + cut} width="34" height="34" />
+    </svg>
+  )}
+  <span class="content-cover__kind" aria-hidden="true">{kind === 'post' ? '文章' : '主题'}</span>
+</figure>
+
+<style>
+  .content-cover {
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid rgba(var(--content-accent-rgb), .34);
+    border-radius: .22rem;
+    background: rgb(var(--surface-rgb));
+    box-shadow: inset 0 0 0 1px rgba(var(--text-rgb), .04);
+  }
+  .content-cover--directory,
+  .content-cover--hero,
+  .content-cover--spotlight,
+  .content-cover--related { aspect-ratio: 16 / 9; }
+  svg, .content-cover__image { display: block; width: 100%; height: 100%; }
+  .content-cover__image {
+    position: relative;
+    z-index: 1;
+    object-fit: contain;
+    background:
+      linear-gradient(135deg, rgba(var(--content-accent-rgb), .14), transparent 48%),
+      linear-gradient(315deg, rgba(var(--content-secondary-rgb), .16), rgb(var(--surface-rgb)) 58%);
+  }
+  .proof-base { fill: rgb(var(--surface-rgb)); }
+  .proof-primary { fill: rgb(var(--content-accent-rgb)); opacity: .88; }
+  .proof-secondary { fill: rgb(var(--content-secondary-rgb)); opacity: .5; mix-blend-mode: screen; }
+  .proof-tertiary { fill: rgb(var(--content-tertiary-rgb)); opacity: .88; }
+  .proof-window { fill: rgb(var(--surface-rgb)); opacity: .9; }
+  .proof-rule, .proof-crop { fill: none; stroke: rgb(var(--text-rgb)); stroke-width: 5; opacity: .65; vector-effect: non-scaling-stroke; }
+  .proof-crop { stroke-width: 2; opacity: .48; }
+  .proof-register { fill: rgb(var(--text-rgb)); opacity: .7; }
+  .proof-stamp { fill: none; stroke: rgb(var(--content-tertiary-rgb)); stroke-width: 6; opacity: .86; vector-effect: non-scaling-stroke; }
+  .content-cover__kind {
+    position: absolute;
+    right: .55rem;
+    bottom: .48rem;
+    z-index: 2;
+    padding: .15rem .3rem;
+    color: rgb(var(--text-rgb));
+    background: rgba(var(--surface-rgb), .78);
+    font-family: var(--font-mono);
+    font-size: .5rem;
+    letter-spacing: .08em;
+    backdrop-filter: blur(8px);
+  }
+  .content-cover--image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-left: .26rem solid rgb(var(--content-accent-rgb));
+    background: linear-gradient(135deg, transparent 68%, rgba(var(--content-secondary-rgb), .2));
+    pointer-events: none;
+  }
+  :global(:root[data-theme='mist']) .proof-secondary { mix-blend-mode: multiply; opacity: .72; }
+</style>

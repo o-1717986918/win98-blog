@@ -1,0 +1,64 @@
+---
+title: 安装包不是最后一步：Windows 发布后暴露的那些缝
+description: 从 Tauri、FastAPI、Python sidecar 和 Pi Worker 组成真实 Windows 包开始，记录发布后才出现的 CI 缺件、PowerShell 失败遮蔽与模块图非确定性。
+date: 2026-08-28
+minutes: 16
+tags: [ArcVellum, Tauri, FastAPI, 工程]
+columns: [arcvellum]
+cover:
+  src: ./cover.png
+  alt: ArcVellum v0.70 桌面应用真实启动界面
+chrome: none
+theme: abyss
+back: true
+---
+import cover from './cover.png'
+import ArcDocShell from '../../../components/arcvellum/ArcDocShell.astro'
+
+<ArcDocShell index="05" section="ENGINEERING / DELIVERY" title="安装包不是最后一步" deck="真实 NSIS 包、更新签名和 sidecar 生命周期都跑通之后，CI 仍然暴露出两个会让“绿灯”失去意义的缺陷。交付的最后一步是让证据也可靠。" image={cover} imageAlt="ArcVellum 叙事星仪真实界面" nextHref="/posts/arcvellum-longform-debugging/" nextLabel="六个场景、几十次失败">
+
+v0.99.0 的 Windows 验证真正组装了 PyInstaller sidecar、Node 版 Pi Worker、Rust/Tauri、NSIS 和 updater 签名，也检查了静默安装、修复安装与进程退出。但发布记录没有把这段经历漂白：视觉烟测曾被 Escape 中断，所以文档明确不声称已完成真实 UI 点击验收。产品化不是把“被打断”改写成“已通过”。
+
+## 五层技术栈，各自只拥有一种真相
+
+Tauri / Rust 负责安装包、更新、本地进程生命周期与安全桥接；Vue 3 / TypeScript / Vite 负责产品交互；FastAPI 与 SSE 负责本地认证 API、事件流和读模型；Python CLI 内核负责路线状态、任务、Schema 与门禁；项目资产则以人类可读文件和账本长期保存。
+
+分层的关键不在语言，而在所有权。桌面壳不能决定场景是否晋升，Vue 不能复制 Canon 规则，API router 不应承载业务投影，Runtime adapter 不能成为第二套状态机。应用层的 composition root 负责装配实现，公开端口负责跨层协作。
+
+## 模块化审计如何约束未来开发
+
+v0.99.1 的模块化就绪审计给出了一个可执行的开发协议：先在模块目录定位唯一主模块，读取公开合同、一个真实 adapter 与定向测试，再在模块内部实现；只有合同必须改变时，才把变更拆成“合同—adapter—调用方”三个可回滚批次。
+
+Architecture Audit、生成模块图、版本同步、Prompt Registry 与定向合同测试构成只进不退的棘轮。审计仍记录 16 个历史大文件和 110 个复杂函数债务，但要求零新增违规、零循环依赖、零 Studio 对 Engine internal 的导入。债务没有被重命名为“遗留特色”，也没有通过放宽 baseline 消失。
+
+## API 与事件为何要版本化
+
+项目界面依赖多个读模型：工作流、作品档案、星仪、任务活动、人工选择与模型连接。FastAPI router 的职责是 HTTP/SSE 适配，真正的投影由所属模块产生。这样 v2/v3/v4 叙事投影可以并存，稳定 revision 与默认参数不因内部拆分而改变。
+
+事件先进入持久化存储，再通过 SSE 发送。客户端拿到的是可重放的事实流，不是仅存在于某个浏览器连接中的动画消息。这对长时间 Agent 任务尤其重要：关闭窗口、网络抖动或桌面重启不应让用户失去“任务已经做了什么”的证据。
+
+## 测试数字应该如何解读
+
+v0.99.0 记录 Python 1,274 项通过、Vue 186 项断言、Pi Worker 75 项测试，以及 Prompt Registry 57 个资产和 72 个任务 Prompt ID 校验。v0.99.1 的 Vue 断言增长到 200，并增加 100、300、1000 场景规模的 Playwright 视觉验收。
+
+数字本身不能证明文学质量，但能证明工程合同被持续执行。更关键的是测试分布：内核、Worker、前端、Prompt 注册、OpenAPI、生成 DTO、模块图、版本同步与生产构建都有各自门禁，而不是用一个端到端 happy path 代替全部层级。
+
+## Windows 发布不是复制一个 exe
+
+发行链需要同时处理 Tauri 安装包、冻结的应用服务 sidecar、固定 Runtime、Updater 签名、SHA-256 与 `latest.json` 更新清单。桌面壳启动随机本地端口，并用每次启动令牌建立会话；安装包需要在没有 Python、Node、Rust 与浏览器开发环境的 Windows 机器上独立工作。
+
+因此发布验证不仅是 `cargo build`。它包括 sidecar 冒烟、版本一致性、更新验签、安装与覆盖升级、进程清理、用户目录迁移和干净系统矩阵。仓库已经有签名与更新链，但也把 Windows 10/11 干净环境矩阵列为走向 v1.0 的未完证据。
+
+## 交付管线为何属于内核
+
+完整作品交付不是把项目目录压缩。正式 Markdown 与 DOCX 需要过滤任务编号、审查记录、内部状态标记和工作流痕迹，同时保持章节顺序、正文内容与发布清单一致。v0.99.0 的闭环生成了整书 Markdown、DOCX、版式报告与检查报告，并以摘要和内容指纹核对产物。
+
+把导出放在正式路线末端，意味着“能打开 DOCX”还不够。缺失字段、不可解析状态或非零阻断必须让发布失败关闭；只有已晋升正文进入读者交付面。
+
+## 发布页与技术文档还可以如何继续生长
+
+本主题当前按产品、前端、内核、Runtime 与交付分层，适合 Beta 阶段快速建立完整心智模型。走向 v1.0 后，应增加稳定版本的配置参考、故障代码索引、项目格式迁移说明与安全威胁模型；只有当多个已发布版本真的需要长期并行维护时，再引入版本化文档。
+
+这也符合 Docusaurus 官方对版本化的提醒：版本归档会增加构建与维护复杂度，只有高流量、快速变化且确需保留旧接口时才值得。ArcVellum 现在更需要把“当前真实状态”写准确，而不是提前复制五份文档目录。
+
+</ArcDocShell>

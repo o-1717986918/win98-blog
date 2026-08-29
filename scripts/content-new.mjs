@@ -27,8 +27,8 @@ try {
 const today = new Date().toISOString().slice(0, 10);
 const yamlTitle = JSON.stringify(title);
 const frontmatter = kind === 'post'
-  ? `---\ntitle: ${yamlTitle}\ndescription: 请补充一段准确摘要。\ndate: ${today}\ntags: []\ncolumns: []\nchrome: full\ntheme: graphite\ndraft: true\n---\n\n从这里开始写作。\n`
-  : `---\ntitle: ${yamlTitle}\ndescription: 请说明这个栏目收录什么。\nchrome: full\ntheme: graphite\nnav: false\norder: 100\nshowPosts: true\ndraft: true\n---\n\n从这里开始编写栏目说明。\n`;
+  ? `---\ntitle: ${yamlTitle}\ndescription: 请补充一段准确摘要。\ndate: ${today}\ntags: []\ncolumns: []\nchrome: full\ntheme: abyss\ndraft: true\n---\n\n从这里开始写作。\n`
+  : `---\ntitle: ${yamlTitle}\ndescription: 请说明这个主题收录什么。\nchrome: full\ntheme: abyss\naccent: aqua\nnav: false\norder: 100\nshowPosts: true\ndraft: true\n---\n\n从这里开始编写主题说明。\n`;
 
 await mkdir(directory, { recursive: false });
 await writeFile(resolve(directory, 'index.mdx'), frontmatter, { encoding: 'utf8', flag: 'wx' });

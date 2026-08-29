@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#0b1116"/>
+  <path d="M0 90H1600M0 810H1600M90 0V900M1510 0V900" stroke="#23313a"/>
+  <g transform="translate(110 104)">
+    <rect width="860" height="676" fill="#101920" stroke="#354650"/>
+    <g font-family="Consolas,monospace" font-size="37" letter-spacing="10">
+      <text y="54" fill="#53636d">################</text>
+      <text y="104" fill="#53636d">#---#------#---#</text>
+      <text y="154"><tspan fill="#53636d">#-</tspan><tspan fill="#e8af55">$</tspan><tspan fill="#53636d">---####-</tspan><tspan fill="#61b7d7">.</tspan><tspan fill="#53636d">-</tspan><tspan fill="#e26661">*</tspan><tspan fill="#53636d">-#</tspan></text>
+      <text y="204" fill="#53636d">###-#----#-#---#</text>
+      <text y="254"><tspan fill="#53636d">#-</tspan><tspan fill="#e26661">*</tspan><tspan fill="#53636d">---##-</tspan><tspan fill="#e8af55">$</tspan><tspan fill="#53636d">-#---#</tspan></text>
+      <text y="304" fill="#53636d">#-###--#---###-#</text>
+      <text y="354"><tspan fill="#53636d">#</tspan><tspan fill="#79d39e">@</tspan><tspan fill="#53636d">--##-</tspan><tspan fill="#e26661">*</tspan><tspan fill="#53636d">-#---</tspan><tspan fill="#61b7d7">.</tspan><tspan fill="#53636d">-#</tspan></text>
+      <text y="404" fill="#53636d">###----#---###-#</text>
+      <text y="454"><tspan fill="#53636d">#---##-</tspan><tspan fill="#e8af55">$</tspan><tspan fill="#53636d">-#-----#</tspan></text>
+      <text y="504"><tspan fill="#53636d">#-#----#---#</tspan><tspan fill="#61b7d7">.</tspan><tspan fill="#53636d">--#</tspan></text>
+      <text y="554" fill="#53636d">#---####---#####</text>
+      <text y="604" fill="#53636d">################</text>
+    </g>
+    <path d="M95 331L245 381L245 431L195 431L195 281L445 281L445 131L695 131L695 331L845 331" fill="none" stroke="#79d39e" stroke-width="5" stroke-dasharray="3 11"/>
+    <circle cx="95" cy="331" r="15" fill="#79d39e"/><circle cx="845" cy="331" r="15" fill="#0b1116" stroke="#79d39e" stroke-width="5"/>
+  </g>
+  <g transform="translate(1030 112)">
+    <text fill="#79d39e" font-family="Consolas,monospace" font-size="18" letter-spacing="4">TWO-PHASE SOLVER / C99</text>
+    <text y="86" fill="#eef3ee" font-family="Segoe UI, sans-serif" font-size="58" font-weight="700">识别、配对，</text>
+    <text y="154" fill="#eef3ee" font-family="Segoe UI, sans-serif" font-size="58" font-weight="700">再规划。</text>
+    <g transform="translate(0 222)" font-family="Consolas,monospace">
+      <text fill="#82919a" font-size="16">REC PATH / 33 STEPS</text>
+      <rect y="25" width="470" height="64" fill="#101920" stroke="#354650"/>
+      <text x="18" y="64" fill="#e8af55" font-size="17">RRDRRRDUUULUUUURRRRRDDDDDDDRRRRUU</text>
+      <text y="136" fill="#82919a" font-size="16">OBJECTIVE</text>
+      <text y="172" fill="#eef3ee" font-size="23">SOLVE → TURNS → STEPS</text>
+      <text y="226" fill="#82919a" font-size="16">BOUNDED STATE</text>
+      <text y="262" fill="#eef3ee" font-size="23">16×12 / 6 BOX / 6 BOMB</text>
+      <text y="316" fill="#82919a" font-size="16">PATH CONTRACT</text>
+      <text y="352" fill="#79d39e" font-size="23">UPPER = WALK</text>
+      <text y="388" fill="#e8af55" font-size="23">lower = PUSH</text>
+    </g>
+    <path d="M0 655H470" stroke="#354650"/>
+    <text y="694" fill="#e26661" font-family="Consolas,monospace" font-size="14" letter-spacing="2">ACTUAL BUILT-IN MAP · ACTUAL C ENGINE TRACE</text>
+  </g>
+</svg>

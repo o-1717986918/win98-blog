@@ -26,6 +26,7 @@ type Particle = {
   size: number;
   phase: number;
   color: number;
+  mark: number;
   kicked: boolean;
 };
 
@@ -87,7 +88,7 @@ export function mountIntroParticles(
       characterX += maskContext.measureText(character).width - fontSize * 0.09;
     }
     const pixels = maskContext.getImageData(0, 0, width, height).data;
-    const step = compact ? 4 : 5;
+    const step = compact ? 5 : 6;
     const samples: Array<[number, number]> = [];
     for (let y = 0; y < height; y += step) {
       for (let x = 0; x < width; x += step) {
@@ -98,7 +99,7 @@ export function mountIntroParticles(
       const swap = Math.floor(random() * (index + 1));
       [samples[index], samples[swap]] = [samples[swap]!, samples[index]!];
     }
-    return samples.slice(0, compact ? 720 : 1280);
+    return samples.slice(0, compact ? 520 : 900);
   };
 
   const rebuild = () => {
@@ -131,6 +132,7 @@ export function mountIntroParticles(
         size: 0.45 + random() * (compact ? 1.25 : 1.65),
         phase: random() * Math.PI * 2,
         color: random() > 0.96 ? 2 : random() > 0.67 ? 1 : random() > 0.18 ? 0 : 3,
+        mark: Math.floor(random() * 3),
         kicked: false,
       });
     }
@@ -156,8 +158,8 @@ export function mountIntroParticles(
     const elapsed = (now - startedAt) * 0.001;
     const delta = Math.min((now - lastFrame) / 16.667, 2.2);
     lastFrame = now;
-    const gather = smoothstep(0.55, 3.15, elapsed);
-    const reveal = smoothstep(1.8, 3.55, elapsed);
+    const gather = smoothstep(0.18, 1.75, elapsed);
+    const reveal = smoothstep(0.72, 2.05, elapsed);
     const exiting = Number.isFinite(exitStartedAt);
     const scatterAmount = exiting ? smoothstep(0, 1.05, (now - exitStartedAt) * 0.001) : 0;
     context.clearRect(0, 0, width, height);
@@ -170,12 +172,12 @@ export function mountIntroParticles(
       pointerActive ? pointerY : height * 0.44,
       Math.max(width, height) * 0.52,
     );
-    atmosphere.addColorStop(0, rgb(palette.secondary, palette.light ? 0.055 : 0.085));
-    atmosphere.addColorStop(0.42, rgb(palette.primary, palette.light ? 0.018 : 0.032));
+    atmosphere.addColorStop(0, rgb(palette.secondary, palette.light ? 0.035 : 0.05));
+    atmosphere.addColorStop(0.42, rgb(palette.primary, palette.light ? 0.012 : 0.02));
     atmosphere.addColorStop(1, 'rgba(0,0,0,0)');
     context.fillStyle = atmosphere;
     context.fillRect(0, 0, width, height);
-    context.globalCompositeOperation = palette.light ? 'source-over' : 'lighter';
+    context.globalCompositeOperation = 'source-over';
 
     for (const particle of particles) {
       particle.previousX = particle.x;
@@ -227,16 +229,25 @@ export function mountIntroParticles(
       context.lineTo(particle.x, particle.y);
       context.stroke();
 
-      if (particle.depth > 0.82) {
-        context.fillStyle = rgb(color, alpha * 0.08);
-        context.beginPath();
-        context.arc(particle.x, particle.y, particle.size * 4.8, 0, Math.PI * 2);
-        context.fill();
-      }
       context.fillStyle = rgb(color, alpha);
-      context.beginPath();
-      context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-      context.fill();
+      if (particle.mark === 2) {
+        const arm = particle.size * 2.2;
+        context.strokeStyle = rgb(color, alpha);
+        context.lineWidth = Math.max(.45, particle.size * .55);
+        context.beginPath();
+        context.moveTo(particle.x - arm, particle.y + arm);
+        context.lineTo(particle.x - arm, particle.y - arm);
+        context.lineTo(particle.x + arm, particle.y - arm);
+        context.stroke();
+      } else {
+        const widthScale = particle.mark === 1 ? 3.6 : 1.25;
+        context.fillRect(
+          particle.x - particle.size * widthScale * .5,
+          particle.y - particle.size * .52,
+          particle.size * widthScale,
+          Math.max(.7, particle.size * 1.04),
+        );
+      }
     }
     context.globalCompositeOperation = 'source-over';
     frame = requestAnimationFrame(render);

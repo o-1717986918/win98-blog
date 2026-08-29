@@ -1,4 +1,4 @@
-<div class="site-intro" data-site-intro data-state="idle" data-pagefind-ignore aria-label="进入某人的小站">
+<div class="site-intro" data-site-intro data-state="idle" data-pagefind-ignore role="dialog" aria-modal="true" aria-label="进入某人的小站">
   <canvas class="intro-particles" data-intro-particles aria-hidden="true"></canvas>
   <div class="intro-grain" aria-hidden="true"></div>
   <div class="intro-scan" aria-hidden="true"></div>
@@ -9,7 +9,7 @@
   </header>
 
   <div class="intro-copy">
-    <p class="intro-index"><span>PERSONAL</span><span>TECHNICAL</span><span>NOTES</span></p>
+    <p class="intro-index"><span>ESSAYS</span><span>OBSERVATIONS</span><span>WORKS</span></p>
     <div class="intro-title-stack">
       <p class="intro-echo intro-echo--back" aria-hidden="true">某人的小站</p>
       <h1 aria-label="某人的小站">某人的小站</h1>
@@ -21,13 +21,13 @@
         <p>记录，连接，继续生长。</p>
       </div>
       <div class="intro-progress" aria-hidden="true"><i></i><b></b></div>
-      <small>ASSEMBLING A PRIVATE KNOWLEDGE SPACE</small>
+      <small>LEAVING A TRAIL OF THOUGHT</small>
     </div>
   </div>
 
   <footer class="intro-footer" aria-hidden="true">
     <p>EST. 2026<br />31.2304° N / 121.4737° E</p>
-    <p>STATIC FIRST<br />OPEN BY DESIGN</p>
+    <p>WORDS IN MOTION<br />MADE TO BE READ</p>
   </footer>
 </div>
 
@@ -71,7 +71,7 @@
     transform: translateX(-130%) skewX(-12deg);
     pointer-events: none;
   }
-  .site-intro[data-state='playing'] .intro-scan { animation: intro-scan 2.5s 2.15s var(--ease) both; }
+  .site-intro[data-state='playing'] .intro-scan { animation: intro-scan 1.35s 1.2s var(--ease) both; }
   .intro-header, .intro-footer {
     position: absolute;
     right: clamp(1.25rem, 4vw, 3.5rem);
@@ -95,7 +95,7 @@
   }
   .intro-header img { width: 1.65rem; height: 1.65rem; padding: 1px; border: 1px solid rgba(var(--brand-primary-rgb), .45); border-radius: .34rem; object-fit: cover; background: linear-gradient(145deg, rgba(var(--brand-primary-rgb), .55), rgba(var(--brand-secondary-rgb), .55)); box-shadow: 0 0 1.2rem rgba(var(--brand-primary-rgb), .12); }
   .intro-header i { display: block; width: 3rem; height: 1px; background: rgba(var(--text-rgb), .14); }
-  .site-intro[data-state='playing'] .intro-header > p { animation: intro-rise .7s .18s var(--ease) forwards; }
+  .site-intro[data-state='playing'] .intro-header > p { animation: intro-rise .52s .08s var(--ease) forwards; }
   .intro-skip {
     padding: .5rem .65rem;
     border: 0;
@@ -107,7 +107,7 @@
     cursor: pointer;
     opacity: 0;
   }
-  .site-intro[data-state='playing'] .intro-skip { animation: intro-fade .5s .62s ease forwards; }
+  .site-intro[data-state='playing'] .intro-skip { animation: intro-fade .38s .26s ease forwards; }
   .intro-skip kbd { margin-left: .4rem; padding: .18rem .32rem; border: 1px solid rgba(var(--text-rgb), .18); border-radius: 2px; color: inherit; font: inherit; }
   .intro-skip:hover { color: rgb(var(--text-rgb)); }
   .intro-skip:focus-visible { outline: 2px solid rgb(var(--signal-rgb)); outline-offset: 3px; }
@@ -131,7 +131,7 @@
     opacity: 0;
     transform: translateY(.7rem);
   }
-  .site-intro[data-state='playing'] .intro-index { animation: intro-rise .7s 1.65s var(--ease) forwards; }
+  .site-intro[data-state='playing'] .intro-index { animation: intro-rise .5s .72s var(--ease) forwards; }
   .intro-index span + span::before { content: '/'; margin-right: 1.2rem; color: rgba(var(--text-rgb), .17); }
   .intro-title-stack { position: relative; text-align: center; }
   h1, .intro-echo {
@@ -152,7 +152,7 @@
     transform: translateY(1.1rem) scale(.985);
     text-shadow: 0 0 2.8rem rgba(var(--field-primary-rgb), .16);
   }
-  .site-intro[data-state='playing'] h1 { animation: intro-title 1.35s 2.4s var(--ease) forwards; }
+  .site-intro[data-state='playing'] h1 { animation: intro-title .92s 1.02s var(--ease) forwards; }
   .intro-echo {
     position: absolute;
     inset: 0 0 auto;
@@ -164,8 +164,8 @@
   }
   .intro-echo--back { transform: translate(-1rem, .4rem); }
   .intro-echo--front { z-index: 3; transform: translate(1rem, -.35rem); -webkit-text-stroke-color: rgba(var(--field-primary-rgb), .15); }
-  .site-intro[data-state='playing'] .intro-echo--back { animation: intro-echo-back 1.6s 2.05s var(--ease) forwards; }
-  .site-intro[data-state='playing'] .intro-echo--front { animation: intro-echo-front 1.7s 2.22s var(--ease) forwards; }
+  .site-intro[data-state='playing'] .intro-echo--back { animation: intro-echo-back 1.05s .86s var(--ease) forwards; }
+  .site-intro[data-state='playing'] .intro-echo--front { animation: intro-echo-front 1.12s .94s var(--ease) forwards; }
   .intro-status {
     display: grid;
     grid-template-columns: auto minmax(7rem, 1fr) auto;
@@ -175,15 +175,15 @@
     opacity: 0;
     transform: translateY(.8rem);
   }
-  .site-intro[data-state='playing'] .intro-status { animation: intro-rise .72s 3.3s var(--ease) forwards; }
+  .site-intro[data-state='playing'] .intro-status { animation: intro-rise .54s 1.62s var(--ease) forwards; }
   .intro-status > div:first-child { display: flex; gap: .65rem; align-items: center; }
   .intro-status span, .intro-status small { color: rgba(var(--text-rgb), .35); font-family: var(--font-mono); font-size: .5rem; letter-spacing: .1em; }
   .intro-status p { margin: 0; color: rgba(var(--text-rgb), .68); font-size: clamp(.72rem, 1vw, .88rem); letter-spacing: .08em; }
   .intro-progress { position: relative; height: 1px; overflow: visible; background: rgba(var(--text-rgb), .14); }
   .intro-progress i { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, rgb(var(--brand-primary-rgb)), rgb(var(--brand-secondary-rgb))); box-shadow: 0 0 .9rem rgba(var(--brand-primary-rgb), .45); transform: scaleX(0); transform-origin: left; }
   .intro-progress b { position: absolute; top: 50%; left: 0; width: .34rem; height: .34rem; border-radius: 50%; background: rgb(var(--text-rgb)); box-shadow: 0 0 1rem rgba(var(--field-primary-rgb), .7); transform: translate(-50%, -50%); }
-  .site-intro[data-state='playing'] .intro-progress i { animation: intro-progress 3s 3.35s var(--ease) forwards; }
-  .site-intro[data-state='playing'] .intro-progress b { animation: intro-progress-dot 3s 3.35s var(--ease) forwards; }
+  .site-intro[data-state='playing'] .intro-progress i { animation: intro-progress 1.7s 1.68s var(--ease) forwards; }
+  .site-intro[data-state='playing'] .intro-progress b { animation: intro-progress-dot 1.7s 1.68s var(--ease) forwards; }
   .intro-footer {
     bottom: clamp(1.3rem, 4vw, 3rem);
     align-items: flex-end;
@@ -195,7 +195,7 @@
   }
   .intro-footer p { margin: 0; }
   .intro-footer p:last-child { text-align: right; }
-  .site-intro[data-state='playing'] .intro-footer { animation: intro-fade .7s 1.1s ease forwards; }
+  .site-intro[data-state='playing'] .intro-footer { animation: intro-fade .45s .46s ease forwards; }
   .site-intro[data-state='dispersing'] :is(h1, .intro-echo, .intro-index, .intro-status) { opacity: 0; filter: blur(12px); transform: translateY(-.8rem) scale(1.012); transition: .48s ease; }
   @keyframes intro-rise { to { opacity: 1; transform: translateY(0); } }
   @keyframes intro-fade { to { opacity: 1; } }
@@ -225,7 +225,7 @@
 <script>
   import type { IntroParticleController, IntroPalette, IntroRgb } from '../lib/intro-particles';
 
-  const introKey = 'someone-site:intro-seen:v3';
+  const introKey = 'someone-site:intro-seen:v4';
   const intro = document.querySelector<HTMLElement>('[data-site-intro]');
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (intro) {
@@ -236,6 +236,24 @@
     let removeTimer = 0;
     let particleController: IntroParticleController | undefined;
     let disposed = false;
+    const suspendedSiblings = new Map<HTMLElement, { inert: boolean; ariaHidden: string | null }>();
+    const suspendPage = () => {
+      for (const element of document.body.querySelectorAll<HTMLElement>(':scope > :not(.site-intro):not(script)')) {
+        if (!suspendedSiblings.has(element)) suspendedSiblings.set(element, {
+          inert: element.inert,
+          ariaHidden: element.getAttribute('aria-hidden'),
+        });
+        element.setAttribute('inert', '');
+        element.inert = true;
+        element.setAttribute('aria-hidden', 'true');
+      }
+    };
+    const introObserver = new MutationObserver(suspendPage);
+    const restorePage = () => suspendedSiblings.forEach(({ inert, ariaHidden }, element) => {
+      element.inert = inert;
+      if (ariaHidden === null) element.removeAttribute('aria-hidden');
+      else element.setAttribute('aria-hidden', ariaHidden);
+    });
     const readRgb = (name: string): IntroRgb => {
       const values = getComputedStyle(document.documentElement).getPropertyValue(name).split(',').map((value) => Number(value.trim()));
       return [values[0] ?? 255, values[1] ?? 255, values[2] ?? 255];
@@ -252,6 +270,9 @@
       disposed = true;
       intro.hidden = true;
       document.body.classList.remove('intro-active');
+      restorePage();
+      introObserver.disconnect();
+      document.removeEventListener('DOMContentLoaded', suspendPage);
       particleController?.destroy();
       removeEventListener('keydown', onKeyDown);
       dispatchEvent(new CustomEvent('site:intro-end'));
@@ -261,17 +282,20 @@
       clearTimeout(leaveTimer);
       particleController?.scatter();
       intro.dataset.state = reducedMotion ? 'leaving' : 'dispersing';
-      exitTimer = window.setTimeout(() => { intro.dataset.state = 'leaving'; }, reducedMotion ? 0 : 460);
-      removeTimer = window.setTimeout(finish, reducedMotion ? 180 : 1580);
+      exitTimer = window.setTimeout(() => { intro.dataset.state = 'leaving'; }, reducedMotion ? 0 : 320);
+      removeTimer = window.setTimeout(finish, reducedMotion ? 150 : 1080);
     };
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' || event.key === 'Enter') leave();
+      if (event.key === 'Escape') leave();
     }
     if (alreadySeen && !forceReplay) {
       intro.hidden = true;
     } else {
       sessionStorage.setItem(introKey, 'true');
       document.body.classList.add('intro-active');
+      suspendPage();
+      introObserver.observe(document.body, { childList: true });
+      document.addEventListener('DOMContentLoaded', suspendPage, { once: true });
       intro.dataset.state = 'playing';
       dispatchEvent(new CustomEvent('site:intro-start'));
       if (!reducedMotion) {
@@ -282,9 +306,11 @@
           }).catch((error) => console.warn('[site-intro] Particle typography unavailable.', error));
         }
       }
-      intro.querySelector<HTMLButtonElement>('[data-intro-skip]')?.addEventListener('click', leave, { once: true });
+      const skipButton = intro.querySelector<HTMLButtonElement>('[data-intro-skip]');
+      skipButton?.addEventListener('click', leave, { once: true });
+      skipButton?.focus({ preventScroll: true });
       addEventListener('keydown', onKeyDown);
-      leaveTimer = window.setTimeout(leave, reducedMotion ? 900 : 6800);
+      leaveTimer = window.setTimeout(leave, reducedMotion ? 650 : 3800);
     }
     addEventListener('pagehide', () => {
       clearTimeout(leaveTimer);

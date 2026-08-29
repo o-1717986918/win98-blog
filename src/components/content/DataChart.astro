@@ -1,0 +1,42 @@
+---
+interface Datum { label: string; value: number; color?: 'aqua' | 'coral' | 'violet' | 'gold'; }
+interface Props { title: string; description: string; data: Datum[]; unit?: string; }
+const { title, description, data, unit = '' } = Astro.props;
+const maximum = Math.max(1, ...data.map(({ value }) => Math.max(0, value)));
+const chartId = `chart-${Array.from(title).reduce((hash, character) => Math.imul(hash ^ (character.codePointAt(0) ?? 0), 16777619), 2166136261) >>> 0}`;
+---
+
+<figure class="data-chart" data-chart aria-labelledby={`${chartId}-title ${chartId}-description`}>
+  <figcaption><strong id={`${chartId}-title`}>{title}</strong><span id={`${chartId}-description`}>{description}</span></figcaption>
+  <div class="data-chart__plot" aria-hidden="true">
+    {data.map(({ label, value, color = 'aqua' }) => (
+      <div class="data-chart__row">
+        <span>{label}</span>
+        <i class={`data-chart__bar data-chart__bar--${color}`} style={`--bar-size:${Math.max(0, value) / maximum * 100}%`}></i>
+        <b>{value}{unit}</b>
+      </div>
+    ))}
+  </div>
+  <table class="visually-hidden">
+    <caption>{title}：{description}</caption><thead><tr><th>项目</th><th>数值</th></tr></thead>
+    <tbody>{data.map(({ label, value }) => <tr><th>{label}</th><td>{value}{unit}</td></tr>)}</tbody>
+  </table>
+</figure>
+
+<style>
+  .data-chart { margin: 2.2rem 0; padding: 1.25rem; border: 1px solid var(--line); background: linear-gradient(160deg, rgba(var(--surface-rgb), .9), rgba(var(--spectrum-violet-rgb), .07)); }
+  figcaption { display: grid; gap: .25rem; margin-bottom: 1.2rem; }
+  figcaption strong { font-family: var(--font-display); font-size: 1rem; }
+  figcaption span { color: rgba(var(--text-rgb), .58); font-size: .72rem; line-height: 1.6; }
+  .data-chart__plot { display: grid; gap: .72rem; }
+  .data-chart__row { display: grid; grid-template-columns: minmax(5rem, .5fr) minmax(7rem, 1fr) 3.5rem; align-items: center; gap: .7rem; font-family: var(--font-mono); font-size: .63rem; }
+  .data-chart__row > span { color: rgba(var(--text-rgb), .74); }
+  .data-chart__row b { color: rgba(var(--text-rgb), .7); font-weight: 500; text-align: right; }
+  .data-chart__bar { position: relative; height: .7rem; background: rgba(var(--text-rgb), .08); }
+  .data-chart__bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--bar-size); background: rgb(var(--chart-color)); }
+  .data-chart__bar--aqua { --chart-color: var(--spectrum-aqua-rgb); }
+  .data-chart__bar--coral { --chart-color: var(--spectrum-coral-rgb); }
+  .data-chart__bar--violet { --chart-color: var(--spectrum-violet-rgb); }
+  .data-chart__bar--gold { --chart-color: var(--spectrum-gold-rgb); }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+</style>

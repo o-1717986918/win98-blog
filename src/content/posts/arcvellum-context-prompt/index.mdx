@@ -1,0 +1,67 @@
+---
+title: Agent 写之前，系统怎样证明它读过
+description: Context Broker 留下来源 Trace，Prompt Registry 版本化执行约束；二者一起阻止 Agent 凭记忆、凭文件名或凭一段泛化提示词继续正式路线。
+date: 2026-08-29T00:00:00+08:00
+minutes: 13
+tags: [ArcVellum, Agent, Context Engineering]
+columns: [arcvellum]
+cover:
+  src: ./cover.png
+  alt: ArcVellum Agent Runtime 真实界面，展示受控任务、状态与执行事件
+chrome: none
+theme: abyss
+back: true
+---
+import cover from './cover.png'
+import ArcDocShell from '../../../components/arcvellum/ArcDocShell.astro'
+
+<ArcDocShell index="11" section="CONTEXT / PROMPT" title="证明 Agent 真正读过" deck="一份上下文 Markdown 对人类很友好，却无法证明当前场景、人物、Canon、文风和字数预算真的被纳入这次执行。正式路线需要来源证明，也需要可版本化的任务要求。" image={cover} imageAlt="ArcVellum Agent Runtime 真实界面" nextHref="/posts/arcvellum-workflow-review/" nextLabel="文件已经生成，为什么流程仍然不算完成">
+
+Agent 最危险的失败不总是输出乱码。更常见的情况是它写得顺畅、文件也存在，却漏读了当前人物状态、沿用旧场景、忽略禁止变化，或者把上一次任务的提示要求带到这一次。只检查结果文本，很难区分“认真读过后判断错误”和“根本没有读完整”。
+
+ArcVellum 把这件事拆成两个模块：Context Broker 回答依据是什么；Prompt Registry 回答这项任务被要求怎样做。
+
+## Context Packet 不再独自成立
+
+早期的 `memory/context_packets/{scene_id}.md` 是一份紧凑、可读的上下文。问题是机器无法据此回答：当前 scene 文件是否加载，主要与次要角色是否覆盖，Canon、forbidden changes、outline、foreshadowing、mounted style 和 word budget 是否存在，又有哪些材料为了长度被排除。
+
+v0.86.0 之后，正式 `context` 命令必须同时生成 Markdown packet 与 `context_trace.v1` JSON。Trace 至少记录 scene id、packet、必需上下文组、loaded / summarized / excluded files、style mounts、word budget source、character files、canon files、上一场尾部、长度预算与缺失项。
+
+一句硬规则因此成立：没有 Trace 的 Packet 不是正式上下文。
+
+## 缺失项如何传播成阻断
+
+`missing_required_context` 非空时，流程不能继续生成正文。`workflow-state` 或 `task-next` 会派发 context-trace 修复任务；RP、分支、composition、generation、review 和 revision 的任务包都要引用同一份 Trace；章节 ready 与导出从场景 readiness 继承这项门禁。
+
+这不是让 Agent 在回复里声称“我已阅读”。平台 Agent 需要在 reading receipt 中记录已读 Trace，而 Trace 本身由 CLI 从项目文件生成。手写一个 JSON 冒充来源不满足正式证明；如果 CLI 失败，只能记录实际尝试、失败与等价 workaround，后续审查仍能看到这条异常。
+
+## Prompt Asset 不是一个装饰性 ID
+
+旧 Task Package 已经带 `prompt_asset_id`，但要求分散在代码、模板和长文档中。宿主 Agent 很容易把 ID 当标签，凭自己记忆继续做。Prompt Registry 将它变成文件资产：frontmatter 描述 route、task type、required inputs、context groups、hard constraints、output contract、review requirements 和 forbidden shortcuts，正文则给出当前 Prompt Body。
+
+`task-open` 会先查 exact asset，再按最具体的 wildcard 匹配，并把解析结果完整写进任务包。高风险任务以后可以增加更精确资产，而不用复制整条 route 的通用要求。Registry 验证命令同时检查资产 Schema 与任务注册表中的每一个 Prompt ID，缺失时任务包明确要求先修 Registry，不能默默使用默认提示。
+
+## 两个模块为什么缺一不可
+
+Prompt Registry 如果没有 Context Trace，只能证明“要求 Agent 读 Canon”，不能证明 Canon 真被装入。Context Trace 如果没有 Prompt Asset，只能证明文件被打包，不能说明这次任务禁止哪些捷径、输出什么合同、怎样复审。
+
+一次正式任务因此形成两条相交证据链：
+
+```text
+task-open -> resolved Prompt Asset -> 做什么 / 不能做什么
+source paths -> Context Trace -> 根据什么 / 缺少什么
+```
+
+两者最终在 Task Package 和 prompt manifest 中汇合。生成、审查与修订可以确认自己引用的是同一份上下文 revision，而不是各自临时搜索一遍项目。
+
+## 这种严格会不会压制创作
+
+它限制的是来源与权力，不是句子选择。平台 Agent仍然负责创意判断、推演、写作和审查；CLI 不替它生成文学结论。Context Trace 不规定某个人物必须怎样说话，只确保人物档案和当前状态没有被漏掉；Prompt Asset 不规定唯一文风，只规定候选不能跳过审查成为 Canon。
+
+真正需要避免的是把 Trace 继续膨胀成“把全项目复制给模型”。它应记录加载、摘要与排除边界，让上下文可审计且受预算约束。内容太多时，正确动作是明确摘要和排除理由，而不是无声截断。
+
+## 仍值得单独展开的文章
+
+Context Broker 和 Prompt Registry 在这里合写，是因为它们共同回答一次 Agent 执行的输入证明。后续仍可分别展开：Trace schema 如何随场景链路演化、上下文包怎样处理长篇前文、wildcard asset 如何避免过度宽泛、Prompt 版本迁移怎样不让正在执行的 Task Package 漂移。
+
+</ArcDocShell>

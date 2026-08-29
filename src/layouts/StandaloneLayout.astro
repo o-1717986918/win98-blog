@@ -7,17 +7,17 @@ interface Props {
   title: string;
   description?: string;
   theme?: ThemeId;
-  back?: boolean;
   pageKind?: 'standalone' | 'post' | 'column';
   published?: Date | undefined;
   updated?: Date | undefined;
   tags?: string[] | undefined;
   noindex?: boolean | undefined;
+  image?: string | undefined;
 }
-const { title, description, theme = SITE.defaultTheme, back = true, pageKind = 'standalone', published, updated, tags, noindex } = Astro.props;
+const { title, description, theme = SITE.defaultTheme, pageKind = 'standalone', published, updated, tags, noindex, image } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description ?? SITE.description} theme={theme} {pageKind} {published} {updated} {tags} {noindex}>
-  {back && <BackBadge />}
+<BaseLayout title={title} description={description ?? SITE.description} theme={theme} {pageKind} {published} {updated} {tags} {noindex} {image}>
+  <BackBadge />
   <slot />
 </BaseLayout>

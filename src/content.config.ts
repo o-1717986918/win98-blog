@@ -6,7 +6,10 @@ const contentId = ({ entry }: { entry: string }) =>
   entry.replaceAll('\\', '/').replace(/\/index\.(md|mdx)$/i, '');
 
 const chrome = z.enum(['full', 'minimal', 'none']).default('full');
-const theme = z.enum(['graphite', 'paper', 'night', 'indigo']).default('graphite');
+const theme = z.enum(['mist', 'abyss', 'graphite', 'paper', 'night', 'indigo'])
+  .default('abyss')
+  .transform((value) => value === 'mist' || value === 'paper' ? 'mist' as const : 'abyss' as const);
+const accent = z.enum(['aqua', 'coral', 'violet', 'gold']).default('aqua');
 const cover = ({ image }: SchemaContext) => z.object({
   src: image(),
   alt: z.string().min(1),
@@ -24,6 +27,7 @@ const columns = defineCollection({
     cover: cover({ image }).optional(),
     chrome,
     theme,
+    accent,
     back: z.boolean().default(true),
     nav: z.boolean().default(false),
     navLabel: z.string().min(1).optional(),
@@ -69,4 +73,27 @@ const posts = defineCollection({
   }),
 });
 
-export const collections = { columns, posts };
+const notes = defineCollection({
+  loader: glob({
+    pattern: '**/index.{md,mdx}',
+    base: './src/content/notes',
+    generateId: contentId,
+  }),
+  schema: z.object({
+    title: z.string().min(1),
+    description: z.string().default(''),
+    created: z.coerce.date(),
+    updated: z.coerce.date().optional(),
+    tags: z.array(z.string().min(1)).default([]),
+    aliases: z.array(z.string().min(1)).default([]),
+    publish: z.boolean().default(false),
+    source: z.string().optional(),
+    draft: z.boolean().default(false),
+  }).superRefine((note, context) => {
+    if (note.updated && note.updated < note.created) {
+      context.addIssue({ code: 'custom', path: ['updated'], message: 'updated 不能早于 created' });
+    }
+  }),
+});
+
+export const collections = { columns, posts, notes };

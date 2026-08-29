@@ -7,6 +7,12 @@
   :focus-visible { outline: 2px solid rgb(var(--signal-rgb)); outline-offset: 4px; }
 }
 
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: .18s ease-out both minimal-fade-out; }
+::view-transition-new(root) { animation: .28s ease-out both minimal-fade-in; }
+@keyframes minimal-fade-out { to { opacity: 0; } }
+@keyframes minimal-fade-in { from { opacity: 0; } }
+
 @layer shell {
   body {
     min-height: 100vh;
@@ -18,5 +24,5 @@
     -webkit-font-smoothing: antialiased;
   }
   .minimal-main { position: relative; z-index: 1; width: min(58rem, calc(100% - 2rem)); margin-inline: auto; }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } ::view-transition-old(root), ::view-transition-new(root) { animation: none; } }
 }

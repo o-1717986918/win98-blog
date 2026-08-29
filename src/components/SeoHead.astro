@@ -70,6 +70,6 @@ const structuredData = isArticle
 {tags.map((tag) => <meta property="article:tag" content={tag} />)}
 <meta data-pagefind-meta="title[content]" content={title} />
 <meta data-pagefind-meta="description[content]" content={description} />
-<meta data-pagefind-filter="type[content]" content={pageKind === 'post' ? '文章' : pageKind === 'column' ? '栏目' : '页面'} />
+<meta data-pagefind-filter="type[content]" content={pageKind === 'post' ? '文章' : pageKind === 'column' ? '主题' : '页面'} />
 {tags.map((tag) => <meta data-pagefind-filter="tag[content]" content={tag} />)}
 <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />

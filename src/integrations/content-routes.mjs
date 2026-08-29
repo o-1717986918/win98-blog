@@ -1,8 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-const CHROME = new Set(['full', 'minimal', 'none']);
+import { readRouteMetadata } from '../lib/frontmatter.mjs';
 
 async function discoverEntries(root) {
   const files = [];
@@ -15,17 +14,6 @@ async function discoverEntries(root) {
   }
   await walk(root);
   return files;
-}
-
-function readRouteMetadata(source, file) {
-  const frontmatter = source.match(/^---\r?\n([\s\S]*?)\r?\n---/u)?.[1] ?? '';
-  const chrome = frontmatter.match(/^chrome:\s*(full|minimal|none)\s*$/mu)?.[1] ?? 'full';
-  const draft = /^draft:\s*true\s*$/mu.test(frontmatter);
-  const rawDate = frontmatter.match(/^date:\s*([^\r\n#]+)\s*$/mu)?.[1]?.trim();
-  const publishAt = rawDate ? Date.parse(rawDate) : undefined;
-  if (!CHROME.has(chrome)) throw new Error(`Unsupported chrome value in ${file}`);
-  if (rawDate && Number.isNaN(publishAt)) throw new Error(`Invalid date in ${file}`);
-  return { chrome, draft, publishAt };
 }
 
 export default function contentRoutes() {

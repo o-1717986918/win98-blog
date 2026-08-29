@@ -1,41 +1,54 @@
 ---
 import { getCollection } from 'astro:content';
 import ColumnDirectory from '../components/ColumnDirectory.astro';
+import ContentCover from '../components/ContentCover.astro';
 import PostList from '../components/PostList.astro';
 import { SITE } from '../config/site';
-import { formatDate, isPublished, sortColumns, sortPosts } from '../lib/content';
+import { allTags, formatDate, isPublished, sortColumns, sortPosts } from '../lib/content';
+import { accentStyle, postAccent } from '../lib/visual';
 import FullShell from '../layouts/FullShell.astro';
 
 const posts = sortPosts((await getCollection('posts')).filter(isPublished));
 const columns = sortColumns((await getCollection('columns')).filter(isPublished));
+const notes = (await getCollection('notes'))
+  .filter((note) => note.data.publish && !note.data.draft)
+  .sort((a, b) => (b.data.updated ?? b.data.created).getTime() - (a.data.updated ?? a.data.created).getTime());
 const columnMap = new Map(columns.map((column) => [column.id, column]));
 const spotlight = posts.find((post) => post.data.featured) ?? posts[0];
-const recent = posts.filter((post) => post.id !== spotlight?.id).slice(0, 5);
+const recent = posts.filter((post) => post.id !== spotlight?.id).slice(0, 3);
+const spotlightStyle = spotlight ? accentStyle(postAccent(spotlight, columnMap)) : accentStyle('aqua');
+const topTags = allTags(posts).slice(0, 4);
+const totalMinutes = posts.reduce((sum, post) => sum + (post.data.minutes ?? 0), 0);
+const latestDate = spotlight ? spotlight.data.updated ?? spotlight.data.date : undefined;
+const noteTags = [...new Set(notes.flatMap((note) => note.data.tags))].slice(0, 5);
+const latestNote = notes[0];
 ---
 
 <FullShell title={SITE.title} description={SITE.description}>
   <div class="page-wrap home-page">
     <header class="home-hero">
       <div class="home-identity">
-        <p class="home-kicker">PERSONAL TECHNICAL BLOG · EST. 2026</p>
+        <p class="home-kicker">ESSAYS · NOTES · EXPERIMENTS · EST. 2026</p>
         <div class="home-title-lockup">
           <h1><span>某人的</span><em>小站</em></h1>
-          <span class="home-title-signal" aria-hidden="true"><i></i><i></i></span>
+          <span class="home-register" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
         </div>
       </div>
       <div class="home-statement">
         <p>记录 Web 架构、图形学、阅读与工程实践。先把问题想清楚，再把实现和判断公开留下。</p>
         <dl>
           <div><dt>文章</dt><dd>{posts.length}</dd></div>
-          <div><dt>栏目</dt><dd>{columns.length}</dd></div>
-          <div><dt>输出</dt><dd>静态优先</dd></div>
+          <div><dt>主题</dt><dd>{columns.length}</dd></div>
+          <div><dt>近况</dt><dd>持续写作</dd></div>
         </dl>
       </div>
 
       {spotlight ? (
-        <a class="spotlight" href={`/posts/${spotlight.id}/`} data-depth-card>
+        <a class="spotlight" href={`/posts/${spotlight.id}/`} style={spotlightStyle}>
+          <span class="spotlight-glow" aria-hidden="true"></span>
+          <span class="spotlight-mark" aria-hidden="true"><i></i><i></i><i></i></span>
           <div class="spotlight-main">
-            <p class="spotlight-label"><span>最近更新</span><time datetime={spotlight.data.date.toISOString()}>{formatDate(spotlight.data.date)}</time></p>
+            <p class="spotlight-label"><span>最近重点</span><time datetime={spotlight.data.date.toISOString()}>{formatDate(spotlight.data.date)}</time></p>
             <h2>{spotlight.data.title}</h2>
           </div>
           <div class="spotlight-detail">
@@ -49,112 +62,270 @@ const recent = posts.filter((post) => post.id !== spotlight?.id).slice(0, 5);
             </div>
             <span class="spotlight-link">开始阅读 <i aria-hidden="true">↗</i></span>
           </div>
+          <ContentCover className="spotlight-cover" title={spotlight.data.title} seed={spotlight.id} kind="post" accent={postAccent(spotlight, columnMap)} cover={spotlight.data.cover} variant="spotlight" eager />
         </a>
       ) : (
         <div class="spotlight spotlight--empty"><p>第一篇文章正在准备中。</p></div>
       )}
-
-      <div class="spotlight-orbits" aria-hidden="true"><i></i><i></i><i></i></div>
-    </header>
-
-    <div class="home-library">
-      <section class="recent-writing" aria-labelledby="latest-heading">
-        <div class="library-heading">
-          <div><p>CHRONOLOGICAL</p><h2 id="latest-heading">继续阅读</h2></div>
-          <a href="/archive/">全部文章 →</a>
-        </div>
-        <PostList posts={recent} />
+      <section class="home-signal" aria-label="站点内容概况">
+        <a href="/archive/"><span>PUBLISHED / 01</span><strong>{posts.length} 篇文章</strong><small>{columns.length} 个长期主题</small></a>
+        <div><span>READING / 02</span><strong>{totalMinutes} 分钟</strong><small>已标注预计阅读量</small></div>
+        <div><span>LATEST / 03</span><strong>{latestDate ? formatDate(latestDate) : '待续'}</strong><small>最近一次更新</small></div>
+        <div class="home-signal__tags"><span>TOPICS / 04</span><p>{topTags.map((tag) => <a href={`/tags/${encodeURIComponent(tag.name)}/`}>#{tag.name}</a>)}</p></div>
       </section>
 
-      <aside class="column-browser" aria-labelledby="columns-heading">
-        <div class="library-heading">
-          <div><p>CURATED PATHS</p><h2 id="columns-heading">栏目</h2></div>
-        </div>
-        <p class="column-note">栏目是开发者自由定义的内容路径，与文章页面采用哪一种外壳互不推导。</p>
-        <ColumnDirectory columns={columns} posts={posts} />
-      </aside>
-    </div>
+    </header>
+
+    <section class="home-library" aria-label="主题、近文与学习笔记">
+        <aside class="column-browser" aria-labelledby="columns-heading">
+          <div class="library-heading">
+            <div><p>LONG-RUNNING THEMES</p><h2 id="columns-heading">主题</h2></div>
+          </div>
+          <p class="column-note">沿着长期问题整理文章；轨道内可独立向下滚动。</p>
+          <div class="column-viewport">
+            <div class="column-rail" aria-hidden="true"><span>01</span><i></i><b>{String(columns.length).padStart(2, '0')}</b></div>
+            <ColumnDirectory columns={columns} posts={posts} compact />
+            <p class="column-scroll-cue">滚动浏览 {columns.length} 个主题 <span aria-hidden="true">↓</span></p>
+          </div>
+        </aside>
+
+        <section class="recent-writing" aria-labelledby="latest-heading">
+          <div class="library-heading">
+            <div><p>LATEST WRITING</p><h2 id="latest-heading">继续阅读</h2></div>
+            <a href="/archive/">全部文章 →</a>
+          </div>
+          <PostList posts={recent} compact />
+        </section>
+
+        <section class="notes-feature" data-notes-feature aria-labelledby="notes-feature-title">
+          <span class="notes-feature__glow" aria-hidden="true"></span>
+          <header><p>PUBLIC VAULT / LOCAL KNOWLEDGE</p><span><i></i> {String(notes.length).padStart(2, '0')} NOTES</span></header>
+          <div class="notes-feature__identity">
+            <h2 id="notes-feature-title">学习<br />笔记</h2>
+            <p>像翻开一组仍在生长的卡片：正文、属性、双向链接与局部关系图共同描述一个知识节点。</p>
+          </div>
+          <div class="notes-feature__modes" role="tablist" aria-label="预览学习笔记视图">
+            <button type="button" role="tab" aria-selected="true" data-note-mode="note"><b>NOTE</b><span>笔记</span></button>
+            <button type="button" role="tab" aria-selected="false" data-note-mode="links"><b>LINKS</b><span>关系</span></button>
+            <button type="button" role="tab" aria-selected="false" data-note-mode="properties"><b>YAML</b><span>属性</span></button>
+          </div>
+          <div class="notes-feature__canvas">
+            <div data-note-panel="note">
+              <span>LATEST PUBLIC NOTE</span>
+              <strong>{latestNote?.data.title ?? '等待第一条公开笔记'}</strong>
+              <p>{latestNote?.data.description ?? '在本地知识库中标记公开后，笔记会出现在这里。'}</p>
+            </div>
+            <div data-note-panel="links" hidden>
+              <span>LOCAL GRAPH</span>
+              <div class="notes-feature__nodes"><i></i>{notes.slice(0, 3).map((note) => <a href={`/notes/${note.id}/`}>{note.data.title}</a>)}</div>
+              <p>节点来自真实公开笔记；内容增加后，关系视图会沿 Wiki 链接继续生长。</p>
+            </div>
+            <div data-note-panel="properties" hidden>
+              <span>NOTE PROPERTIES</span>
+              <dl><div><dt>updated</dt><dd>{latestNote ? formatDate(latestNote.data.updated ?? latestNote.data.created) : '—'}</dd></div><div><dt>tags</dt><dd>{noteTags.join(', ') || '—'}</dd></div><div><dt>publish</dt><dd>true</dd></div></dl>
+            </div>
+          </div>
+          <a class="notes-feature__enter" href="/notes/"><span>进入知识空间</span><i>↗</i></a>
+        </section>
+    </section>
   </div>
 </FullShell>
 
 <style>
-  .home-page { padding-bottom: clamp(5rem, 10vw, 9rem); }
-  .home-hero { position: relative; padding: clamp(2.6rem, 5vh, 4rem) 0 0; }
+  .home-page { width: min(var(--content), calc(100% - clamp(2.5rem, 5vw, 6rem))); padding-bottom: clamp(5rem, 10vw, 9rem); }
+  .home-hero { position: relative; padding: clamp(2.2rem, 4vh, 3.25rem) 0 0; }
   .home-identity { display: flex; align-items: end; justify-content: space-between; gap: 2rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
-  .home-kicker { color: rgb(var(--spectrum-aqua-rgb)); font-family: var(--font-mono); font-size: .62rem; letter-spacing: .12em; }
+  .home-kicker { color: rgb(var(--spectrum-aqua-rgb)); font-family: var(--font-mono); font-size: .68rem; letter-spacing: .1em; }
   .home-title-lockup { display: flex; align-items: center; justify-content: flex-end; gap: .8rem; min-width: min(100%, 13rem); }
   .home-title-lockup h1 { display: flex; justify-content: flex-end; gap: .3em; font-family: var(--font-display); font-size: clamp(1.65rem, 3.2vw, 2.5rem); font-stretch: condensed; font-weight: 660; line-height: .95; letter-spacing: -.055em; }
   .home-title-lockup h1 span { color: rgb(var(--text-rgb)); }
   .home-title-lockup h1 em { color: rgb(var(--brand-secondary-rgb)); font-style: normal; }
-  .home-title-signal { display: flex; gap: .3rem; align-items: center; }
-  .home-title-signal i { display: block; width: .38rem; height: .38rem; border-radius: 50%; background: rgb(var(--brand-primary-rgb)); box-shadow: 0 0 0 .22rem rgba(var(--brand-primary-rgb), .1); }
-  .home-title-signal i:last-child { width: .24rem; height: .24rem; background: rgb(var(--brand-secondary-rgb)); box-shadow: 0 0 0 .18rem rgba(var(--brand-secondary-rgb), .1); }
+  .home-register { display: grid; grid-template-columns: repeat(4, .52rem); gap: .18rem; align-items: center; transform: rotate(-6deg); }
+  .home-register i { display: block; height: 2px; background: rgb(var(--spectrum-aqua-rgb)); }
+  .home-register i:nth-child(2) { background: rgb(var(--spectrum-coral-rgb)); transform: translateY(.2rem); }
+  .home-register i:nth-child(3) { background: rgb(var(--spectrum-violet-rgb)); transform: translateY(-.12rem); }
+  .home-register i:nth-child(4) { background: rgb(var(--spectrum-gold-rgb)); transform: translateY(.08rem); }
   .home-statement { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2rem; align-items: end; padding: 1rem 0 clamp(2rem, 3vw, 3rem); }
   .home-statement > p { max-width: 43rem; color: rgba(var(--text-rgb), .66); font-size: clamp(.9rem, 1.4vw, 1.02rem); line-height: 1.9; }
   dl { display: flex; gap: 1.6rem; margin: 0; }
   dl div { display: grid; gap: .12rem; }
-  dt { color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .54rem; }
-  dd { margin: 0; color: rgb(var(--spectrum-gold-rgb)); font-family: var(--font-mono); font-size: .68rem; }
-  .spotlight { --tilt-x: 0deg; --tilt-y: 0deg; position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(16rem, .72fr); gap: clamp(2.5rem, 8vw, 8rem); align-items: center; min-height: clamp(21rem, 34vw, 26rem); padding: clamp(2.4rem, 4vw, 3.2rem) clamp(1.4rem, 4vw, 3.6rem); overflow: hidden; border: 1px solid rgba(var(--text-rgb), .18); border-radius: 1.2rem; color: inherit; background: radial-gradient(circle at 3% 0%, rgba(var(--brand-primary-rgb), .34), transparent 42%), radial-gradient(circle at 100% 94%, rgba(var(--brand-secondary-rgb), .3), transparent 45%), radial-gradient(circle at 70% 12%, rgba(var(--secondary-rgb), .14), transparent 32%), linear-gradient(135deg, rgba(var(--raised-rgb), .86), rgba(var(--surface-rgb), .68) 48%, rgba(var(--bg-rgb), .34)); box-shadow: 0 2.8rem 6rem rgba(8, 19, 28, .23), 0 .8rem 1.8rem rgba(8, 19, 28, .12), inset 0 1px rgba(255, 255, 255, .15); text-decoration: none; transform: perspective(1200px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)); transform-style: preserve-3d; transition: transform .18s var(--ease), box-shadow .3s var(--ease); will-change: transform; cursor: pointer; }
-  .spotlight::before { content: ''; position: absolute; right: -7rem; bottom: -9rem; z-index: -1; width: 24rem; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(var(--brand-secondary-rgb), .14), rgba(var(--brand-primary-rgb), .05) 44%, transparent 70%); filter: blur(1.4rem); transform: translateZ(-2rem); }
-  .spotlight:hover { box-shadow: 0 3.5rem 7.5rem rgba(8, 19, 28, .3), 0 1rem 2rem rgba(8, 19, 28, .14), inset 0 1px rgba(255, 255, 255, .18); }
-  .spotlight > * { position: relative; z-index: 1; transform: translateZ(1.5rem); }
+  dt { color: rgba(var(--text-rgb), .68); font-family: var(--font-mono); font-size: .61rem; }
+  dd { margin: 0; color: rgb(var(--spectrum-gold-rgb)); font-family: var(--font-mono); font-size: .72rem; }
+  .spotlight { position: relative; isolation: isolate; display: grid; grid-template-areas: 'main cover' 'detail cover'; grid-template-columns: minmax(25rem, .86fr) minmax(34rem, 1.14fr); grid-template-rows: auto 1fr; gap: 1rem clamp(2.5rem, 4vw, 5rem); align-items: center; min-height: clamp(29rem, 36vw, 36rem); padding: clamp(1.6rem, 2.7vw, 3rem); overflow: hidden; border: 1px solid rgba(var(--content-accent-rgb), .42); border-radius: .36rem; color: inherit; background: linear-gradient(112deg, rgba(var(--content-accent-rgb), .16), rgba(var(--surface-rgb), .93) 38%, rgba(var(--content-secondary-rgb), .11) 82%, rgba(var(--surface-rgb), .86)); box-shadow: .7rem .82rem 0 rgba(var(--content-secondary-rgb), .1), 0 1.8rem 4.2rem rgba(8, 19, 28, .13), inset 0 1px rgba(255, 255, 255, .12); text-decoration: none; transition: transform .24s var(--ease), border-color .24s var(--ease), box-shadow .24s var(--ease); cursor: pointer; }
+  .spotlight::before { content: ''; position: absolute; inset: 0 auto 0 0; width: .46rem; background: rgb(var(--content-accent-rgb)); }
+  .spotlight::after { content: ''; position: absolute; inset: auto 1.35rem 1.2rem auto; width: clamp(5rem, 12vw, 9rem); height: 1px; background: linear-gradient(90deg, transparent, rgb(var(--content-accent-rgb))); opacity: .7; }
+  .spotlight:hover { border-color: rgba(var(--content-accent-rgb), .72); box-shadow: .92rem 1rem 0 rgba(var(--content-secondary-rgb), .13), 0 2.2rem 5rem rgba(8, 19, 28, .16); transform: translateY(-3px); }
+  .spotlight-glow { position: absolute; inset: 0; z-index: 0; background: radial-gradient(26rem circle at var(--spot-x, 32%) var(--spot-y, 48%), rgba(var(--content-accent-rgb), .2), transparent 66%); opacity: 0; transition: opacity .28s ease; pointer-events: none; }
+  .spotlight[data-pointer='true'] .spotlight-glow { opacity: 1; }
+  :global(.spotlight-cover) { grid-area: cover; align-self: center; width: 100%; height: auto; min-height: 0; aspect-ratio: 16 / 9; box-shadow: .65rem .72rem 0 rgba(var(--content-secondary-rgb), .12); transition: transform .32s var(--ease), border-color .24s var(--ease); }
+  .spotlight:hover :global(.spotlight-cover) { border-color: rgba(var(--content-accent-rgb), .72); }
+  .spotlight[data-pointer='true'] :global(.spotlight-cover) { transform: translate3d(calc(var(--spot-nx, 0) * 5px), calc(var(--spot-ny, 0) * 5px), 0) rotate(calc(var(--spot-nx, 0) * .35deg)); }
+  .spotlight-main, .spotlight-detail { position: relative; z-index: 1; padding-left: clamp(1rem, 3vw, 2.4rem); }
+  .spotlight-main { grid-area: main; align-self: end; }
+  .spotlight-detail { grid-area: detail; align-self: start; }
+  .spotlight-mark { position: absolute; top: .85rem; right: 1rem; display: flex; gap: .24rem; align-items: end; }
+  .spotlight-mark i { width: 1.2rem; height: 1px; background: rgb(var(--content-accent-rgb)); opacity: .72; }
+  .spotlight-mark i:nth-child(2) { width: .65rem; transform: translateY(.22rem); }
+  .spotlight-mark i:nth-child(3) { width: .3rem; height: .3rem; border: 1px solid rgb(var(--content-accent-rgb)); background: transparent; transform: translateY(.12rem); }
   .spotlight:focus-visible { outline: 3px solid rgb(var(--brand-primary-rgb)); outline-offset: 4px; }
-  .spotlight-label { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.4rem; color: rgba(var(--text-rgb), .48); font-family: var(--font-mono); font-size: .6rem; }
-  .spotlight-label span { color: rgb(var(--spectrum-coral-rgb)); }
-  .spotlight h2 { max-width: 14ch; font-family: var(--font-display); font-size: clamp(3rem, 6vw, 6rem); font-stretch: condensed; font-weight: 640; line-height: .98; letter-spacing: -.065em; text-wrap: balance; }
-  .spotlight:hover h2, .spotlight:focus-within h2 { color: rgb(var(--brand-primary-rgb)); }
-  .spotlight-detail { align-self: end; padding-bottom: .35rem; }
-  .spotlight-detail > p { color: rgba(var(--text-rgb), .68); font-size: .9rem; line-height: 1.9; }
-  .spotlight-taxonomy { display: flex; flex-wrap: wrap; gap: .45rem .9rem; margin-top: 1.3rem; font-family: var(--font-mono); font-size: .58rem; }
-  .spotlight-taxonomy span { color: rgb(var(--spectrum-violet-rgb)); }
-  .spotlight-taxonomy span:nth-child(2n) { color: rgb(var(--spectrum-gold-rgb)); }
-  .spotlight-link { display: inline-flex; gap: .6rem; align-items: center; margin-top: 2rem; color: rgb(var(--spectrum-coral-rgb)); font-size: .82rem; font-weight: 650; }
+  .spotlight-label { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.1rem; color: rgba(var(--text-rgb), .7); font-family: var(--font-mono); font-size: .66rem; }
+  .spotlight-label span { color: rgb(var(--content-accent-rgb)); }
+  .spotlight h2 { max-width: 15ch; font-family: var(--font-display); font-size: clamp(2.9rem, 4.25vw, 5.1rem); font-stretch: condensed; font-weight: 640; line-height: .97; letter-spacing: -.058em; text-wrap: balance; }
+  .spotlight:hover h2, .spotlight:focus-visible h2 { color: rgb(var(--content-accent-rgb)); }
+  .spotlight-detail > p { color: rgba(var(--text-rgb), .72); font-size: .92rem; line-height: 1.85; }
+  .spotlight-taxonomy { display: flex; flex-wrap: wrap; gap: .45rem .9rem; margin-top: 1.1rem; color: rgba(var(--text-rgb), .64); font-family: var(--font-mono); font-size: .63rem; }
+  .spotlight-taxonomy span { color: inherit; }
+  .spotlight-taxonomy span:first-child { color: rgb(var(--content-accent-rgb)); }
+  .spotlight-link { display: inline-flex; gap: .6rem; align-items: center; margin-top: 1.5rem; color: rgb(var(--content-accent-rgb)); font-size: .84rem; font-weight: 650; }
   .spotlight-link i { font-style: normal; transition: transform .2s var(--ease); }
   .spotlight:hover .spotlight-link i { transform: translate(.2rem, -.2rem); }
   .spotlight--empty { min-height: 18rem; align-items: center; }
-  .spotlight-orbits { display: flex; gap: .55rem; align-items: center; width: max-content; margin: 1.2rem 0 0 auto; }
-  .spotlight-orbits i { display: block; width: .52rem; height: .52rem; border: 1px solid rgba(var(--text-rgb), .3); border-radius: 50%; box-shadow: 0 0 0 .24rem rgba(var(--brand-primary-rgb), .07); }
-  .spotlight-orbits i:nth-child(2) { width: .34rem; height: .34rem; border-color: rgba(var(--brand-secondary-rgb), .72); box-shadow: 0 0 .8rem rgba(var(--brand-secondary-rgb), .3); }
-  .spotlight-orbits i:nth-child(3) { width: .22rem; height: .22rem; border: 0; background: rgb(var(--secondary-rgb)); box-shadow: 0 0 .7rem rgba(var(--secondary-rgb), .32); }
-  .home-library { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(18rem, .72fr); gap: clamp(3rem, 8vw, 7rem); padding-top: clamp(5rem, 8vw, 7rem); }
-  .library-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.4rem; }
-  .library-heading p { margin-bottom: .32rem; color: rgb(var(--spectrum-coral-rgb)); font-family: var(--font-mono); font-size: .55rem; letter-spacing: .1em; }
+  .home-signal { display: grid; grid-template-columns: .8fr .8fr .9fr 1.35fr; margin-top: 1.65rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .home-signal > * { display: grid; align-content: center; min-height: 5.8rem; padding: .85rem 1rem; border-right: 1px solid var(--line); color: inherit; text-decoration: none; }
+  .home-signal > :first-child { padding-left: 0; }
+  .home-signal > :last-child { border-right: 0; }
+  .home-signal span { color: rgb(var(--spectrum-violet-rgb)); font-family: var(--font-mono); font-size: .54rem; letter-spacing: .09em; }
+  .home-signal strong { margin-top: .2rem; font-family: var(--font-display); font-size: 1.05rem; }
+  .home-signal small { color: rgba(var(--text-rgb), .48); font-family: var(--font-mono); font-size: .56rem; }
+  .home-signal__tags p { display: flex; flex-wrap: wrap; gap: .15rem .65rem; margin-top: .3rem; }
+  .home-signal__tags a { color: rgba(var(--text-rgb), .7); font-size: .67rem; text-decoration: none; }
+  .home-signal__tags a:hover { color: rgb(var(--signal-rgb)); }
+  .home-library { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0 clamp(2.2rem, 3.3vw, 4rem); align-items: start; padding-top: clamp(5rem, 8vw, 8rem); }
+  .column-browser { grid-column: 1 / 9; grid-row: 1; }
+  .recent-writing { grid-column: 9 / 13; grid-row: 1; min-width: 0; margin-top: clamp(3.2rem, 5vw, 5.8rem); }
+  .notes-feature { --note-x: 72%; --note-y: 30%; position: relative; isolation: isolate; grid-column: 5 / 13; grid-row: 2; display: grid; grid-template-areas: 'header header' 'identity canvas' 'modes canvas' 'enter enter'; grid-template-columns: minmax(15rem, .72fr) minmax(0, 1.28fr); gap: 1.15rem clamp(1.6rem, 3vw, 3.2rem); min-height: 28rem; margin-top: clamp(3.5rem, 7vw, 7rem); padding: clamp(1.6rem, 2.8vw, 2.7rem); overflow: hidden; border: 1px solid rgba(var(--spectrum-violet-rgb), .46); background: linear-gradient(145deg, rgba(var(--spectrum-violet-rgb), .13), rgba(var(--surface-rgb), .96) 43%, rgba(var(--spectrum-gold-rgb), .08)); box-shadow: .72rem .8rem 0 rgba(var(--spectrum-violet-rgb), .09); }
+  .notes-feature::before { content: ''; position: absolute; z-index: -1; inset: 0; background-image: linear-gradient(rgba(var(--spectrum-violet-rgb), .08) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--spectrum-violet-rgb), .08) 1px, transparent 1px); background-size: 2.4rem 2.4rem; mask-image: linear-gradient(115deg, #000, transparent 72%); }
+  .notes-feature__glow { position: absolute; z-index: -1; width: 22rem; aspect-ratio: 1; left: var(--note-x); top: var(--note-y); border: 1px solid rgba(var(--spectrum-gold-rgb), .28); border-radius: 50%; box-shadow: 0 0 0 2rem rgba(var(--spectrum-violet-rgb), .04), 0 0 0 4rem rgba(var(--spectrum-gold-rgb), .025); opacity: .55; transform: translate(-50%, -50%); transition: left .18s ease, top .18s ease, opacity .2s ease; pointer-events: none; }
+  .notes-feature:hover .notes-feature__glow, .notes-feature:focus-within .notes-feature__glow { opacity: 1; }
+  .notes-feature > header { grid-area: header; display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding-bottom: .8rem; border-bottom: 1px solid rgba(var(--spectrum-violet-rgb), .25); }
+  .notes-feature > header p, .notes-feature > header span { font: .53rem/1 var(--font-mono); letter-spacing: .1em; }
+  .notes-feature > header p { color: rgb(var(--spectrum-violet-rgb)); }
+  .notes-feature > header span { display: flex; gap: .4rem; align-items: center; color: rgba(var(--text-rgb), .52); }
+  .notes-feature > header i { width: .42rem; aspect-ratio: 1; border-radius: 50%; background: rgb(var(--spectrum-aqua-rgb)); box-shadow: 0 0 .65rem rgba(var(--spectrum-aqua-rgb), .7); }
+  .notes-feature__identity { grid-area: identity; display: grid; align-content: end; gap: 1.2rem; }
+  .notes-feature__identity h2 { font: 650 clamp(3.8rem, 6vw, 6.4rem)/.76 var(--font-display); letter-spacing: -.075em; }
+  .notes-feature__identity p { max-width: 24rem; color: rgba(var(--text-rgb), .65); font-size: .78rem; line-height: 1.8; }
+  .notes-feature__modes { grid-area: modes; align-self: end; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); background: rgba(var(--surface-rgb), .7); }
+  .notes-feature__modes button { display: grid; gap: .38rem; padding: .72rem .65rem; border: 0; border-right: 1px solid var(--line); color: rgba(var(--text-rgb), .5); background: transparent; text-align: left; cursor: pointer; }
+  .notes-feature__modes button:last-child { border-right: 0; }
+  .notes-feature__modes button:hover, .notes-feature__modes button[aria-selected='true'] { color: rgb(var(--text-rgb)); background: rgba(var(--spectrum-violet-rgb), .13); }
+  .notes-feature__modes b { color: rgb(var(--spectrum-coral-rgb)); font: .5rem/1 var(--font-mono); }
+  .notes-feature__modes span { font-size: .72rem; }
+  .notes-feature__canvas { grid-area: canvas; min-width: 0; min-height: 18rem; padding: clamp(1.2rem, 2vw, 1.8rem); border: 1px solid rgba(var(--spectrum-violet-rgb), .32); background: linear-gradient(rgba(var(--spectrum-violet-rgb), .07) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--spectrum-violet-rgb), .07) 1px, transparent 1px), rgba(var(--surface-rgb), .76); background-size: 2.2rem 2.2rem; }
+  .notes-feature__canvas > div { display: grid; align-content: center; height: 100%; }
+  .notes-feature__canvas > div[hidden] { display: none; }
+  .notes-feature__canvas span { color: rgb(var(--spectrum-violet-rgb)); font: .53rem/1 var(--font-mono); letter-spacing: .09em; }
+  .notes-feature__canvas strong { max-width: 19ch; margin: 1.4rem 0 .75rem; font: 640 clamp(1.65rem, 2.8vw, 2.8rem)/1.03 var(--font-display); letter-spacing: -.045em; }
+  .notes-feature__canvas p { max-width: 34rem; color: rgba(var(--text-rgb), .64); font-size: .73rem; line-height: 1.8; }
+  .notes-feature__canvas dl { display: grid; gap: .75rem; margin-top: 1.4rem; }
+  .notes-feature__canvas dl div { grid-template-columns: 6rem 1fr; gap: 1rem; padding-bottom: .55rem; border-bottom: 1px solid var(--line); }
+  .notes-feature__canvas dt, .notes-feature__canvas dd { font-size: .62rem; }
+  .notes-feature__nodes { position: relative; display: flex; flex-wrap: wrap; gap: .65rem; align-items: center; margin: 1.5rem 0; }
+  .notes-feature__nodes i { width: 1.15rem; aspect-ratio: 1; border: 1px solid rgb(var(--spectrum-gold-rgb)); border-radius: 50%; background: rgba(var(--spectrum-gold-rgb), .14); }
+  .notes-feature__nodes::before { content: ''; position: absolute; left: 1.1rem; right: 1rem; top: .57rem; z-index: -1; height: 1px; background: linear-gradient(90deg, rgb(var(--spectrum-gold-rgb)), rgb(var(--spectrum-violet-rgb)), transparent); }
+  .notes-feature__nodes a { max-width: 12rem; padding: .6rem .75rem; overflow: hidden; border: 1px solid rgba(var(--spectrum-violet-rgb), .35); color: inherit; background: rgba(var(--surface-rgb), .94); font-size: .68rem; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+  .notes-feature__nodes a:hover { border-color: rgb(var(--spectrum-aqua-rgb)); transform: translateY(-2px); }
+  .notes-feature__enter { grid-area: enter; display: flex; justify-content: space-between; align-items: center; padding-top: .95rem; border-top: 1px solid rgba(var(--spectrum-violet-rgb), .25); color: rgb(var(--spectrum-coral-rgb)); font-size: .78rem; font-weight: 650; text-decoration: none; }
+  .notes-feature__enter i { font-style: normal; transition: transform .2s var(--ease); }
+  .notes-feature__enter:hover i { transform: translate(.25rem, -.25rem); }
+  .column-browser { display: flex; height: clamp(58rem, 78vw, 72rem); min-height: 0; flex-direction: column; overflow: hidden; }
+  .column-viewport { position: relative; display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); min-height: 0; flex: 1; overflow: hidden; border-top: 1px solid rgba(var(--spectrum-violet-rgb), .35); border-bottom: 1px solid rgba(var(--spectrum-violet-rgb), .28); background: linear-gradient(90deg, rgba(var(--spectrum-violet-rgb), .07), transparent 18%); }
+  .column-rail { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: .5rem 0 2rem; color: rgb(var(--spectrum-violet-rgb)); font: .5rem/1 var(--font-mono); }
+  .column-rail i { width: 1px; flex: 1; margin: .45rem 0; background: linear-gradient(rgb(var(--spectrum-violet-rgb)), transparent); opacity: .52; }
+  .column-rail b { font-weight: 500; }
+  :global(.column-browser .column-directory) { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .5rem .6rem 2.6rem .45rem; scrollbar-color: rgba(var(--spectrum-violet-rgb), .62) transparent; scrollbar-width: thin; }
+  .column-scroll-cue { position: absolute; right: .85rem; bottom: .45rem; padding: .28rem .45rem; color: rgba(var(--text-rgb), .62); background: rgba(var(--surface-rgb), .86); font: .53rem/1 var(--font-mono); letter-spacing: .04em; pointer-events: none; }
+  .library-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.15rem; }
+  .library-heading p { margin-bottom: .32rem; color: rgb(var(--spectrum-coral-rgb)); font-family: var(--font-mono); font-size: .62rem; letter-spacing: .09em; }
   .library-heading h2 { font-family: var(--font-display); font-size: clamp(1.65rem, 3vw, 2.5rem); letter-spacing: -.045em; }
-  .library-heading > a { color: rgba(var(--text-rgb), .54); font-size: .68rem; text-decoration: none; }
+  .library-heading > a { color: rgba(var(--text-rgb), .7); font-size: .72rem; text-decoration: none; }
   .library-heading > a:hover { color: rgb(var(--spectrum-aqua-rgb)); }
-  .column-note { margin: -.45rem 0 1rem; color: rgba(var(--text-rgb), .52); font-size: .72rem; line-height: 1.75; }
+  .column-note { margin: -.35rem 0 1rem; color: rgba(var(--text-rgb), .52); font-size: .72rem; line-height: 1.75; }
+  :global(.home-page .column-directory--compact .column-card) { grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr) 1rem; min-height: 12rem; padding: .82rem; }
+  :global(.home-page .column-directory--compact .column-card__cover) { width: 100%; }
+  :global(.home-page .recent-writing .post-list--compact) { gap: 1.15rem; }
+  :global(.home-page .recent-writing .post-list--compact .post-row) { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto; gap: .55rem 1rem; min-height: 0; padding: .78rem .82rem 1rem; }
+  :global(.home-page .recent-writing .post-list--compact .post-cover) { grid-column: 1 / -1; grid-row: 1; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+  :global(.home-page .recent-writing .post-list--compact time) { grid-column: 1; grid-row: 2; align-self: end; padding-top: .12rem; font-size: .6rem; }
+  :global(.home-page .recent-writing .post-list--compact .post-copy) { grid-column: 1; grid-row: 3; align-self: start; }
+  :global(.home-page .recent-writing .post-list--compact h3) { font-size: clamp(1.2rem, 1.5vw, 1.48rem); line-height: 1.28; -webkit-line-clamp: 2; }
+  :global(.home-page .recent-writing .post-list--compact .post-arrow) { grid-column: 2; grid-row: 2 / 4; align-self: center; }
   @media (max-width: 900px) {
-    .spotlight { grid-template-columns: 1fr; gap: 2rem; min-height: auto; transform: none !important; }
+    .spotlight { grid-template-columns: minmax(0, 1fr) minmax(13rem, .55fr); gap: .8rem 1.5rem; min-height: 18rem; transform: none !important; }
+    :global(.spotlight-cover) { min-height: 16.4rem; }
     .spotlight h2 { max-width: 16ch; }
-    .spotlight-detail { max-width: 38rem; }
-    .home-library { grid-template-columns: 1fr; }
+    .spotlight-detail { max-width: 38rem; align-self: start; }
+    .home-library { grid-template-columns: 1fr; gap: 3.5rem; }
+    .column-browser, .recent-writing, .notes-feature { grid-column: 1; grid-row: auto; margin-top: 0; }
+    .column-browser { height: auto; }
+    .column-viewport { height: 31rem; flex: none; }
+    .notes-feature { grid-template-columns: minmax(14rem, .7fr) minmax(0, 1.3fr); }
+    :global(.home-page .column-directory--compact .column-card) { grid-template-columns: minmax(13rem, 17rem) minmax(0, 1fr) 1rem; min-height: 10.6rem; }
   }
   @media (max-width: 620px) {
-    .home-hero { padding-top: 2.8rem; }
+    .home-hero { padding-top: 2.25rem; }
     .home-identity, .home-statement { display: grid; gap: 1rem; }
     .home-statement { padding-bottom: 2.6rem; }
     dl { justify-content: space-between; gap: .8rem; }
-    .spotlight { padding: 2.4rem 1rem 2rem; }
-    .spotlight h2 { font-size: clamp(2.6rem, 13.5vw, 4.3rem); }
+    .spotlight { grid-template-areas: 'cover' 'main' 'detail'; grid-template-columns: 1fr; grid-template-rows: auto auto auto; gap: .72rem; min-height: 0; padding: .58rem .72rem .92rem; }
+    :global(.spotlight-cover) { height: auto; min-height: 0; aspect-ratio: 16 / 9; }
+    .spotlight-main { padding-inline: .38rem; }
+    .spotlight-label { margin-bottom: .5rem; }
+    .spotlight h2 { display: -webkit-box; max-width: 16ch; overflow: hidden; font-size: clamp(1.85rem, 8.7vw, 2.45rem); line-height: 1.02; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+    .spotlight-detail { padding: 0 .38rem; }
+    .spotlight-detail > p { display: none; }
+    .spotlight-taxonomy { display: none; }
+    .spotlight-link { margin-top: 0; }
+    .home-signal { grid-auto-flow: column; grid-auto-columns: minmax(9.5rem, 43vw); grid-template-columns: none; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; }
+    .home-signal::-webkit-scrollbar { display: none; }
+    .home-signal > * { min-height: 4.7rem; padding: .65rem .8rem; scroll-snap-align: start; }
+    .home-library { gap: 3rem; padding-top: 4.2rem; }
+    .notes-feature { grid-template-areas: 'header' 'identity' 'modes' 'canvas' 'enter'; grid-template-columns: 1fr; min-height: 0; padding: 1.15rem; }
+    .notes-feature__identity h2 { font-size: 3.25rem; line-height: .82; }
+    .notes-feature__identity p { max-width: none; }
+    .notes-feature__canvas { min-height: 15rem; }
+    :global(.home-page .recent-writing .post-list--compact .post-row) { grid-template-columns: 7.2rem minmax(0, 1fr) auto; grid-template-rows: auto 1fr; gap: .4rem .75rem; min-height: 8rem; padding: .62rem .7rem .62rem .62rem; }
+    :global(.home-page .recent-writing .post-list--compact .post-cover) { grid-column: 1; grid-row: 1 / 3; width: 7.2rem; }
+    :global(.home-page .recent-writing .post-list--compact time) { grid-column: 2; grid-row: 1; }
+    :global(.home-page .recent-writing .post-list--compact .post-copy) { grid-column: 2; grid-row: 2; }
+    :global(.home-page .recent-writing .post-list--compact h3) { font-size: 1.04rem; -webkit-line-clamp: 3; }
+    :global(.home-page .recent-writing .post-list--compact .post-arrow) { grid-column: 3; grid-row: 1 / 3; }
+    :global(.home-page .column-directory--compact .column-card) { grid-template-columns: 7.2rem minmax(0, 1fr) .8rem; min-height: 7.2rem; }
   }
 </style>
 
 <script>
-  const finePointer = matchMedia('(pointer: fine)');
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  document.querySelectorAll<HTMLElement>('[data-depth-card]').forEach((card) => {
-    card.addEventListener('pointermove', (event) => {
-      if (!finePointer.matches || reducedMotion.matches) return;
-      const bounds = card.getBoundingClientRect();
-      const x = (event.clientX - bounds.left) / bounds.width - .5;
-      const y = (event.clientY - bounds.top) / bounds.height - .5;
-      card.style.setProperty('--tilt-x', `${(-y * 3.2).toFixed(2)}deg`);
-      card.style.setProperty('--tilt-y', `${(x * 3.2).toFixed(2)}deg`);
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll<HTMLElement>('.spotlight').forEach((spotlight) => {
+      spotlight.addEventListener('pointermove', (event) => {
+        if (event.pointerType === 'touch') return;
+        const bounds = spotlight.getBoundingClientRect();
+        const x = event.clientX - bounds.left;
+        const y = event.clientY - bounds.top;
+        spotlight.style.setProperty('--spot-x', `${x}px`);
+        spotlight.style.setProperty('--spot-y', `${y}px`);
+        spotlight.style.setProperty('--spot-nx', String(x / bounds.width * 2 - 1));
+        spotlight.style.setProperty('--spot-ny', String(y / bounds.height * 2 - 1));
+        spotlight.dataset.pointer = 'true';
+      });
+      spotlight.addEventListener('pointerleave', () => { spotlight.dataset.pointer = 'false'; });
     });
-    card.addEventListener('pointerleave', () => {
-      card.style.setProperty('--tilt-x', '0deg');
-      card.style.setProperty('--tilt-y', '0deg');
-    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-notes-feature]').forEach((feature) => {
+    const modes = [...feature.querySelectorAll<HTMLButtonElement>('[data-note-mode]')];
+    const panels = [...feature.querySelectorAll<HTMLElement>('[data-note-panel]')];
+    modes.forEach((mode) => mode.addEventListener('click', () => {
+      modes.forEach((item) => item.setAttribute('aria-selected', String(item === mode)));
+      panels.forEach((panel) => { panel.hidden = panel.dataset.notePanel !== mode.dataset.noteMode; });
+    }));
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      feature.addEventListener('pointermove', (event) => {
+        if (event.pointerType === 'touch') return;
+        const bounds = feature.getBoundingClientRect();
+        feature.style.setProperty('--note-x', `${event.clientX - bounds.left}px`);
+        feature.style.setProperty('--note-y', `${event.clientY - bounds.top}px`);
+      });
+    }
   });
 </script>

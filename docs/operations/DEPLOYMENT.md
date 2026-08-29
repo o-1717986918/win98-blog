@@ -1,61 +1,97 @@
-# 部署指南
+# Cloudflare Pages 部署手册
 
-## 1. 生产前提
+## 1. 已选方案
 
-- Node.js 22、pnpm 11；
-- 把 `.env.example` 中的 `SITE_URL` 改为真实 HTTPS 根域名，不带路径和尾斜杠；
-- 构建命令：`pnpm build`；输出目录：`dist`；
-- 最终检查：`pnpm deploy:check`。它会重新验证、构建，并确认 canonical 使用当前 `SITE_URL`。
+生产主机采用 **Cloudflare Pages Direct Upload + GitHub Actions**。仓库自己完成测试、静态构建、Pagefind 索引和产物审计，再把已经验证的 `dist` 上传到 Pages。这样线上构建与本地/CI 使用同一条 `pnpm deploy:prepare` 契约。
 
-项目是 Astro `output: static`，没有 SSR adapter、数据库或常驻 Node 进程。`dist` 可以部署到任何支持静态文件和 history-independent 路径的主机。
+暂不启用 Cloudflare 的 Git 仓库集成。Direct Upload 项目后续不能原地切换成 Git integration；若未来要切换，需要新建 Pages 项目并迁移域名。这个选择记录在 `docs/decisions/0012-reader-facing-copy-and-pages-deployment.md`。
 
-## 2. Cloudflare Pages（参考部署）
+## 2. 一次性准备
 
-1. 在 Cloudflare Pages 连接 Git 仓库；
-2. Production branch 选择 `main`；
-3. Build command 填 `pnpm build`，Build output directory 填 `dist`；
-4. 设置 `NODE_VERSION=22`、真实 `SITE_URL`，按需添加 `.env.example` 中的公开 provider 变量；
-5. 首次预览确认 canonical、RSS 和 sitemap 域名后再绑定自定义域名。
+1. 在 Cloudflare 创建 API Token，权限只授予目标账号的 `Account / Cloudflare Pages / Edit`。
+2. 取得 Cloudflare Account ID。
+3. 登录 Wrangler，创建 Direct Upload 项目：
 
-也可以在已授权的本机执行：
+   ```powershell
+   pnpm dlx wrangler@4.127.0 login
+   pnpm dlx wrangler@4.127.0 pages project create
+   ```
+
+   项目名建议为 `someone-site`，production branch 设为 `main`。若项目已存在，跳过创建。
+4. 在 GitHub 建立 `preview` 与 `production` 两个 Environment；为 `production` 配置 required reviewers，避免单人误触直接上线。
+5. 在两个 Environment 或仓库中设置以下 Actions 配置。
+
+| 类型 | 名称 | 示例/说明 |
+|---|---|---|
+| Variable | `SITE_URL` | 最终 HTTPS 根域名，不带尾斜杠 |
+| Variable | `CLOUDFLARE_PAGES_PROJECT` | `someone-site` |
+| Variable | `CLOUDFLARE_PRODUCTION_BRANCH` | `main` |
+| Secret | `CLOUDFLARE_ACCOUNT_ID` | 32 位 Account ID |
+| Secret | `CLOUDFLARE_API_TOKEN` | Pages Edit token |
+
+评论与统计变量按 `.env.example` 添加。它们会进入公开网页，不能放真正的私密凭据；Waline 数据库密钥等服务端秘密属于对应服务，不属于本仓库。
+
+## 3. 第一次发布
+
+先复制环境文件并填写真实值：
 
 ```powershell
-pnpm build
-pnpm dlx wrangler pages deploy dist --project-name someone-site
+Copy-Item .env.example .env
+pnpm deploy:prepare
 ```
 
-仓库的 `public/_headers` 会随产物发布，提供基础安全头和静态资源缓存策略。
+`deploy:prepare` 会依次执行 Vitest、完整静态构建、Pagefind、链接/体积/封面审计、canonical 检查，并验证 Cloudflare 项目、账号和 token 是否齐备。它不上传任何文件。
 
-## 3. GitHub Pages / 通用静态主机
+推荐在 GitHub Actions 手动运行 `deploy-cloudflare-pages`，先选 `preview`。工作流会创建 `manual-<run number>` 预览分支并把部署 URL 写入 Job Summary。通过 `docs/operations/PRODUCTION_CHECKLIST.md` 后，再从 `main` 手动选择 `production`；非 production branch 会被工作流拒绝。
 
-CI 会上传完整 `dist` artifact。GitHub Pages 可把该 artifact 交给官方 Pages deploy action，适合用户主页仓库、自定义域名或根路径部署。当前站内 URL 以 `/` 为根；若部署到 `https://name.github.io/repository/` 子路径，应先统一实现 base path，不要只修改 Astro 的 `base`。
+授权本机也可以执行：
 
-对 Netlify、对象存储或 Nginx，上传 `dist` 即可。确保：
+```powershell
+pnpm deploy:pages:preview
+$env:CONFIRM_PRODUCTION='YES'
+pnpm deploy:pages:production
+Remove-Item Env:CONFIRM_PRODUCTION
+```
 
-- 目录 URL `/path/` 能解析到 `/path/index.html`；
-- `404.html` 被配置为错误页；
-- `.wasm` 或 `.pagefind` 未知扩展可作为静态二进制返回；
-- XML、manifest、SVG 和 JavaScript 使用正确 MIME；
-- 不重写 `rss.xml`、`robots.txt`、`llms.txt` 与 Pagefind 文件。
+生产命令没有 `CONFIRM_PRODUCTION=YES` 会主动退出。不要把确认值长期保存在 `.env`。
 
-## 4. 评论和统计
+### 3.1 本次内容重构后的发布顺序
 
-默认 `none`，不会产生第三方请求。
+1. 在无外部凭据的机器上先运行 `pnpm verify`，确认内容引用、ArcVellum 十二篇手记、工具主题、Pagefind 与全部静态路由可构建。
+2. 确认 `pnpm solver:smoke` 返回内置地图的 33 步识别路径。`public/solver/solver-engine.wasm` 是已构建产物；只有当求解器源仓库变更时，才使用 `tools/solver-wasm/build.ps1` 重建。
+3. 启动本地预览，在 390×844 与桌面视口检查首页主题抽屉、三篇近文限制、全站返回桥、ArcVellum 侧栏目录与工具主题。
+4. 在求解器文章先执行“只跑识别”，再执行一次内置地图“识别 + 完整规划”。确认 Worker 期间页面仍可滚动，结果显示 191 步规划路径，“停止”能中断运行。
+5. 手动部署 preview，在 preview 域名再执行第 3–4 步，特别检查 `.wasm` 返回 200 且 Worker 可同源加载。该模块不依赖 `SharedArrayBuffer`，因此不需要为它额外启用 COOP/COEP。
+6. 通过 `PRODUCTION_CHECKLIST.md` 后再人工批准 production。首发后保留前一个 deployment，并立即做一次回滚演练。
 
-- Giscus：设置 provider、公开仓库、repo/category ID；仓库必须启用 Discussions 并安装 Giscus App；
-- Waline：设置 provider 和自有 server URL；服务端、数据库、审核和备份由站主管理；
-- Cloudflare Web Analytics：设置 provider 和 token；
-- Umami：设置 provider、脚本 URL 与 website ID。
+## 4. 自定义域名
 
-这些脚本只进入 full/minimal 页面，`none` 构建产物保持隔离。每次更换 provider 后重新执行 `pnpm verify`，并确认隐私页显示的当前状态。
+1. 先在 Pages 项目的 **Custom domains** 中关联域名，再修改 DNS；不要只添加 CNAME。
+2. 根域名必须由 Cloudflare 托管该 zone 并使用 Cloudflare nameserver。
+3. 外部 DNS 托管的子域名可在 Pages 关联后 CNAME 到 `<project>.pages.dev`。
+4. 域名生效后，把 `SITE_URL` 更新为最终源站，重新跑一次 preview 和 production；检查 canonical、RSS、sitemap、OG 图片都使用最终域名。
 
-## 5. 发布、观察、回滚
+## 5. 发布后验证与回滚
 
-先用 PR preview 检查移动端、搜索与代表文章。生产发布后检查 `/robots.txt`、`/sitemap-index.xml`、`/rss.xml` 和 `/search/`。Cloudflare Pages 可以直接回滚到先前 deployment；通用主机应保留上一版 `dist` artifact，同时在 Git 中回退有问题的提交。
+完整验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。最低检查包括：首页和一篇 full/minimal/none 内容、移动端导航、Pagefind、`robots.txt`、`sitemap-index.xml`、`rss.xml`、分享图、404、评论/统计的实际网络请求。
 
-## 6. 官方依据
+发生问题时：
 
+1. 在 Cloudflare Pages Deployments 中把上一个成功 deployment 设回生产；
+2. 在 Git 中回退或修正问题提交；
+3. 重新运行 `pnpm deploy:prepare` 和 production workflow；
+4. 记录故障、影响范围和回滚 deployment URL。
+
+Direct Upload 当前限制为单次最多 20,000 个文件、单文件最多 25 MiB。仓库的构建预算更严格，正常不会接近该边界。
+
+## 6. 自动化策略
+
+当前 workflow 仅允许 `workflow_dispatch`，这是首发阶段的刻意限制。完成首次上线、回滚演练和至少一次稳定发布后，才把 `main` push 加入生产触发；PR 仍由 `ci.yml` 验证，不直接获得生产权限。
+
+## 7. 官方依据
+
+- [Cloudflare Pages Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/)
+- [Direct Upload 持续集成](https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/)
+- [Cloudflare Pages 自定义域名](https://developers.cloudflare.com/pages/configuration/custom-domains/)
+- [Cloudflare Wrangler Action](https://github.com/cloudflare/wrangler-action)
 - [Astro 部署指南](https://docs.astro.build/en/guides/deploy/)
-- [Cloudflare Pages 的 Astro 指南](https://developers.cloudflare.com/pages/framework-guides/deploy-an-astro-site/)
-- [GitHub Pages 自定义 Actions 工作流](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
-- [Pagefind 部署后索引](https://pagefind.app/docs/running-pagefind/)

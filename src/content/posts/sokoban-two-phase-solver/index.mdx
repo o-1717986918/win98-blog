@@ -1,0 +1,345 @@
+---
+title: 从识别到炸墙：一套 C99 推箱炸障求解器的完整工程剖面
+description: 基于最新源码、当前文档与完整开发史，分层拆解识别路径、标签配对、炸弹分配、弹箱协同、搜索缓存、状态回滚、MCU 契约、Wasm 展示和仍未解决的技术债。
+date: 2026-08-28
+updated: 2026-08-29
+minutes: 36
+tags: [C99, 路径规划, 启发式搜索, 嵌入式系统, 工程复盘]
+columns: [tools]
+cover:
+  src: ./cover.png
+  alt: 推箱炸障求解器内置地图、识别路径和规划阶段的真实可视化
+chrome: none
+theme: abyss
+back: true
+---
+import cover from './cover.png'
+import SolverStoryShell from '../../../components/sokoban/SolverStoryShell.astro'
+import SolverVisualizer from '../../../components/sokoban/SolverVisualizer.astro'
+
+<SolverStoryShell title="从识别到炸墙" deck="这不是把 Sokoban 套一层 BFS：小车要先看见编号，标签要容忍缺失，炸弹会改写地图拓扑，箱子与炸弹还会互相为对方让路；最后生成的每一步都必须能被真实执行器重放。" image={cover}>
+
+> **源码与核验快照**：项目公开在 [o-1717986918/sokoban-recognition-bomb-solver](https://github.com/o-1717986918/sokoban-recognition-bomb-solver)。本文依据 2026-08-29 的最新提交 [`94f04c2`](https://github.com/o-1717986918/sokoban-recognition-bomb-solver/commit/94f04c22030504bbaeba642fd311584b0841b6a1) 重写，并在本机重新执行仓库自带的 GCC 构建与回归脚本。历史文档用于解释设计演变，不拿旧结论冒充当前状态。
+
+## 先说结论：它已经是独立工程，但还不是通用搜索内核
+
+这套代码最初嵌在机器人控制工程中，后来被逐层抽离为一个无第三方运行时依赖的 C99 静态库。它现在有清晰的 include/src/tests/docs 分区、CMake 目标、GCC 与 Clang CI、ASan/UBSan 任务、单元测试、50 图回归、性能画像和内存报告。仓库内共有 34 个 C 文件、11 个头文件，C 源码约 1.3 万行；当前求解器本体由 20 个 C 源文件构建。
+
+但“工程化”不等于“完备”。当前算法依然是有界、确定、带多层回退的启发式求解器：它不会承诺搜索完整性；默认 workspace 是全局静态状态，因而不可重入、非线程安全；两个复杂地图仍没有规划解；推动查询仍是主要性能债；仓库目前也没有开源许可证，公开可读不等于已经授予再分发权。
+
+这四个判断必须同时成立：
+
+| 维度 | 当前状态 | 不应被误读为 |
+| --- | --- | --- |
+| 工程边界 | 已从 MCU 与摄像头代码中独立 | 已包含完整机器人固件 |
+| 求解能力 | Recognition 50/50，Planning 48/50 | 对全部合法地图完备 |
+| 运行约束 | 静态有界、求解时不堆分配 | 小内存、可并发 |
+| 质量目标 | 完成优先，转向次之，步数再次 | 单纯最短路 |
+
+## 问题边界：这里的“识别”不是图像分类
+
+输入已经是一张符号化矩阵。`# @ $ . *` 分别是墙、小车、箱子、出口和炸弹，地图上限 16×12，箱子、出口、炸弹各不超过 6 个。引擎负责安排小车去哪里停车、以什么 yaw 面向目标、何时触发扫描、如何把识别回来的编号变成箱口配对；摄像头取图、数字识别、UART 驱动和电机闭环都属于调用方。
+
+路径也是一份执行合同：`U/R/D/L` 表示普通行走，`u/r/d/l` 表示沿相同方向推动实体。大小写不是装饰，回放器据此判断下一格应当是箱子还是炸弹，导航转换器也据此决定分段边界。
+
+完整链路不是一个 `solve()`，而是：
+
+```text
+输入地图
+  ├─ 识别目标、停车位与 yaw
+  ├─ 识别路径 + 必要的推弹/爆破交错
+  ├─ 输出识别末状态 end_map
+  ├─ 摄像头标签 → 箱子/出口配对
+  ├─ 炸弹/墙候选 + 阻挡箱预清理
+  ├─ Phase A / A+ / B / Top-N / box-only 规划
+  ├─ 可选返航修复与局部路径优化
+  └─ 从初始状态重放完整路径，验证完成数与终点
+```
+
+这里最容易被忽略的事实是：识别阶段可能推动或引爆炸弹。因此规划输入必须是 `recognition.end_map`，不能重新拿原图开算。拓扑已经变了，玩家和实体位置也可能变了。
+
+<SolverVisualizer />
+
+<span id="architecture"></span>
+
+## 第一层：公共 API 把两阶段合同写清楚
+
+公共头文件位于 [`include/solver/solver_engine.h`](https://github.com/o-1717986918/sokoban-recognition-bomb-solver/blob/main/include/solver/solver_engine.h)。实际接入时，推荐使用 `*_into` 版本，让调用方持有结果缓冲区，避免把约 8.5 KiB 的 `SolverResult` 按值返回。
+
+下面是一段按当前 API 组织的最小两阶段调用。标签来自外部摄像头；如果编号不足以证明唯一配对，配对器会要求重新识别，而不是猜一个答案：
+
+```c
+SolverResult recognition;
+solver_recognition_into(&input, &recognition);
+if (!recognition.solved) {
+    report_failure(recognition.last_step, recognition.fail_reason);
+    return;
+}
+
+SolverInput planning_input = map_from_result(recognition.end_map,
+                                             recognition.end_map_w,
+                                             recognition.end_map_h);
+uint8_t pairing[SOLVER_MAX_BOXES];
+SolverPairingStatus pairing_status = solver_resolve_labeled_pairing(
+    &planning_input, box_labels, exit_labels, pairing);
+if (pairing_status != SOLVER_PAIRING_OK) {
+    request_rescan(pairing_status);
+    return;
+}
+
+SolverResult planning;
+solver_planning_into(&planning_input, pairing,
+                     &recognition.start_pos, &planning);
+```
+
+`SolverResult` 不只给一个路径字符串。它还给出最后阶段、失败原因、失败的箱/弹索引、识别目标、末状态地图、返航是否失败、完成数和耗时。调用方因此能够区分解析失败、无箱路、死锁、无炸墙候选、组合失败、验证失败和超时，而不是只得到一个模糊的 `false`。
+
+仓库同时提供 `solver_path_to_segments` 与 `solver_path_to_navseq`，把逐格路径压缩成直线段端点，再转成导航协议。历史 MCU 约定坐标在求解器内是 `(x, y) = (列, 行)`，下发 `<PATH,row,col>` 时必须交换；这类“看似低级”的坐标合同，实际上比换一个启发式更容易毁掉整条链路。
+
+## 第二层：识别路径是在方向状态上做有界优化
+
+识别不是把所有目标做一次最近邻巡游。每个箱子与出口都要先找到相邻可停车格，再计算面向目标的 yaw；沿路若经过另一个目标旁边，可以机会式完成识别。工程还会预选恰好一个 `skip_scan` 目标，让编号多重集合在安全条件下恢复缺失项。
+
+当前实现同时评估兼容候选和优化候选。优化侧在目标数较小时精确枚举，在较大目标集上使用宽度 128 的 bounded beam，并设置 50,000 次评估预算。候选节点不是只有当前位置：
+
+```c
+typedef struct {
+    ST       car;
+    uint32_t mask;
+    uint32_t cost;
+    uint16_t turns;
+    char     last_move;
+    uint8_t  order[RECOG_PERM_MAX_TARGETS];
+    uint8_t  order_len;
+    bool     valid;
+} RecogBeamNode;
+```
+
+`last_move` 必须进入状态，因为目标函数先比较转向。普通 BFS 若只以 cell 为 visited，会把“到达同一格但入射方向不同”的路径合并，之后的转向代价就不再可靠。玩家识别导航因此使用 `(cell, last_direction)` 的方向状态搜索。
+
+设计中还有一个很克制的防线：如果优化候选和兼容候选留下不同的末状态地图，只有识别转向至少改善 5 次时才允许替换。原因是局部更漂亮的巡视路线可能把炸弹或玩家留在更差的位置，让后续规划整体恶化。这里比较的不是理论估值，而是路径实际重放后的转向数与长度。
+
+历史开发记录解释了这一策略为何出现：早期 10 目标全排列会走向 `10!`，2026-07-20 先用 50,000 次/800ms 预算止血，之后尝试 beam，最终演化为当前的“精确小规模 + 有界大规模 + 真实回放比较”。它是一条从运行事故中长出来的路线，而不是一次性画出的完美架构。
+
+## 第三层：标签配对要处理重复编号和一次缺失
+
+识别顺序不等于配对顺序。同号箱子和出口可能有多个，系统允许它们在几何上重新匹配。当前配对层会：
+
+1. 按标签构造合法候选；
+2. 对重复标签用 DFS 枚举一对一匹配；
+3. 先用轻量启发式保留 Top 8；
+4. 再调用真实推箱求解评价候选；
+5. 以转向优先、步数次优决定最终配对。
+
+未知标签也不是无条件补值。最多允许一个未知箱和一个未知出口；只有当两侧已知标签的多重集合能够唯一推出缺项时才恢复。若无法证明，返回 `SOLVER_PAIRING_NEEDS_RESCAN`。这让“漏识别一次”的工程容错与“拍脑袋配对”有了清楚边界。
+
+## 第四层：炸弹不是道具，而是会改变状态空间的拓扑操作
+
+炸弹被推入墙格后清除爆点 3×3 内的非边界墙。于是墙不再是只读地图常量：当前网格、已清墙签名、炸弹完成标志都必须进入状态快照与缓存指纹。一次爆炸可能打开玩家连通域，增加箱子可站推位，也可能让另一枚锁死炸弹获得接近墙的空间。
+
+开发史里曾明确列出五类炸弹分配：识别预推弹、解锁弹、规划 Phase A、递归 Phase B 和无墙目标的重定位回退。它们一度分散在 `recog_bomb_walls`、`bomb.target`、`alt_targets`、`opt_bomb_targets` 与 `top_combos` 中。当前代码还没有把它们统一成一个 `BombAllocation` 数据模型；但等效墙优化已经覆盖识别、解锁和规划入口。
+
+所谓等效墙，是在原目标墙 3×3 邻域内寻找能产生同等拓扑效果、却更容易推到的墙。评价顺序仍然是转向、路径长度，再通过模拟爆炸与后续求解确认它不是一个只在局部好看的替代品。为了控制开销，规划等效墙优化只放在关键配对入口与递归 depth 0，不在每个深层排列分支里重复执行。
+
+## 第五层：preclear 把“箱挡弹”和“弹为箱造空间”纳入同一条链
+
+炸弹可能不是完全锁死，而是只够到一两面次优墙。当前 `preclear` 不再只在“0 面墙可达”时触发；当候选少于 3 面，会暂时移除附近箱子重新计算可达墙数。如果至少增加 2 面，才把该箱子列入推离候选：
+
+```c
+uint8_t wall_cnt = ctx_collect_bomb_walls(ctx, player, bi, reachable);
+if (wall_cnt == 0) {
+    /* 精确寻找真正阻挡炸弹的箱子 */
+    ...
+} else if (wall_cnt < PRECLR_WALL_THRESHOLD) {
+    ctx->boxes[i].completed = true;   /* 临时从障碍集合移除 */
+    uint8_t new_cnt = ctx_collect_bomb_walls(ctx, player, bi, reachable);
+    ctx->boxes[i].completed = saved;
+    if (new_cnt >= wall_cnt + PRECLR_WALL_GAIN_MIN) {
+        need_push[i] = true;
+    }
+}
+```
+
+这段逻辑的关键不在“临时设 completed”这个技巧，而在必须恢复状态并重建占用语义。`completed` 同时影响实体是否是障碍、是否参与配对和结果统计；漏恢复一次，就会产生一个看似可解、实际少算实体的幽灵分支。
+
+更激进的 `ctx_bomb_create_box_space` 处理另一种局面：挡路箱子根本没有安全空位。它会评估牺牲一枚未完成、未锁死的炸弹，模拟每个可达墙的 3×3 爆炸，寻找爆破后新增的箱子安全位，再检查剩余炸弹冗余。只有“推弹 → 引爆 → 推箱 → 剩余任务仍成立”整条事务都成功，才提交路径；任何一步失败都回滚。
+
+这就是“弹箱协同”的真正含义：不是按固定顺序先把弹全炸掉再推箱，而是把“推箱为弹开路”和“用弹为箱造空间”作为受限宏动作交错使用。
+
+## 第六层：规划不是单路线，而是一组逐级加价的候选策略
+
+`solver_planning_into` 的编排可概括为五层：
+
+| 层级 | 核心动作 | 何时承担代价 |
+| --- | --- | --- |
+| Phase A | 简单炸弹-墙配对、等效墙、炸弹顺序排列 | 先走便宜而稳定的路径 |
+| Phase A+ | 推弹与推箱行为全排列交错 | Phase A 候选可比较或未解时 |
+| Phase B | 最多 5000 个炸墙组合、递归推弹/推箱 | 前两层失败后 |
+| Top-N retry | 重试次优炸墙组合 | 最优局部评分未能完成全局任务时 |
+| Box-only fallback | 忽略不必要炸弹，仅推箱 | 炸弹策略全部失败后 |
+
+Phase A 若只完成炸弹但箱子未完成，不会把“部分成功”当成答案；它会重新配对剩余炸弹或退回更昂贵阶段。Phase B 也不是无限枚举，组合数、递归深度和候选数都有静态上限。代码因此能够在 MCU 规模内预测内存，却用可能漏解换取边界。
+
+最终候选的全局比较器非常直接：
+
+```c
+bool solver_solution_better(SolverSolutionScore cand,
+                            SolverSolutionScore best)
+{
+    if (cand.solved != best.solved)
+        return cand.solved;
+    if (!cand.solved)
+        return false;
+    if (cand.turns != best.turns)
+        return cand.turns < best.turns;
+    return cand.len < best.len;
+}
+```
+
+这段代码也解释了一个容易误判的结果：某张图可以多走几步，只要少转更多。当前性能记录中的 map 50 正是用 8 个额外步骤换了 6 次更少转向；对真实小车而言，转向往往比直行更昂贵、更不稳定，所以这不是回退。
+
+## 第七层：BFS、A* 与缓存必须共享同一份板面语义
+
+底层并不只有一个 BFS：
+
+- 玩家步行搜索负责可达格、停车位、返航与重连；
+- 方向化玩家搜索把入射方向纳入状态，服务转向优先的识别导航；
+- 推箱搜索联合玩家位置与箱位置，内部保留三种权重 pass；
+- 推弹搜索要处理炸弹前方格、接近位和撞墙爆炸；
+- 可达墙扫描给炸弹配对和 preclear 提供候选。
+
+当前最贵的是 `ctx_bfs_push_one_box`。高层组合会反复询问相同板面上的“从这里能否把某箱推到某目标”，因此工程加入 16 set × 4 way 的有界 query cache。键不能只放玩家、箱子和目标；它把 base grid、所有箱/弹位置、完成标记和 `bombs_are_obstacle` 一并哈希：
+
+```c
+for (int y = 0; y < ctx->map_h; y++)
+    for (int x = 0; x < ctx->map_w; x++) {
+        a = hash_byte(a, ctx->base_grid[y][x], UINT64_C(1099511628211));
+        b = hash_byte(b, ctx->base_grid[y][x],
+                      UINT64_C(14029467366897019727));
+    }
+
+for (int i = 0; i < ctx->box_count; i++) {
+    uint16_t packed = (uint16_t)(uint8_t)ctx->boxes[i].pos.x |
+                      ((uint16_t)(uint8_t)ctx->boxes[i].pos.y << 8);
+    hash_u16(&a, &b, packed);
+    hash_u16(&a, &b, (uint16_t)(ctx->boxes[i].completed ? 1u : 0u));
+}
+```
+
+这是缓存正确性的底线：爆炸前后坐标相同，不代表拓扑相同。缓存也保存不可达结果；路径超过 192 字符则拒绝写入，避免固定条目被溢出。
+
+map 47 的性能画像揭示了下一步应该改哪里：约 54,077 次推箱查询中命中约 51.7%，规划约 9.9 秒，其中约 9.4 秒仍花在未命中的推动查询上。继续微调哈希收益有限；真正需要的是“箱位置固定时只做一次玩家 flood-fill”，以连通域 ID 和可站推位构建 push macro graph。
+
+## 第八层：事务外壳解决了一半回滚问题
+
+试探性分支必须遵守 begin → mutate → verify → commit/rollback。当前 `SolverTxn` 已把地图、实体和玩家的 `GameSnapshot` 包起来：
+
+```c
+void solver_txn_begin(SolverTxn *txn, SolverContext *ctx,
+                      ST *player, const char *label)
+{
+    txn->label = label ? label : "unnamed";
+    txn->active = 1;
+    ctx_save_full_state(ctx, &txn->snapshot, player);
+}
+
+void solver_txn_rollback(SolverTxn *txn, SolverContext *ctx, ST *player)
+{
+    if (!txn->active) return;
+    ctx_restore_full_state(ctx, &txn->snapshot, player);
+    txn->active = 0;
+}
+```
+
+但这还不是完整 context 事务。`GameSnapshot` 不保存路径缓冲、路径长度、manual pairing、失败原因、返航标志和启发式缓存。更危险的是 `path_buf` 是一个 union：识别路径和规划路径共享 4096 字节。跨阶段调用 preclear 或在递归里追加路径时，调用者仍需显式保存 union 内容和两个长度。
+
+因此当前事务层的正确评价是“把最常见的状态恢复做成了可读边界”，而不是“所有副作用已经自动安全”。这是下一轮重构应优先关闭的语义缺口。
+
+## 第九层：后处理只能接受更短且仍合法的路径
+
+主规划成功后还要经过三道门：
+
+1. 从后往前检查 push 边界，截掉“箱子已完成后仍继续推弹”的尾巴；
+2. 重放 raw plan，按真实末状态 BFS 到 return point，再重放拼接路径；
+3. 尝试 push swap 与 walk segment reconnect，但只有路径更短、完整重放合法且终点不变才接受。
+
+历史上 map 13、26、45 就曾经出现“主规划已经成功，却被返航或最终验证误杀”。`return_repair` 把这三张图从失败集中移出，使基线由 Planning 45/50 提升到 48/50。这个案例很重要：提升通过率不一定靠更强搜索，有时是先停止破坏已经找到的答案。
+
+最终验证从规划初始地图重放每个字符，检查边界、墙、实体、推动、爆炸、箱子完成数和返航终点。浏览器上方的展示器也沿同一字符语义重放；如果路径非法，它会在对应步骤停止，而不是用动画补出一条“看起来能走”的路径。
+
+## 第十层：MCU 历史告诉我们库边界为什么必要
+
+当前公开仓库明确不包含 MCU 状态机、摄像头驱动、串口协议和 Keil 工程；这些只在历史归档中作为接入证据。历史链路曾包含地图请求、识别旋转、扫描、标签构建、导航端点下发、DEV 误差闭环和固定返航点。它也暴露过若干典型风险：过短临时路径缓冲、push endpoint 固定数组越界、非法路径先索引后判界、by-value 与 into 两套实现漂移、旧 `.axf` 早于源码等。
+
+当前独立仓库已经修复路径执行越界、临时路径缓冲、完成统计和总计时等问题，并让 by-value wrapper 与 into API 共享维护路径；但“PC 通过”仍不能证明 MCU 固件已经用当前源码 Clean Build。若再次接回 RT1064，应重新检查 linker map、DTCM/ITCM 放置、UART 时序、阻塞日志和约 140 KiB context 的内存预算。
+
+## 当前可复现状态：历史数字与今日实测
+
+2026-07-16 的历史重构基线是 Recognition 50/50、Planning 45/50，失败图为 13、26、37、45、47。返航修复、识别顺序和缓存等改进之后，当前仓库门禁是：
+
+| 指标 | 当前结果 |
+| --- | ---: |
+| Recognition | 50 / 50 |
+| Planning | 48 / 50 |
+| 仍失败 | map 37、map 47 |
+| 48 张共同解地图的累计转向变化 | -111 |
+| 48 张共同解地图的累计步数变化 | -46 |
+| 六箱专项 | recognition 32/7；total 110/38 |
+| `sizeof(SolverContext)` | 141,980 B（PC ABI） |
+| `sizeof(SolverResult)` | 8,736 B |
+
+本文重写时实际执行了：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/build.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test.ps1
+```
+
+公共单测全部通过，回归再次得到 50/50 与 48/50；map 37 在识别成功后快速返回 `NO_SOLUTION`，map 47 仍是慢失败热点。机器相关 wall time 会变化，所以仓库把通过数、转向和步数作为确定性门禁，而不把某次毫秒数写成普适承诺。
+
+CI 的回归不是“进程返回 0 就算过”。测试程序会因为两张已知失败返回 1，流水线反而要求这个返回码与明确文本同时成立，并锁住关键图质量：
+
+```bash
+grep -q 'Recognition: 50/50 passed, 0 failed' <<< "$output"
+grep -q 'Planning   : 48/50 passed, 2 failed' <<< "$output"
+grep -Eq 'map_user_3b2e_judge.*total=130 +totalt=49' <<< "$output"
+test "$rc" -eq 1
+```
+
+这是一种诚实的基线：已知失败被建模，而不是在日志里被忽略。
+
+<span id="review"></span>
+
+## 仍未解决的技术债，按优先级排序
+
+### P0：复用玩家可达域，再谈统一推箱搜索
+
+把三遍推箱搜索简单合成一个 `(player, box, direction)` 联合状态，历史原型反而让 map 14 与 23 变慢约三倍，因为最贵的玩家可达性被重复计算。正确路线是先对固定箱布局做一次 flood-fill，用区域 ID 代表等价玩家位置，再把“站到推位并推动一次”作为宏边。之后才有条件统一三种权重 pass、加入反向推距和隧道/角落死锁。
+
+### P0：BombEffectGraph 与联合配对下界
+
+当前炸弹候选仍以局部墙评分和有限组合为主。下一代配对需要显式记录每个炸点清除的单元、解锁的连通域、新增箱子推位和死锁影响，再把炸弹移动成本、炸墙收益与箱到口反向推距放入小规模分支限界。map 37 与 47 应是验收样本，但实现不得读取地图文件名或固定坐标。
+
+### P1：把 workspace 变成调用方拥有的实例
+
+`g_ctx`、push cache、识别转移表和方向搜索数组让当前 API 确定且无需堆分配，却限制并发与平台裁剪。应新增 `SolverWorkspace`，由调用者提供内存，并提供 SMALL / MEDIUM / FULL 编译档位；旧 API 继续包装默认静态实例，保持兼容。
+
+### P1：让事务真正覆盖决策上下文
+
+状态事务应同时覆盖 board、实体、occupancy、路径、配对、失败状态与缓存失效，而不是由每个调用者手工记忆一组补丁字段。可以先补一个 `PathCheckpoint`，再逐步把候选提交统一到一个接口，避免一次性重排 `SolverContext`。
+
+### P1：内核级 cooperative cancellation
+
+网页版本在 Worker 外层设置 60 秒中止，能保证页面不卡死；C 内核内部还没有统一 cancellation/budget 检查点。对嵌入式与交互式调用，更可靠的做法是在组合、递归和重型推箱查询边界读取同一 budget，而不是只能杀掉整个 Worker。
+
+### P2：许可证与发布语义
+
+仓库没有开源许可证。若目标是把它作为可复用库发布，需要先明确授权，再讨论 package 安装、语义化版本和稳定 ABI。没有许可证时，最合适的描述是“公开源码工程记录”，而不是“任何人可自由集成的开源库”。
+
+## 最后：这个项目真正值得保留的不是某个 BFS
+
+它最有价值的地方，是把一个真实机器人问题拆成了可诊断的合同：识别可以改变地图；配对必须尊重标签不确定性；炸弹是拓扑动作；试探分支必须回滚；完成、转向和步数有明确顺序；最后路径必须重放；历史失败要进入回归门禁。
+
+它也保留了自己的不完美：全局状态还很重，事务只完成一半，两个地图仍漏解，推动查询仍慢，历史 MCU 与当前独立库之间还需要重新集成验证。把这些边界写出来，比用一段炫目的动画宣称“智能求解已经完成”更接近工程事实。
+
+</SolverStoryShell>

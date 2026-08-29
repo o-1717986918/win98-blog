@@ -18,6 +18,8 @@ export async function loadPostRoute(pathname: string, expectedChrome: 'full' | '
   }
   const { Content, headings } = await render(post);
   const columns = await getEntries(post.data.columns);
+  const allColumns = await getCollection('columns');
+  const columnLookup = new Map(allColumns.map((column) => [column.id, column]));
   const posts = sortPosts((await getCollection('posts')).filter(isPublished));
   const index = posts.findIndex((entry) => entry.id === post.id);
   return {
@@ -25,6 +27,7 @@ export async function loadPostRoute(pathname: string, expectedChrome: 'full' | '
     Content,
     headings,
     columns,
+    columnLookup,
     related: relatedPosts(post, posts),
     previous: index >= 0 ? posts[index + 1] : undefined,
     next: index > 0 ? posts[index - 1] : undefined,

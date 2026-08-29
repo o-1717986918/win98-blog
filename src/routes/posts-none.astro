@@ -1,20 +1,23 @@
 ---
 import StandaloneLayout from '../layouts/StandaloneLayout.astro';
+import { getImage } from 'astro:assets';
 import { loadPostRoute } from '../lib/route-content';
+import { socialImagePath } from '../lib/social-image';
 
 const { post, Content } = await loadPostRoute(Astro.url.pathname, 'none');
+const socialImage = post.data.cover ? (await getImage({ src: post.data.cover.src, width: 1200, format: 'webp' })).src : socialImagePath('posts', post.id);
 ---
 
 <StandaloneLayout
   title={post.data.title}
   description={post.data.description}
   theme={post.data.theme}
-  back={post.data.back}
   pageKind="post"
   published={post.data.date}
   updated={post.data.updated}
   tags={post.data.tags}
   noindex={post.data.noindex}
+  image={socialImage}
 >
   <Content />
 </StandaloneLayout>

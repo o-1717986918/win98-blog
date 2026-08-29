@@ -28,7 +28,7 @@ document.querySelectorAll('[data-search-index]').forEach((root) => {
     status.textContent = '正在搜索…';
     try {
       const api = await load();
-      const response = await api.search(query);
+      const response = await api.search(query, { filters: { type: '文章' } });
       const results = await Promise.all(response.results.slice(0, 8).map((result) => result.data()));
       if (id !== requestId) return;
       list.innerHTML = results.map((result) => `

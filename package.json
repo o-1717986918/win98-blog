@@ -2,7 +2,7 @@
   "name": "someone-site",
   "version": "0.0.0",
   "private": true,
-  "description": "某人的小站：可自由组合文章与栏目的个人博客",
+  "description": "某人的小站：可自由组合文章与主题的个人博客",
   "type": "module",
   "packageManager": "pnpm@11.19.0",
   "engines": {
@@ -12,13 +12,23 @@
     "dev": "astro dev",
     "build": "pnpm check && astro build && pagefind --site dist --force-language zh-cn && node scripts/check-build.mjs && node scripts/check-links.mjs && node scripts/check-budgets.mjs",
     "preview": "astro preview",
-    "check": "pnpm check:workspace && pnpm content:audit && astro check",
+    "check": "pnpm check:workspace && pnpm check:scripts && pnpm content:audit && pnpm content:covers && pnpm solver:smoke && astro check",
     "check:workspace": "node scripts/check-workspace.mjs",
+    "check:scripts": "tsc -p tsconfig.scripts.json",
     "content:new": "node scripts/content-new.mjs",
+    "studio": "node tools/blog-studio/server.mjs",
+    "notes:sync": "node tools/blog-studio/sync-notes.mjs",
     "content:audit": "node scripts/check-content.mjs",
-    "deploy:check": "pnpm verify && node scripts/deploy-check.mjs",
+    "content:covers": "node scripts/check-covers.mjs",
+    "solver:smoke": "node tools/solver-wasm/smoke.mjs",
+    "solver:full-smoke": "node tools/solver-wasm/smoke.mjs --full",
+    "deploy:check": "node --env-file-if-exists=.env scripts/deploy-check.mjs",
+    "deploy:prepare": "pnpm deploy:check && node --env-file-if-exists=.env scripts/check-cloudflare-config.mjs",
+    "deploy:pages:preview": "pnpm deploy:prepare && node --env-file-if-exists=.env scripts/deploy-cloudflare-pages.mjs preview",
+    "deploy:pages:production": "pnpm deploy:prepare && node --env-file-if-exists=.env scripts/deploy-cloudflare-pages.mjs production",
     "test": "vitest run",
-    "verify": "pnpm test && pnpm build",
+    "test:e2e": "playwright test",
+    "verify": "pnpm test && pnpm solver:full-smoke && pnpm build",
     "preview:prototype": "node scripts/serve-prototype.mjs",
     "preview:visual-experiment": "node scripts/serve-static.mjs experiments/single-file-visual-candidate",
     "preview:experiment": "node scripts/serve-static.mjs experiments/celestial-matrix"
@@ -28,13 +38,17 @@
     "@astrojs/rss": "4.0.19",
     "@astrojs/sitemap": "3.7.3",
     "astro": "7.2.9",
-    "pixi.js": "8.20.1"
+    "pixi.js": "8.20.1",
+    "sharp": "0.35.4"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.13.3",
     "astro-expressive-code": "^0.44.1",
     "pagefind": "^1.5.2",
     "typescript": "6.0.3",
-    "vitest": "4.1.11"
+    "vitest": "4.1.11",
+    "yaml": "^2.9.0"
   }
 }

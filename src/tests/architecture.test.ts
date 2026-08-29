@@ -85,8 +85,8 @@ describe('blog-architecture contracts', () => {
     const logo = await stat(join(root, 'public', 'brand', 'logo.jpg'));
     for (const source of [header, intro, base, manifest]) expect(source).toContain('/brand/logo.jpg');
     expect(logo.size).toBeGreaterThan(10_000);
-    expect(tokens).toContain('--brand-primary-rgb: 101, 169, 244;');
-    expect(tokens).toContain('--brand-secondary-rgb: 225, 139, 86;');
+    expect(tokens).toContain('--brand-primary-rgb: 53, 121, 168;');
+    expect(tokens).toContain('--brand-secondary-rgb: 198, 106, 67;');
   });
 
   it('keeps publication, discovery and content operations in the static build', async () => {
@@ -104,6 +104,9 @@ describe('blog-architecture contracts', () => {
     await expect(read('src/components/chrome/SiteHeader.astro')).resolves.toContain('SearchIndex');
     await expect(read('src/components/SearchIndex.astro')).resolves.toContain('id="site-search"');
     await expect(read('src/components/SearchIndex.astro')).resolves.not.toContain('search-filters');
+    await expect(read('public/scripts/search.js')).resolves.toContain("filters: { type: '文章' }");
+    await expect(read('src/components/ArticleBody.astro')).resolves.toContain('data-pagefind-body');
+    await expect(read('src/content/posts/particle-field/ParticleField.astro')).resolves.toContain('data-pagefind-body');
     await expect(read('src/pages/search.astro')).resolves.toContain('href="#site-search"');
     await expect(read('src/pages/tags/index.astro')).resolves.toContain('allTags');
   });
@@ -127,6 +130,7 @@ describe('blog-architecture contracts', () => {
     expect(ambient).toContain('prefers-reduced-motion');
     expect(ambient).toContain('visibilitychange');
     expect(ambient).toContain('someone-site:ambient-paused');
+    expect(ambient).toContain('if (active()) ensureController()');
     expect(engine).toContain("from 'pixi.js'");
     expect(engine).toContain('pointermove');
     expect(engine).toContain('pointerdown');
@@ -140,6 +144,7 @@ describe('blog-architecture contracts', () => {
     expect(home).toContain('<a class="spotlight"');
     expect(list).toContain('<a class="post-row"');
     expect(home).not.toContain('spotlight-hitbox');
+    expect(home).not.toContain('.spotlight > *');
     expect(list).not.toContain('post-hitbox');
   });
 
@@ -152,20 +157,112 @@ describe('blog-architecture contracts', () => {
     expect(intro).toContain('prefers-reduced-motion');
     expect(intro).toContain("event.key === 'Escape'");
     expect(intro).toContain('mountIntroParticles');
-    expect(intro).toContain('6800');
+    expect(intro).toContain('3800');
+    expect(intro).toContain('aria-modal="true"');
+    expect(intro).toContain('element.inert = true');
     expect(intro).not.toContain('clip-path: inset(0 100% 0 0)');
     expect(particles).toContain('sampleText');
     expect(particles).toContain('scatter');
     expect(shell).toContain("Astro.url.pathname === '/'");
   });
 
+  it('uses content-owned accents and a shared article body', async () => {
+    const postList = await read('src/components/PostList.astro');
+    const directory = await read('src/components/ColumnDirectory.astro');
+    const related = await read('src/components/RelatedPosts.astro');
+    const full = await read('src/layouts/PostLayout.astro');
+    const minimal = await read('src/layouts/MinimalPostLayout.astro');
+    for (const source of [postList, directory, related]) {
+      expect(source).toContain('accentStyle');
+      expect(source).not.toMatch(/article:nth-child|post-row:nth-child|column-card:nth-child/);
+    }
+    expect(full).toContain('ArticleBody');
+    expect(minimal).toContain('ArticleBody');
+  });
+
+  it('renders only mist and abyss while accepting legacy content during migration', async () => {
+    const site = await read('src/config/site.ts');
+    const tokens = await read('src/styles/tokens.css');
+    const header = await read('src/components/chrome/SiteHeader.astro');
+    const config = await read('src/content.config.ts');
+    expect(site).toContain("THEMES = ['mist', 'abyss']");
+    expect(tokens).toContain("data-theme='mist'");
+    expect(tokens).toContain("data-theme='abyss'");
+    expect(tokens).not.toMatch(/data-theme='(?:graphite|paper|night|indigo)'/u);
+    expect(header).toContain("const themeIds = ['mist', 'abyss']");
+    expect(config).toContain("value === 'mist' || value === 'paper' ? 'mist'");
+  });
+
+  it('gives standard content deterministic covers without weakening none isolation', async () => {
+    const cover = await read('src/components/ContentCover.astro');
+    expect(cover).toContain('data-default-cover');
+    expect(cover).toContain('role="img"');
+    expect(cover).toContain('Image');
+    for (const path of [
+      'src/pages/index.astro',
+      'src/components/PostList.astro',
+      'src/components/ColumnDirectory.astro',
+      'src/components/RelatedPosts.astro',
+      'src/components/ArticleBody.astro',
+      'src/layouts/ColumnLayout.astro',
+      'src/layouts/MinimalColumnLayout.astro',
+    ]) await expect(read(path)).resolves.toContain('ContentCover');
+    for (const path of ['src/routes/posts-none.astro', 'src/routes/columns-none.astro', 'src/layouts/StandaloneLayout.astro']) {
+      await expect(read(path)).resolves.not.toContain('ContentCover');
+    }
+  });
+
+  it('ships build-time social cards and formal accessible MDX components', async () => {
+    const endpoint = await read('src/pages/og/[collection]/[...slug].png.ts');
+    const social = await read('src/lib/social-image.ts');
+    expect(endpoint).toContain('renderSocialCard');
+    expect(social).toContain('1200');
+    expect(social).toContain('630');
+    await expect(read('src/components/content/Callout.astro')).resolves.toContain('role="note"');
+    await expect(read('src/components/content/DataChart.astro')).resolves.toContain('<table');
+    const playground = await read('src/components/content/CodePlayground.astro');
+    expect(playground).toContain('sandbox="allow-scripts"');
+    expect(playground).toContain('srcdoc');
+  });
+
+  it('persists reading rhythm and isolates third-party comment content', async () => {
+    const reader = await read('src/components/chrome/ReaderControls.astro');
+    const comments = await read('src/components/Comments.astro');
+    expect(reader).toContain('reader-leading');
+    expect(reader).toContain('reading-position');
+    expect(reader).toContain('data-reader-trigger');
+    expect(comments).toContain('sandbox="allow-scripts allow-forms"');
+    expect(comments).not.toContain('allow-same-origin');
+    expect(comments).toContain("parsed.protocol !== 'https:'");
+  });
+
+  it('keeps cross-document transitions out of none routes', async () => {
+    await expect(read('src/styles/shell.css')).resolves.toContain('@view-transition');
+    await expect(read('src/styles/minimal.css')).resolves.toContain('@view-transition');
+    for (const path of ['src/layouts/BaseLayout.astro', 'src/layouts/StandaloneLayout.astro', 'src/routes/posts-none.astro', 'src/routes/columns-none.astro']) {
+      await expect(read(path)).resolves.not.toContain('@view-transition');
+    }
+  });
+
   it('ships production operations and deployment documentation', async () => {
     for (const path of [
       '.env.example',
       '.github/workflows/ci.yml',
+      '.github/workflows/deploy.yml',
+      'scripts/check-cloudflare-config.mjs',
+      'scripts/deploy-cloudflare-pages.mjs',
       'docs/operations/CONTENT_WORKFLOW.md',
       'docs/operations/DEPLOYMENT.md',
+      'docs/operations/PRODUCTION_CHECKLIST.md',
       'docs/operations/OPERATIONS.md',
     ]) await expect(read(path)).resolves.toBeTruthy();
+
+    const scripts = JSON.parse(await read('package.json')).scripts;
+    expect(scripts['deploy:prepare']).toContain('deploy:check');
+    expect(scripts['deploy:pages:preview']).toContain('deploy:prepare');
+    expect(scripts['deploy:pages:production']).toContain('deploy:prepare');
+    await expect(read('.github/workflows/deploy.yml')).resolves.toContain('workflow_dispatch');
+    await expect(read('.github/workflows/deploy.yml')).resolves.toContain('cloudflare/wrangler-action@v4');
+    await expect(read('scripts/deploy-cloudflare-pages.mjs')).resolves.toContain('CONFIRM_PRODUCTION');
   });
 });

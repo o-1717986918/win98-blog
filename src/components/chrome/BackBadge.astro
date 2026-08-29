@@ -1,14 +1,14 @@
 ---
 interface Props { href?: string; label?: string; }
-const { href = '/', label = '返回小站' } = Astro.props;
+const { href = '/', label = '返回上页' } = Astro.props;
 ---
 
-<a class="back-badge" href={href} aria-label={label}>← <span>{label}</span></a>
+<a class="back-badge" href={href} aria-label={label} data-history-back>← <span>{label}</span></a>
 
 <style>
   .back-badge {
     position: fixed;
-    top: 1rem;
+    bottom: 1rem;
     left: 1rem;
     z-index: 80;
     display: inline-flex;
@@ -28,3 +28,23 @@ const { href = '/', label = '返回小站' } = Astro.props;
   .back-badge:focus-visible { outline: 2px solid #77dbc8; outline-offset: 3px; }
   @media (max-width: 520px) { .back-badge span { display: none; } }
 </style>
+
+<script>
+  const bindHistoryBack = () => {
+    document.querySelectorAll<HTMLAnchorElement>('[data-history-back]').forEach((link) => {
+      if (link.dataset.bound === 'true') return;
+      link.dataset.bound = 'true';
+      link.addEventListener('click', (event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        if (!document.referrer) return;
+        const previous = new URL(document.referrer);
+        const current = new URL(location.href);
+        if (previous.origin !== current.origin || previous.pathname === current.pathname) return;
+        event.preventDefault();
+        history.back();
+      });
+    });
+  };
+  bindHistoryBack();
+  document.addEventListener('astro:page-load', bindHistoryBack);
+</script>

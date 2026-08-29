@@ -11,6 +11,12 @@
   ::selection { color: rgb(var(--bg-rgb)); background: rgb(var(--signal-rgb)); }
 }
 
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: .18s ease-out both shell-fade-out; }
+::view-transition-new(root) { animation: .28s var(--ease) both shell-fade-in; }
+@keyframes shell-fade-out { to { opacity: 0; transform: translateY(-.25rem); } }
+@keyframes shell-fade-in { from { opacity: 0; transform: translateY(.35rem); } }
+
 @layer shell {
   body {
     min-height: 100vh;
@@ -144,5 +150,6 @@
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
   }
 }
