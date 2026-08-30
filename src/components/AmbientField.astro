@@ -103,6 +103,7 @@
   .motion-toggle[aria-pressed='true'] i { background: rgba(var(--text-rgb), .34); box-shadow: none; }
   .motion-toggle:hover { border-color: rgba(var(--signal-rgb), .62); color: rgb(var(--signal-rgb)); transform: translateY(-2px); background: rgba(var(--surface-rgb), .82); }
   .motion-toggle:focus-visible { outline: 2px solid rgb(var(--signal-rgb)); outline-offset: 3px; }
+  @media (min-width: 1101px) { :global(body:has(.site-header)) .motion-toggle { display: none; } }
   @media (max-width: 520px) {
     .ambient-lenses { inset: -5% -30%; }
     .ambient-lenses i { filter: blur(3rem); }

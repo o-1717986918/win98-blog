@@ -1,5 +1,5 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { extname, join, resolve } from 'node:path';
+import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -24,11 +24,13 @@ const failures = [];
 for (const file of htmlFiles) {
   const html = await readFile(file, 'utf8');
   const staticHtml = html.replace(/<script\b[\s\S]*?<\/script>/gi, '');
+  const outputRoute = relative(dist, file).replaceAll('\\', '/');
+  const documentUrl = `https://local.invalid${basePath}/${outputRoute}`;
   for (const match of staticHtml.matchAll(/\b(?:href|src)=["']([^"']+)["']/gi)) {
     const raw = match[1];
     if (!raw || raw.startsWith('#') || raw.startsWith('data:') || raw.startsWith('mailto:') || raw.startsWith('tel:')) continue;
     let url;
-    try { url = new URL(raw, 'https://local.invalid'); } catch { failures.push(`${file}: malformed URL ${raw}`); continue; }
+    try { url = new URL(raw, documentUrl); } catch { failures.push(`${file}: malformed URL ${raw}`); continue; }
     if (url.origin !== 'https://local.invalid') continue;
     let pathname;
     try { pathname = withoutBase(decodeURIComponent(url.pathname)); } catch { failures.push(`${file}: invalid URL encoding ${raw}`); continue; }

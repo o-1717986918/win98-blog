@@ -3,6 +3,7 @@ import type { MarkdownHeading } from 'astro';
 import ArticleTools from './ArticleTools.astro';
 import Comments from './Comments.astro';
 import ContentCover from './ContentCover.astro';
+import EvidenceLedger from './content/EvidenceLedger.astro';
 import RelatedPosts from './RelatedPosts.astro';
 import TableOfContents from './chrome/TableOfContents.astro';
 import { formatDate, tagPath, type ColumnEntry, type PostEntry } from '../lib/content';
@@ -26,22 +27,27 @@ const accent = postAccent(post, columnLookup);
 const style = accentStyle(accent);
 ---
 
-<article class:list={['article-page', { 'article-page--wide': post.data.wide }]} style={style}>
+<article id="article-start" class:list={['article-page', 'h-entry', { 'article-page--wide': post.data.wide }]} style={style}>
   <header class="article-head">
     <p class="eyebrow">{eyebrow}</p>
-    <h1 class="article-title">{post.data.title}</h1>
-    <p class="article-description">{post.data.description}</p>
+    <h1 class="article-title p-name" aria-label={post.data.title}>
+      <span class="article-title__full">{post.data.title}</span>
+      {post.data.shortTitle && <span class="article-title__short" aria-hidden="true">{post.data.shortTitle}</span>}
+    </h1>
+    <p class="article-description p-summary">{post.data.description}</p>
     <div class="article-meta">
-      <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+      <time class="dt-published" datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+      {post.data.updated && <time class="dt-updated" datetime={post.data.updated.toISOString()}>更新 {formatDate(post.data.updated)}</time>}
       {post.data.minutes && <span>约 {post.data.minutes} 分钟</span>}
       {columns.map((column) => <a href={withBase(`/columns/${column.id}/`)}>{column.data.title}</a>)}
       {post.data.tags.map((tag) => <a href={tagPath(tag)}>#{tag}</a>)}
     </div>
   </header>
   <ContentCover className="article-cover" title={post.data.title} seed={post.id} kind="post" {accent} cover={post.data.cover} variant="hero" eager />
+  <EvidenceLedger items={post.data.evidence} />
   <div class:list={['article-grid', { 'article-grid--no-toc': !showToc }]}>
-    <div class="prose" data-pagefind-body data-reading-surface><slot /></div>
-    {showToc && <TableOfContents headings={headings} />}
+    <div class="prose e-content" data-pagefind-body data-reading-surface><slot /></div>
+    {showToc && <TableOfContents headings={headings} minutes={post.data.minutes} />}
   </div>
   <ArticleTools />
   {(previous || next) && (
@@ -52,5 +58,8 @@ const style = accentStyle(accent);
   )}
   <RelatedPosts posts={related} {columnLookup} />
   <Comments preference={post.data.comments} />
+  {post.data.syndication.length > 0 && <p class="article-syndication">同步发布：{post.data.syndication.map((url) => <a class="u-syndication" href={url} rel="syndication noreferrer">{new URL(url).hostname} ↗</a>)}</p>}
+  <a class="u-url article-author" href={withBase(`/posts/${post.id}/`)}>原文</a>
+  <a class="p-author h-card article-author" href={withBase('/about/')} rel="author"><span class="p-name">某人</span></a>
   <p class="article-license">本文采用 {post.data.license} 许可；转载时请保留作者与原文链接。</p>
 </article>

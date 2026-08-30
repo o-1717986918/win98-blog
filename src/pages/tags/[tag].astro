@@ -16,7 +16,7 @@ export async function getStaticPaths() {
 const { tag, posts } = Astro.props;
 ---
 
-<FullShell title={`#${tag}`} description={`标记为“${tag}”的全部文章。`}>
+<FullShell title={`#${tag}`} description={`标记为“${tag}”的全部文章。`} schemaType="CollectionPage">
   <div class="page-wrap tag-page">
     <header class="page-intro">
       <div><p class="eyebrow">TAG</p><h1 class="display-title">#{tag}</h1></div>

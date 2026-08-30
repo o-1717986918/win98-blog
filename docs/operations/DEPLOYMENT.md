@@ -47,6 +47,8 @@ GitHub Pages 是当前可立即访问的公开首发渠道；下述 Cloudflare P
 
 评论与统计变量按 `.env.example` 添加。它们会进入公开网页，不能放真正的私密凭据；Waline 数据库密钥等服务端秘密属于对应服务，不属于本仓库。
 
+`PUBLIC_WEBMENTION_ENDPOINT` 与 `PUBLIC_PERFORMANCE_ENDPOINT` 也是可选公开地址，必须使用 HTTPS。留空时前者不写入页面，后者只在当前标签页保存一次性能样本，不产生网络请求。GitHub Pages 不能承载接收 API；需要 Webmention 或聚合现场性能时，应使用独立服务或迁移后的 Cloudflare Worker，并在隐私页公开保存边界。
+
 ## 3. 第一次发布
 
 先复制环境文件并填写真实值：
@@ -74,7 +76,7 @@ Remove-Item Env:CONFIRM_PRODUCTION
 ### 3.1 本次内容重构后的发布顺序
 
 1. 在无外部凭据的机器上先运行 `pnpm verify`，确认内容引用、ArcVellum 十二篇手记、工具主题、Pagefind 与全部静态路由可构建。
-2. 确认 `pnpm solver:smoke` 返回内置地图的 33 步识别路径。`public/solver/solver-engine.wasm` 是已构建产物；只有当求解器源仓库变更时，才使用 `tools/solver-wasm/build.ps1` 重建。
+2. 确认 `pnpm solver:smoke` 返回内置地图的 33 步识别路径。冒烟脚本还会根据 `tools/solver-wasm/solver-engine.provenance.json` 校验制品 SHA-256、源码提交与 33/191 步行为契约。`public/solver/solver-engine.wasm` 是已构建产物；只有当求解器源仓库变更时，才使用 `tools/solver-wasm/build.ps1` 重建，并同步更新溯源清单。清单中的 `compilerVersion` 只有在真实重建时才可填写，不得猜测。
 3. 启动本地预览，在 390×844 与桌面视口检查首页主题抽屉、三篇近文限制、全站返回桥、ArcVellum 侧栏目录与工具主题。
 4. 在求解器文章先执行“只跑识别”，再执行一次内置地图“识别 + 完整规划”。确认 Worker 期间页面仍可滚动，结果显示 191 步规划路径，“停止”能中断运行。
 5. 手动部署 preview，在 preview 域名再执行第 3–4 步，特别检查 `.wasm` 返回 200 且 Worker 可同源加载。该模块不依赖 `SharedArrayBuffer`，因此不需要为它额外启用 COOP/COEP。

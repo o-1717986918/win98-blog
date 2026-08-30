@@ -1,23 +1,31 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection } from 'astro:content';
 import StandaloneLayout from '../../layouts/StandaloneLayout.astro';
 import '../../styles/tokens.css';
 import '../../styles/shell.css';
 import '../../styles/prose.css';
 import { withBase } from '../../lib/site-path';
+import { buildNoteGraph, NOTE_MATURITY } from '../../lib/note-graph';
 
 const notes = (await getCollection('notes'))
   .filter((note) => note.data.publish && !note.data.draft)
   .sort((a, b) => (b.data.updated ?? b.data.created).getTime() - (a.data.updated ?? a.data.created).getTime());
 const tags = [...new Set(notes.flatMap((note) => note.data.tags))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
 const latest = notes[0];
-const renderedNotes = await Promise.all(notes.map(async (note) => ({ note, Content: (await render(note)).Content })));
+const excerpt = (body: string) => body
+  .replace(/```[\s\S]*?```/g, ' ')
+  .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+  .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+  .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_match, target, label) => label ?? target)
+  .replace(/^#{1,6}\s+/gm, '')
+  .replace(/[*_`>~]/g, '')
+  .replace(/\s+/g, ' ')
+  .trim()
+  .slice(0, 320);
+const previewNotes = notes.map((note) => ({ note, excerpt: excerpt(note.body ?? note.data.description) }));
 const formatDate = (value: Date) => value.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
-const linksTo = (source: (typeof notes)[number], target: (typeof notes)[number]) =>
-  (source.body ?? '').includes(`[[${target.data.title}`) || (source.body ?? '').includes(`/notes/${target.id}/`);
-const relations = notes.flatMap((source) => notes
-  .filter((target) => target.id !== source.id && linksTo(source, target))
-  .map((target) => ({ source: source.id, target: target.id })));
+const graph = buildNoteGraph(notes);
+const relations = graph.relations;
 const graphNodes = notes.map((note, index) => {
   const count = Math.max(notes.length, 1);
   const angle = -Math.PI / 2 + index * (Math.PI * 2 / count);
@@ -25,13 +33,13 @@ const graphNodes = notes.map((note, index) => {
   return { note, x: 50 + Math.cos(angle) * radius, y: 50 + Math.sin(angle) * radius };
 });
 const nodeById = new Map(graphNodes.map((node) => [node.note.id, node]));
-const incomingFor = (note: (typeof notes)[number]) => notes.filter((entry) => entry.id !== note.id && linksTo(entry, note));
-const outgoingFor = (note: (typeof notes)[number]) => notes.filter((entry) => entry.id !== note.id && linksTo(note, entry));
+const incomingFor = (note: (typeof notes)[number]) => graph.incoming.get(note.id) ?? [];
+const outgoingFor = (note: (typeof notes)[number]) => graph.outgoing.get(note.id) ?? [];
 const latestIncoming = latest ? incomingFor(latest) : [];
 const latestOutgoing = latest ? outgoingFor(latest) : [];
 ---
 
-<StandaloneLayout title="学习笔记" description="本地知识库经过显式公开后形成的只读知识空间。" theme="mist">
+<StandaloneLayout title="学习笔记" description="本地知识库经过显式公开后形成的只读知识空间。" theme="mist" back={false} schemaType="CollectionPage">
   <main class="garden" data-note-workbench data-pagefind-body>
     <header class="garden-bar">
       <a class="garden-home" href={withBase('/')} aria-label="返回博客首页"><b>某</b><span><strong>学习笔记</strong><small>PUBLIC VAULT</small></span></a>
@@ -62,6 +70,9 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
                 data-preview-tags={note.data.tags.map((tag) => `#${tag}`).join(' · ') || 'UNTAGGED'}
                 data-preview-source={note.data.source ?? '站内创建'}
                 data-preview-aliases={note.data.aliases.join(' · ') || '—'}
+                data-preview-maturity={NOTE_MATURITY[note.data.maturity].label}
+                data-preview-backlinks={JSON.stringify(incoming.map((entry) => ({ title: entry.data.title, href: withBase(`/notes/${entry.id}/`) })))}
+                data-preview-outgoing-links={JSON.stringify(outgoing.map((entry) => ({ title: entry.data.title, href: withBase(`/notes/${entry.id}/`) })))}
                 data-preview-incoming={String(incoming.length)}
                 data-preview-outgoing={String(outgoing.length)}>
                 <i aria-hidden="true">◇</i><span><strong>{note.data.title}</strong><small>{formatDate(date)}</small></span>
@@ -82,14 +93,14 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
         </header>
 
         <div class="garden-index" data-index-view>
-          {renderedNotes.length ? renderedNotes.map(({ note, Content }, index) => <article class="garden-note" data-note-panel={note.id} hidden={index !== 0}>
+          {previewNotes.length ? previewNotes.map(({ note, excerpt }, index) => <article class="garden-note" data-note-panel={note.id} hidden={index !== 0}>
             <header>
-              <p>{note.data.tags.map((tag) => `#${tag}`).join(' · ') || 'UNTAGGED'}</p>
+              <p>{NOTE_MATURITY[note.data.maturity].label} · {note.data.tags.map((tag) => `#${tag}`).join(' · ') || 'UNTAGGED'}</p>
               <h2>{note.data.title}</h2>
               <span>{note.data.description}</span>
               <a class="garden-note__open" href={withBase(`/notes/${note.id}/`)}>独立阅读 <span>↗</span></a>
             </header>
-            <div class="garden-note__body prose"><Content /></div>
+            <div class="garden-note__body prose"><p>{excerpt}</p></div>
             <footer><span>LAST SYNC</span><time>{formatDate(note.data.updated ?? note.data.created)}</time></footer>
           </article>) : <article class="garden-note garden-note--empty"><h2>等待第一条公开笔记</h2><p>在本地 Vault 中明确标记公开后，笔记会出现在这里。</p></article>}
         </div>
@@ -114,6 +125,7 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
             <div><dt>aliases</dt><dd data-preview-aliases>{latest?.data.aliases.join(' · ') || '—'}</dd></div>
             <div><dt>tags</dt><dd data-context-tags>{latest?.data.tags.join(' · ') || '—'}</dd></div>
             <div><dt>source</dt><dd data-preview-source>{latest?.data.source ?? '站内创建'}</dd></div>
+            <div><dt>maturity</dt><dd data-preview-maturity>{latest ? NOTE_MATURITY[latest.data.maturity].label : '—'}</dd></div>
             <div><dt>publish</dt><dd>true</dd></div>
           </dl>
         </section>
@@ -123,7 +135,7 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
         </section>
         <section class="garden-outgoing">
           <header><p>OUTGOING LINKS</p><span data-preview-outgoing>{latestOutgoing.length}</span></header>
-          <small>关系数量随当前选中的公开笔记更新。</small>
+          <div data-outgoing-copy>{latestOutgoing.length ? latestOutgoing.map((entry) => <a href={withBase(`/notes/${entry.id}/`)}>{entry.data.title} ↗</a>) : <small>当前笔记尚未指向其他公开条目。</small>}</div>
         </section>
       </aside>
     </section>
@@ -152,79 +164,19 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
   .garden-graph{position:relative;min-height:0;overflow:hidden;background:radial-gradient(circle at 50% 50%,rgba(var(--spectrum-violet-rgb),.13),transparent 18rem),linear-gradient(rgba(var(--spectrum-violet-rgb),.055) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--spectrum-violet-rgb),.055) 1px,transparent 1px);background-size:auto,2.5rem 2.5rem,2.5rem 2.5rem}.garden-graph[hidden]{display:none}.garden-graph svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.garden-graph line{vector-effect:non-scaling-stroke;stroke:rgba(var(--spectrum-violet-rgb),.58);stroke-width:1}.garden-graph>a{position:absolute;left:var(--node-x);top:var(--node-y);display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.55rem;align-items:center;max-width:14rem;padding:.7rem .8rem;border:1px solid rgba(var(--spectrum-violet-rgb),.38);color:inherit;background:rgba(var(--surface-rgb),.94);box-shadow:.35rem .4rem 0 rgba(var(--spectrum-violet-rgb),.08);font-size:.68rem;text-decoration:none;transform:translate(-50%,-50%)}.garden-graph>a:hover{z-index:2;border-color:rgb(var(--spectrum-aqua-rgb));transform:translate(-50%,calc(-50% - 3px))}.garden-graph>a i{width:.5rem;aspect-ratio:1;border-radius:50%;background:rgb(var(--spectrum-aqua-rgb));box-shadow:0 0 .5rem rgba(var(--spectrum-aqua-rgb),.5)}.garden-graph>a strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.garden-graph>a small{color:rgb(var(--spectrum-coral-rgb));font:.48rem/1 var(--font-mono)}.garden-graph>p{position:absolute;right:1rem;bottom:1rem;max-width:26rem;color:rgba(var(--text-rgb),.5);font:.55rem/1.6 var(--font-mono);text-align:right}
   .garden-context{min-width:0;min-height:0;padding:1rem;overflow:auto;border-left:1px solid var(--garden-line);background:rgba(var(--surface-rgb),.58)}.garden-context section+section{margin-top:1.7rem}.garden-context dl{display:grid;margin:0}.garden-context dl div{display:grid;gap:.35rem;padding:.7rem 0;border-bottom:1px solid rgba(var(--spectrum-violet-rgb),.13)}.garden-context dt{color:rgb(var(--spectrum-violet-rgb));font:.51rem/1 var(--font-mono)}.garden-context dd{margin:0;overflow-wrap:anywhere;color:rgba(var(--text-rgb),.68);font:.62rem/1.55 var(--font-mono)}.garden-context section>div{display:grid;gap:.45rem;padding-top:.8rem}.garden-context section>div a{color:inherit;font-size:.66rem;text-decoration:none}.garden-context section>div a:hover{color:rgb(var(--spectrum-coral-rgb))}.garden-context small{color:rgba(var(--text-rgb),.5);font:.57rem/1.65 var(--font-mono)}
   .garden-sync{position:relative;z-index:6;width:100%;margin:0;background:rgba(var(--bg-rgb),.95)}.garden-sync summary{display:grid;grid-template-columns:auto 1fr auto;gap:1.1rem;align-items:center;min-height:2.7rem;padding:.55rem 1rem;cursor:pointer}.garden-sync summary span{font:640 .7rem/1 var(--font-display)}.garden-sync summary small{color:rgba(var(--text-rgb),.48);font:.52rem/1 var(--font-mono)}.garden-sync summary i{color:rgb(var(--spectrum-coral-rgb));font-style:normal}.garden-sync[open] summary i{transform:rotate(45deg)}.garden-sync>div{position:absolute;right:0;bottom:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.8rem;width:min(48rem,100%);padding:1rem;border:1px solid var(--garden-line);background:rgb(var(--surface-rgb));box-shadow:0 -1rem 3rem rgba(13,25,31,.12)}.garden-sync p{grid-column:1/-1;color:rgba(var(--text-rgb),.63);font-size:.68rem;line-height:1.65}.garden-sync code{overflow:auto;padding:.75rem;border:1px solid var(--garden-line);background:rgba(var(--bg-rgb),.66);font:.58rem/1.4 var(--font-mono);white-space:nowrap}.garden-sync button{padding:.7rem 1rem;border:1px solid rgba(var(--spectrum-coral-rgb),.42);color:rgb(var(--spectrum-coral-rgb));background:transparent;font:.56rem/1 var(--font-mono);cursor:pointer}.garden-sync button:hover{color:rgb(var(--bg-rgb));background:rgb(var(--spectrum-coral-rgb))}.garden-sync>div>span{grid-column:1/-1;min-height:1rem;color:rgb(var(--spectrum-gold-rgb));font:.54rem/1 var(--font-mono)}
+  /* Workbench authenticity cannot come at the cost of legibility. Keep metadata dense, not microscopic. */
+  .garden-home strong{font-size:.8rem}.garden-home small{font-size:.55rem}.garden-path,.garden-bar nav{font-size:.62rem}
+  .garden-explorer>header p,.garden-context header p{font-size:.61rem}.garden-explorer>header span,.garden-context header span{font-size:.59rem}
+  .garden-search input{font-size:.76rem}.garden-tags button,.garden-views button{min-height:1.9rem;font-size:.6rem}.garden-folder{font-size:.63rem}
+  .garden-list strong{font-size:.78rem}.garden-list small{font-size:.56rem}.garden-stage__bar>p{font-size:.63rem}
+  .garden-note>header>p{font-size:.61rem}.garden-note>header>span,.garden-note__body{font-size:.84rem}.garden-note__open{font-size:.73rem}.garden-note footer{font-size:.58rem}
+  .garden-context dt{font-size:.58rem}.garden-context dd{font-size:.69rem}.garden-context section>div a{font-size:.72rem}.garden-context small{font-size:.63rem}
   [hidden]{display:none!important}
   @media(max-width:1080px){.garden{height:auto;min-height:100dvh;overflow:visible}.garden-bar{grid-template-columns:14rem 1fr auto}.garden-workspace{grid-template-columns:14rem minmax(0,1fr)}.garden-context{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;overflow:visible;border-top:1px solid var(--garden-line);border-left:0}.garden-context section+section{margin-top:0}.garden-stage{min-height:38rem}.garden-list{max-height:27rem}.garden-sync>div{position:static;width:100%;border-right:0;border-left:0;box-shadow:none}}
-  @media(max-width:760px){.garden{display:block;min-height:100dvh}.garden-bar{grid-template-columns:1fr auto;min-height:4.1rem}.garden-bar .garden-path{display:none}.garden-bar nav{border-left:1px solid var(--garden-line)}.garden-bar nav a{display:none}.garden-bar nav span{font-size:.48rem}.garden-workspace{grid-template-columns:1fr}.garden-explorer{border-right:0;border-bottom:1px solid var(--garden-line)}.garden-list{max-height:14rem}.garden-stage{min-height:29rem}.garden-note{padding:1.35rem 1.1rem}.garden-note h2{font-size:clamp(1.55rem,7vw,2rem)}.garden-graph{min-height:29rem}.garden-context{grid-template-columns:1fr}.garden-context section+section{margin-top:1rem}.garden-sync summary{grid-template-columns:1fr auto}.garden-sync summary small{grid-column:1/-1;grid-row:2}.garden-sync>div{grid-template-columns:1fr}.garden-home{border-right:0}}
+  @media(max-width:760px){.garden{display:block;min-height:100dvh}.garden-bar{grid-template-columns:1fr auto;min-height:4.1rem}.garden-bar .garden-path{display:none}.garden-bar nav{border-left:1px solid var(--garden-line)}.garden-bar nav a{display:inline-flex}.garden-bar nav span{display:none}.garden-workspace{grid-template-columns:1fr}.garden-explorer{border-right:0;border-bottom:1px solid var(--garden-line)}.garden-list{max-height:14rem}.garden-stage{min-height:29rem}.garden-note{padding:1.35rem 1.1rem}.garden-note h2{font-size:clamp(1.55rem,7vw,2rem)}.garden-graph{min-height:29rem}.garden-context{grid-template-columns:1fr}.garden-context section+section{margin-top:1rem}.garden-sync summary{grid-template-columns:1fr auto}.garden-sync summary small{grid-column:1/-1;grid-row:2}.garden-sync>div{grid-template-columns:1fr}.garden-home{border-right:0}}
 </style>
 
 <script>
-  const workbench = document.querySelector<HTMLElement>('[data-note-workbench]');
-  if (workbench) {
-    const search = workbench.querySelector<HTMLInputElement>('[data-note-search]');
-    const tagButtons = [...workbench.querySelectorAll<HTMLButtonElement>('[data-note-tag]')];
-    const entries = [...workbench.querySelectorAll<HTMLElement>('[data-note-entry]')];
-    const listEntries = [...workbench.querySelectorAll<HTMLElement>('.garden-list [data-note-entry]')];
-    const visibleCount = workbench.querySelector<HTMLElement>('[data-visible-count]');
-    const empty = workbench.querySelector<HTMLElement>('[data-note-empty]');
-    let activeTag = '';
-    const applyFilter = () => {
-      const query = search?.value.trim().toLowerCase() ?? '';
-      let count = 0;
-      entries.forEach((entry) => {
-        const matchesText = !query || `${entry.dataset.noteTitle} ${entry.dataset.noteDescription} ${entry.dataset.noteTags}`.includes(query);
-        const matchesTag = !activeTag || (entry.dataset.noteTags ?? '').split('|').includes(activeTag.toLowerCase());
-        const visible = matchesText && matchesTag;
-        entry.hidden = !visible;
-        if (visible && listEntries.includes(entry)) count += 1;
-      });
-      if (visibleCount) visibleCount.textContent = String(count);
-      if (empty) empty.hidden = count !== 0;
-    };
-    search?.addEventListener('input', applyFilter);
-    tagButtons.forEach((button) => button.addEventListener('click', () => {
-      activeTag = button.dataset.noteTag ?? '';
-      tagButtons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
-      applyFilter();
-    }));
-
-    const indexView = workbench.querySelector<HTMLElement>('[data-index-view]');
-    const mapView = workbench.querySelector<HTMLElement>('[data-map-view]');
-    const panels = [...workbench.querySelectorAll<HTMLElement>('[data-note-panel]')];
-    workbench.querySelectorAll<HTMLButtonElement>('[data-note-view]').forEach((button) => button.addEventListener('click', () => {
-      const showMap = button.dataset.noteView === 'map';
-      if (indexView) indexView.hidden = showMap;
-      if (mapView) mapView.hidden = !showMap;
-      workbench.querySelectorAll<HTMLButtonElement>('[data-note-view]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
-    }));
-
-    const field = (selector: string) => workbench.querySelector<HTMLElement>(selector);
-    workbench.querySelectorAll<HTMLAnchorElement>('[data-note-preview]').forEach((link) => {
-      const update = () => {
-        const values: Record<string, string | undefined> = {
-          '[data-preview-number]': link.dataset.previewIndex,
-          '[data-preview-file]': link.dataset.previewFile,
-          '[data-preview-tags]': link.dataset.previewTags,
-          '[data-context-tags]': link.dataset.previewTags,
-          '[data-preview-source]': link.dataset.previewSource,
-          '[data-preview-aliases]': link.dataset.previewAliases,
-          '[data-preview-incoming]': link.dataset.previewIncoming,
-          '[data-preview-outgoing]': link.dataset.previewOutgoing,
-        };
-        Object.entries(values).forEach(([selector, value]) => {
-          workbench.querySelectorAll<HTMLElement>(`${selector}:not([data-note-preview])`).forEach((node) => { node.textContent = value ?? ''; });
-        });
-        panels.forEach((panel) => { panel.hidden = panel.dataset.notePanel !== link.dataset.previewId; });
-        workbench.querySelectorAll<HTMLAnchorElement>('[data-note-preview]').forEach((item) => item.toggleAttribute('aria-current', item === link));
-        const backlinkCopy = field('[data-backlink-copy]');
-        if (backlinkCopy) backlinkCopy.innerHTML = Number(link.dataset.previewIncoming) ? '<small>打开完整笔记查看引用它的公开条目。</small>' : '<small>尚无公开笔记引用当前条目。</small>';
-      };
-      link.addEventListener('click', (event) => { event.preventDefault(); update(); });
-    });
-
-    const status = field('[data-copy-status]');
-    workbench.querySelectorAll<HTMLButtonElement>('[data-copy-command]').forEach((button) => button.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(button.dataset.copyCommand ?? ''); if (status) status.textContent = '命令已复制，可在项目根目录运行。'; }
-      catch { if (status) status.textContent = '浏览器未授权剪贴板，请手动复制上方命令。'; }
-    }));
-  }
+  import { initNotesWorkbench } from '../../lib/notes-workbench';
+  initNotesWorkbench();
 </script>

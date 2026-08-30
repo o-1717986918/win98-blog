@@ -49,11 +49,13 @@ async function loadTree() {
       const heading = document.createElement('h2'); heading.textContent = { posts: 'ARTICLES', columns: 'THEMES', notes: 'LEARNING NOTES' }[collection]; tree.append(heading);
       for (const path of files.filter((file) => file.startsWith(`src/content/${collection}/`))) {
         const button = document.createElement('button'); button.type = 'button'; button.dataset.path = path;
-        button.innerHTML = `<i>${collection === 'posts' ? 'A' : collection === 'columns' ? 'T' : 'N'}</i><span>${path.split('/').at(-2)}</span>`;
+        const icon = document.createElement('i'); icon.textContent = collection === 'posts' ? 'A' : collection === 'columns' ? 'T' : 'N';
+        const label = document.createElement('span'); label.textContent = path.split('/').at(-2) ?? path;
+        button.append(icon, label);
         button.addEventListener('click', () => openFile(path)); tree.append(button);
       }
     }
-  } catch (error) { tree.innerHTML = `<p>${escapeHtml(error.message)}</p>`; }
+  } catch (error) { const message = document.createElement('p'); message.textContent = error.message; tree.replaceChildren(message); }
 }
 
 async function openFile(path) {

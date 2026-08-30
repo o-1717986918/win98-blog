@@ -1,0 +1,31 @@
+---
+import { PORTAL_PROJECTS } from '../config/portal';
+import { withBase } from '../lib/site-path';
+import { accentStyle } from '../lib/visual';
+import FullShell from '../layouts/FullShell.astro';
+import '../styles/portal-pages.css';
+---
+
+<FullShell title="项目" description="某人的小站正在维护和公开记录的真实项目。" schemaType="CollectionPage">
+  <div class="page-wrap portal-feature-page">
+    <header class="page-intro">
+      <div><p class="eyebrow">PROJECTS</p><h1 class="display-title">项目<br />陈列</h1></div>
+      <div class="page-intro__copy">
+        <p>这里不陈列概念稿，只连接已经有代码、文章、交互或知识节点作为证据的项目。</p>
+        <dl class="portal-feature-summary"><div><dt>ACTIVE RECORDS</dt><dd>{PORTAL_PROJECTS.length}</dd></div><div><dt>MODEL</dt><dd>Evidence first</dd></div><div><dt>STATUS</dt><dd>持续维护</dd></div></dl>
+      </div>
+    </header>
+    <section class="portal-feature-grid" aria-label="项目列表">
+      {PORTAL_PROJECTS.map((project) => (
+        <a class="portal-record" href={withBase(project.href)} style={accentStyle(project.accent)}>
+          <div class="portal-record__meta"><span>{project.kind}</span><span>{project.status}</span></div>
+          <h2>{project.name}</h2>
+          <p>{project.description}</p>
+          <div class="portal-record__facts">{project.facts.map((fact) => <span>{fact}</span>)}</div>
+          <i class="portal-record__arrow" aria-hidden="true">查看项目证据 ↗</i>
+        </a>
+      ))}
+    </section>
+    <p class="portal-feature-note">新项目只有在拥有可访问的实现、文章或公开笔记后才进入这里；状态文字描述当前阶段，不使用虚构完成度。</p>
+  </div>
+</FullShell>

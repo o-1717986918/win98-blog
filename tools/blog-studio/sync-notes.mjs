@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, realpath, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse, stringify } from 'yaml';
@@ -40,9 +40,11 @@ function yamlDate(value, fallback) {
   return Number.isNaN(date.getTime()) ? fallback.toISOString().slice(0, 10) : date.toISOString().slice(0, 10);
 }
 
-function safeChild(root, candidate) {
-  const target = resolve(root, candidate);
-  return target === root || target.startsWith(`${root}${sep}`) ? target : null;
+async function safeExistingChild(root, candidate) {
+  try {
+    const target = await realpath(resolve(root, candidate));
+    return target === root || target.startsWith(`${root}${sep}`) ? target : null;
+  } catch { return null; }
 }
 
 async function collectMarkdown(root) {
@@ -50,6 +52,7 @@ async function collectMarkdown(root) {
   async function walk(directory) {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+      if (entry.isSymbolicLink()) continue;
       const path = resolve(directory, entry.name);
       if (entry.isDirectory()) await walk(path);
       else if (/\.mdx?$/iu.test(entry.name)) files.push(path);
@@ -62,11 +65,11 @@ async function collectMarkdown(root) {
 async function locateAttachment(noteFile, sourceRoot, reference) {
   const clean = decodeURIComponent(reference.split(/[?#]/u)[0] ?? '').replace(/^<|>$/gu, '');
   if (!clean || /^(?:https?:|data:|\/)/iu.test(clean)) return null;
-  const beside = safeChild(sourceRoot, resolve(dirname(noteFile), clean));
+  const beside = await safeExistingChild(sourceRoot, resolve(dirname(noteFile), clean));
   if (beside) {
     try { if ((await stat(beside)).isFile()) return beside; } catch {}
   }
-  const byRoot = safeChild(sourceRoot, clean);
+  const byRoot = await safeExistingChild(sourceRoot, clean);
   if (byRoot) {
     try { if ((await stat(byRoot)).isFile()) return byRoot; } catch {}
   }
@@ -76,7 +79,7 @@ async function locateAttachment(noteFile, sourceRoot, reference) {
 async function main() {
   const options = argumentsFrom(process.argv.slice(2));
   if (!options.source) throw new Error('用法：pnpm notes:sync -- --source "D:\\Notes" [--dry-run]');
-  const sourceRoot = resolve(options.source);
+  const sourceRoot = await realpath(resolve(options.source));
   const outputRoot = options.output ? resolve(options.output) : defaultOutputRoot;
   if (!(await stat(sourceRoot)).isDirectory()) throw new Error(`笔记源不是目录：${sourceRoot}`);
   const files = await collectMarkdown(sourceRoot);
@@ -103,6 +106,7 @@ async function main() {
     const targetDirectory = resolve(outputRoot, entry.slug);
     const attachments = new Map();
     const copiedAttachments = new Set();
+    const relations = new Set();
     let body = entry.parsed.body;
     body = body.replace(/!\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/gu, (full, sourceName) => {
       const key = `__WIKI_ASSET_${attachments.size}__`;
@@ -111,7 +115,8 @@ async function main() {
     });
     body = body.replace(/(?<!!)\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|([^\]]+))?\]\]/gu, (full, target, label) => {
       const slug = titleMap.get(String(target).trim().toLowerCase());
-      return slug ? `[${String(label ?? target).trim()}](/notes/${slug}/)` : String(label ?? target).trim();
+      if (slug) relations.add(slug);
+      return slug ? `[${String(label ?? target).trim()}](../${slug}/)` : String(label ?? target).trim();
     });
 
     const imageMatches = [...body.matchAll(/!\[([^\]]*)\]\(([^)]+)\)/gu)];
@@ -134,6 +139,13 @@ async function main() {
     for (const [placeholder, original] of attachments) body = body.replaceAll(placeholder, original);
     const created = yamlDate(entry.parsed.data.created ?? entry.parsed.data.date, entry.fileStat.birthtime);
     const updated = yamlDate(entry.parsed.data.updated ?? entry.parsed.data.modified, entry.fileStat.mtime);
+    for (const target of Array.isArray(entry.parsed.data.relations) ? entry.parsed.data.relations : []) {
+      const slug = titleMap.get(String(target).trim().toLowerCase()) ?? String(target).trim();
+      if (slug && slug !== entry.slug) relations.add(slug);
+    }
+    const maturity = ['seedling', 'growing', 'evergreen'].includes(String(entry.parsed.data.maturity))
+      ? String(entry.parsed.data.maturity)
+      : 'seedling';
     const metadata = {
       title: entry.title,
       description: String(entry.parsed.data.description ?? entry.parsed.data.summary ?? '').trim(),
@@ -143,6 +155,8 @@ async function main() {
       aliases: Array.isArray(entry.parsed.data.aliases) ? entry.parsed.data.aliases.map(String) : [],
       publish: entry.publish,
       source: entry.relativePath,
+      maturity,
+      relations: [...relations].sort(),
       draft: entry.parsed.data.draft === true,
     };
     const output = `---\n${stringify(metadata).trim()}\n---\n\n${body.trim()}\n`;

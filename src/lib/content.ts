@@ -6,8 +6,11 @@ export type ColumnEntry = CollectionEntry<'columns'>;
 
 const previewUnpublished = import.meta.env.DEV || import.meta.env.PREVIEW_DRAFTS === 'true';
 
+export const isPublishedForPreview = <T extends { data: { draft: boolean; date?: Date } }>(entry: T, preview: boolean) =>
+  preview || (!entry.data.draft && (!entry.data.date || entry.data.date.getTime() <= Date.now()));
+
 export const isPublished = <T extends { data: { draft: boolean; date?: Date } }>(entry: T) =>
-  previewUnpublished || (!entry.data.draft && (!entry.data.date || entry.data.date.getTime() <= Date.now()));
+  isPublishedForPreview(entry, previewUnpublished);
 
 export const sortPosts = (posts: PostEntry[]) =>
   [...posts].sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
@@ -17,6 +20,7 @@ export const sortColumns = (columns: ColumnEntry[]) =>
 
 export const formatDate = (date: Date) =>
   new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

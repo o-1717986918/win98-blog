@@ -12,6 +12,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN?: string;
   readonly PUBLIC_UMAMI_SCRIPT_URL?: string;
   readonly PUBLIC_UMAMI_WEBSITE_ID?: string;
+  readonly PUBLIC_WEBMENTION_ENDPOINT?: string;
+  readonly PUBLIC_PERFORMANCE_ENDPOINT?: string;
 }
 
 interface ImportMeta { readonly env: ImportMetaEnv; }

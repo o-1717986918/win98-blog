@@ -15,7 +15,7 @@ function routeId(pathname: string, collection: 'posts' | 'columns') {
 export async function loadPostRoute(pathname: string, expectedChrome: 'full' | 'minimal' | 'none') {
   const id = routeId(pathname, 'posts');
   const post = await getEntry('posts', id);
-  if (!post || post.data.draft) throw new Error(`Post not found: ${id}`);
+  if (!post || !isPublished(post)) throw new Error(`Post not found: ${id}`);
   if (post.data.chrome !== expectedChrome) {
     throw new Error(`Post ${id} was dispatched to ${expectedChrome}, but declares ${post.data.chrome}`);
   }
@@ -40,7 +40,7 @@ export async function loadPostRoute(pathname: string, expectedChrome: 'full' | '
 export async function loadColumnRoute(pathname: string, expectedChrome: 'full' | 'minimal' | 'none') {
   const id = routeId(pathname, 'columns');
   const column = await getEntry('columns', id);
-  if (!column || column.data.draft) throw new Error(`Column not found: ${id}`);
+  if (!column || !isPublished(column)) throw new Error(`Column not found: ${id}`);
   if (column.data.chrome !== expectedChrome) {
     throw new Error(`Column ${id} was dispatched to ${expectedChrome}, but declares ${column.data.chrome}`);
   }

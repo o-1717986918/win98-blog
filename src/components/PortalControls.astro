@@ -1,0 +1,118 @@
+<section class="portal-controls" data-portal-controls aria-label="门户显示设置">
+  <div>
+    <span aria-hidden="true"><i></i><i></i><i></i></span>
+    <p><b>PORTAL CONFIG</b><small data-portal-summary>标准密度 · 4 个辅助模块</small></p>
+  </div>
+  <button type="button" aria-haspopup="dialog" aria-controls="portal-preferences" data-portal-open>自定义门户 <i aria-hidden="true">⌁</i></button>
+  <dialog id="portal-preferences" data-portal-dialog aria-labelledby="portal-preferences-title">
+    <form method="dialog">
+      <header>
+        <div><p>VISITOR PREFERENCES</p><h2 id="portal-preferences-title">门户显示设置</h2></div>
+        <button type="submit" aria-label="关闭门户显示设置">×</button>
+      </header>
+      <fieldset>
+        <legend>辅助模块</legend>
+        <label><input type="checkbox" value="topics" data-portal-toggle checked /><span><b>长期主题</b><small>左栏主题索引</small></span></label>
+        <label><input type="checkbox" value="calendar" data-portal-toggle checked /><span><b>发表日历</b><small>按日期筛选写作</small></span></label>
+        <label><input type="checkbox" value="tags" data-portal-toggle checked /><span><b>发现索引</b><small>高频标签入口</small></span></label>
+        <label><input type="checkbox" value="gateway" data-portal-toggle checked /><span><b>站内入口</b><small>功能页面目录</small></span></label>
+      </fieldset>
+      <fieldset>
+        <legend>信息密度</legend>
+        <label><input type="radio" name="portal-density" value="standard" data-portal-density checked /><span><b>标准</b><small>显示摘要和标签</small></span></label>
+        <label><input type="radio" name="portal-density" value="compact" data-portal-density /><span><b>紧凑</b><small>隐藏次要说明</small></span></label>
+      </fieldset>
+      <footer>
+        <button type="button" data-portal-reset>恢复默认</button>
+        <p>设置仅保存在当前浏览器。</p>
+      </footer>
+    </form>
+  </dialog>
+  <p class="portal-controls__live" aria-live="polite" data-portal-live></p>
+</section>
+
+<style>
+  .portal-controls { position: relative; display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-top: 1rem; padding: .65rem .8rem; border-left: 2px solid rgb(var(--spectrum-aqua-rgb)); border-bottom: 1px solid var(--line); background: rgba(var(--spectrum-aqua-rgb), .05); }
+  .portal-controls > div { display: flex; gap: .65rem; align-items: center; }
+  .portal-controls > div > span { width: 1rem; height: .65rem; border-left: 3px solid rgb(var(--spectrum-aqua-rgb)); border-right: 3px solid rgb(var(--spectrum-coral-rgb)); }
+  .portal-controls > div > span i { display: none; }
+  .portal-controls p { display: grid; gap: .12rem; }
+  .portal-controls b, dialog header p, legend { color: rgb(var(--spectrum-aqua-rgb)); font: .5rem/1 var(--font-mono); letter-spacing: .08em; }
+  .portal-controls small, dialog footer p { color: rgba(var(--text-rgb), .48); font: .54rem/1.35 var(--font-mono); }
+  button { padding: .45rem .58rem; border: 1px solid var(--line); color: rgba(var(--text-rgb), .68); background: transparent; font-size: .62rem; cursor: pointer; }
+  button:hover { border-color: rgba(var(--spectrum-aqua-rgb), .55); color: rgb(var(--spectrum-aqua-rgb)); }
+  dialog { width: min(34rem, calc(100% - 2rem)); max-height: calc(100vh - 2rem); padding: 1rem; overflow: auto; border: 1px solid rgba(var(--spectrum-aqua-rgb), .48); color: rgb(var(--text-rgb)); background: rgb(var(--surface-rgb)); box-shadow: .7rem .8rem 0 rgba(var(--spectrum-violet-rgb), .12); }
+  dialog::backdrop { background: rgba(var(--bg-rgb), .76); }
+  dialog form, label span { display: grid; gap: .2rem; }
+  dialog header, dialog footer { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding-block: .7rem; border-bottom: 1px solid var(--line); }
+  dialog footer { border-top: 1px solid var(--line); border-bottom: 0; }
+  dialog h2 { margin-top: .3rem; font: 640 1.65rem/1 var(--font-display); }
+  fieldset { display: grid; grid-template-columns: repeat(2, 1fr); gap: .35rem; margin: 1rem 0; padding: .65rem; border: 1px solid var(--line); }
+  label { display: grid; grid-template-columns: auto 1fr; gap: .55rem; padding: .5rem; cursor: pointer; }
+  input { accent-color: rgb(var(--spectrum-aqua-rgb)); }
+  label b { font-size: .68rem; }
+  label small { font-size: .55rem; }
+  .portal-controls__live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  @media (max-width: 520px) { .portal-controls { align-items: start; } .portal-controls > button { white-space: nowrap; } fieldset { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+  type PortalDensity = 'standard' | 'compact';
+  type PortalPreferences = { density: PortalDensity; widgets: Record<string, boolean> };
+  const storageKey = 'someone-site:portal-preferences:v1';
+  const defaults: PortalPreferences = {
+    density: 'standard',
+    widgets: { topics: true, calendar: true, tags: true, gateway: true },
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-portal-controls]').forEach((controls) => {
+    const dialog = controls.querySelector<HTMLDialogElement>('[data-portal-dialog]');
+    const summary = controls.querySelector<HTMLElement>('[data-portal-summary]');
+    const live = controls.querySelector<HTMLElement>('[data-portal-live]');
+    const portal = document.querySelector<HTMLElement>('.home-portal');
+    if (!dialog || !summary || !live || !portal) return;
+
+    let preferences: PortalPreferences = structuredClone(defaults);
+    try {
+      const stored = JSON.parse(localStorage.getItem(storageKey) ?? 'null') as Partial<PortalPreferences> | null;
+      if (stored) preferences = {
+        density: stored.density === 'compact' ? 'compact' : 'standard',
+        widgets: { ...defaults.widgets, ...(stored.widgets ?? {}) },
+      };
+    } catch { localStorage.removeItem(storageKey); }
+
+    const apply = (announce = false) => {
+      document.documentElement.dataset.portalDensity = preferences.density;
+      Object.entries(preferences.widgets).forEach(([id, visible]) => {
+        document.querySelectorAll<HTMLElement>(`[data-portal-widget="${id}"]`).forEach((widget) => { widget.hidden = !visible; });
+        controls.querySelectorAll<HTMLInputElement>(`[data-portal-toggle][value="${id}"]`).forEach((input) => { input.checked = visible; });
+      });
+      controls.querySelectorAll<HTMLInputElement>('[data-portal-density]').forEach((input) => { input.checked = input.value === preferences.density; });
+      const visibleRight = ['calendar', 'tags', 'gateway'].some((id) => preferences.widgets[id]);
+      portal.dataset.rightVisible = String(visibleRight);
+      const right = portal.querySelector<HTMLElement>('.portal-right');
+      if (right) right.hidden = !visibleRight;
+      const count = Object.values(preferences.widgets).filter(Boolean).length;
+      summary.textContent = `${preferences.density === 'compact' ? '紧凑' : '标准'}密度 · ${count} 个辅助模块`;
+      if (announce) live.textContent = `门户设置已更新：${summary.textContent}`;
+    };
+
+    const save = () => { localStorage.setItem(storageKey, JSON.stringify(preferences)); apply(true); };
+    controls.querySelector('[data-portal-open]')?.addEventListener('click', () => dialog.showModal());
+    controls.querySelectorAll<HTMLInputElement>('[data-portal-toggle]').forEach((input) => input.addEventListener('change', () => {
+      preferences.widgets[input.value] = input.checked;
+      save();
+    }));
+    controls.querySelectorAll<HTMLInputElement>('[data-portal-density]').forEach((input) => input.addEventListener('change', () => {
+      if (!input.checked) return;
+      preferences.density = input.value === 'compact' ? 'compact' : 'standard';
+      save();
+    }));
+    controls.querySelector('[data-portal-reset]')?.addEventListener('click', () => {
+      preferences = structuredClone(defaults);
+      localStorage.removeItem(storageKey);
+      apply(true);
+    });
+    apply();
+  });
+</script>

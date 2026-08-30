@@ -13,6 +13,7 @@ interface Props {
   updated?: Date | undefined;
   tags?: string[] | undefined;
   noindex?: boolean | undefined;
+  schemaType?: 'WebPage' | 'CollectionPage' | 'ProfilePage' | undefined;
 }
 
 const {
@@ -25,10 +26,17 @@ const {
   updated,
   tags,
   noindex,
+  schemaType,
 } = Astro.props;
 const documentTitle = title === SITE.title ? title : `${title} · ${SITE.title}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const resolvedTheme = resolveTheme(theme);
+const webmentionEndpoint = (() => {
+  try {
+    const endpoint = new URL(import.meta.env.PUBLIC_WEBMENTION_ENDPOINT ?? '');
+    return endpoint.protocol === 'https:' ? endpoint.href : '';
+  } catch { return ''; }
+})();
 ---
 
 <!doctype html>
@@ -41,9 +49,10 @@ const resolvedTheme = resolveTheme(theme);
     <meta name="theme-color" content={resolvedTheme === 'mist' ? '#e7eceb' : '#091115'} />
     <link rel="canonical" href={canonical} />
     <link rel="alternate" type="application/rss+xml" title={`${SITE.title} RSS`} href={withBase('/rss.xml')} />
+    {webmentionEndpoint && <link rel="webmention" href={webmentionEndpoint} />}
     <link rel="icon" href={withBase('/brand/logo.jpg')} type="image/jpeg" sizes="640x640" />
     <link rel="manifest" href={withBase('/site.webmanifest')} />
-    <SeoHead {title} {description} {canonical} {pageKind} {image} {published} {updated} {tags} {noindex} />
+    <SeoHead {title} {description} {canonical} {pageKind} {image} {published} {updated} {tags} {noindex} {schemaType} />
     <title>{documentTitle}</title>
     <slot name="head" />
   </head>

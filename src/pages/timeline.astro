@@ -1,0 +1,77 @@
+---
+import { PORTAL_MILESTONES } from '../config/portal';
+import { withBase } from '../lib/site-path';
+import FullShell from '../layouts/FullShell.astro';
+---
+
+<FullShell title="时间线" description="某人的小站、写作和项目里程碑。" schemaType="CollectionPage">
+  <div class="page-wrap timeline-page">
+    <header class="page-intro">
+      <div><p class="eyebrow">TIMELINE</p><h1 class="display-title">成长<br />时间线</h1></div>
+      <div class="page-intro__copy"><p>文章归档回答“什么时候写了什么”，这里记录项目和站点发生方向变化的节点。</p><div class="page-intro__meta"><span><b>{PORTAL_MILESTONES.length}</b> 个里程碑</span><span>可按类型筛选</span></div></div>
+    </header>
+    <section class="timeline-ledger" data-feature-timeline>
+      <div class="timeline-filters" role="toolbar" aria-label="筛选时间线">
+        {['ALL', 'SITE', 'PROJECT', 'WRITING', 'DECISION'].map((kind, index) => <button type="button" data-timeline-filter={kind} aria-pressed={index === 0 ? 'true' : 'false'}>{kind}</button>)}
+      </div>
+      <ol>
+        {PORTAL_MILESTONES.map((item, index) => (
+          <li data-timeline-item data-kind={item.kind}>
+            <time datetime={item.date}>{item.date.replaceAll('-', '.')}</time>
+            <i aria-hidden="true"></i>
+            <a href={withBase(item.href)}>
+              <span>{item.kind} / {String(index + 1).padStart(2, '0')}</span>
+              <h2>{item.title}</h2>
+              <p>{item.description}</p>
+              <b aria-hidden="true">查看关联记录 ↗</b>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <p class="timeline-empty" data-timeline-empty hidden>当前类型还没有里程碑。</p>
+    </section>
+  </div>
+</FullShell>
+
+<style>
+  .timeline-page { padding-bottom: 7rem; }
+  .timeline-ledger { width: min(64rem, 100%); margin: clamp(3rem, 7vw, 6rem) auto 0; }
+  .timeline-filters { display: flex; flex-wrap: wrap; gap: .4rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+  .timeline-filters button { padding: .45rem .58rem; border: 1px solid var(--line); color: rgba(var(--text-rgb), .52); background: transparent; font: .55rem/1 var(--font-mono); cursor: pointer; }
+  .timeline-filters button:is(:hover, :focus-visible), .timeline-filters button[aria-pressed='true'] { border-color: rgba(var(--spectrum-coral-rgb), .55); color: rgb(var(--spectrum-coral-rgb)); background: rgba(var(--spectrum-coral-rgb), .07); }
+  ol { position: relative; margin: 0; padding: 1rem 0 0; list-style: none; }
+  ol::before { content: ''; position: absolute; top: 1rem; bottom: 1rem; left: 8.45rem; width: 1px; background: linear-gradient(rgb(var(--spectrum-violet-rgb)), rgba(var(--spectrum-violet-rgb), .1)); }
+  li { display: grid; grid-template-columns: 7.4rem 1.1rem minmax(0, 1fr); gap: .5rem; }
+  li[hidden] { display: none; }
+  time { padding-top: 1.2rem; color: rgba(var(--text-rgb), .46); font: .58rem/1 var(--font-mono); text-align: right; }
+  li > i { position: relative; z-index: 1; width: .52rem; aspect-ratio: 1; margin: 1.05rem auto 0; border: 1px solid rgb(var(--spectrum-violet-rgb)); background: rgb(var(--surface-rgb)); transform: rotate(45deg); }
+  li a { display: block; padding: 1rem 1rem 1.2rem; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none; }
+  li a:hover { background: linear-gradient(90deg, rgba(var(--spectrum-violet-rgb), .08), transparent); }
+  li a > span { color: rgb(var(--spectrum-coral-rgb)); font: .52rem/1 var(--font-mono); letter-spacing: .06em; }
+  li h2 { max-width: 24ch; margin-top: .5rem; font: 620 clamp(1.3rem, 2.3vw, 1.85rem)/1.2 var(--font-display); letter-spacing: -.04em; }
+  li p { max-width: 44rem; margin-top: .5rem; color: rgba(var(--text-rgb), .62); font-size: .75rem; line-height: 1.75; }
+  li b { display: block; margin-top: .65rem; color: rgb(var(--spectrum-aqua-rgb)); font-size: .62rem; }
+  .timeline-empty { padding: 2rem 0; color: rgba(var(--text-rgb), .48); font: .65rem/1.6 var(--font-mono); }
+  @media (max-width: 560px) {
+    ol::before { left: .26rem; }
+    li { grid-template-columns: .55rem minmax(0, 1fr); }
+    time { grid-column: 2; padding: .9rem 0 0 1rem; text-align: left; }
+    li > i { grid-column: 1; grid-row: 1 / 3; }
+    li a { grid-column: 2; }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-feature-timeline]').forEach((timeline) => {
+    const buttons = [...timeline.querySelectorAll<HTMLButtonElement>('[data-timeline-filter]')];
+    const items = [...timeline.querySelectorAll<HTMLElement>('[data-timeline-item]')];
+    const empty = timeline.querySelector<HTMLElement>('[data-timeline-empty]');
+    buttons.forEach((button) => button.addEventListener('click', () => {
+      const kind = button.dataset.timelineFilter ?? 'ALL';
+      buttons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+      let visible = 0;
+      items.forEach((item) => { item.hidden = kind !== 'ALL' && item.dataset.kind !== kind; if (!item.hidden) visible += 1; });
+      if (empty) empty.hidden = visible > 0;
+    }));
+  });
+</script>

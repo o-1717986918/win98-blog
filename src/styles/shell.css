@@ -49,6 +49,15 @@
     padding-top: var(--header);
   }
 
+  @media (min-width: 1101px) {
+    .shell-main {
+      min-height: 100vh;
+      margin-left: var(--site-rail);
+      padding-top: 0;
+    }
+    .skip-link { left: calc(var(--site-rail) + 1rem); }
+  }
+
   .page-wrap {
     width: min(var(--content), calc(100% - 2.5rem));
     margin-inline: auto;

@@ -7,6 +7,8 @@ tags: [知识库, Blog Studio]
 aliases: [笔记系统说明]
 publish: true
 source: manual/welcome.md
+maturity: evergreen
+relations: [evidence-ledgers, static-first-publishing]
 ---
 
 学习笔记已经从“主题”迁移为真正的内容模块。它和文章共享静态构建、搜索与链接检查，但拥有自己的元数据、URL 和同步入口。
@@ -28,3 +30,5 @@ pnpm notes:sync -- --source "C:\path\to\vault"
 ```
 
 同步清单会记录源相对路径、目标 slug、公开状态和复制附件数，不把本机绝对路径发布到站点。
+
+这套公开边界与[静态优先的发布方法](../static-first-publishing/)相互约束；文章里“已经证明了什么”则由[证据账本](../evidence-ledgers/)负责表达。

@@ -5,11 +5,12 @@ import type { ThemeId } from '../config/site';
 import AmbientField from '../components/AmbientField.astro';
 import Analytics from '../components/Analytics.astro';
 import SiteIntro from '../components/SiteIntro.astro';
-import BackBadge from '../components/chrome/BackBadge.astro';
 import SiteFooter from '../components/chrome/SiteFooter.astro';
 import SiteHeader from '../components/chrome/SiteHeader.astro';
 import { SITE } from '../config/site';
+import { withBase } from '../lib/site-path';
 import BaseLayout from './BaseLayout.astro';
+import PerformanceVitals from '../components/PerformanceVitals.astro';
 
 interface Props {
   title: string;
@@ -21,18 +22,19 @@ interface Props {
   updated?: Date | undefined;
   tags?: string[] | undefined;
   noindex?: boolean | undefined;
+  schemaType?: 'WebPage' | 'CollectionPage' | 'ProfilePage' | undefined;
 }
-const { title, description, theme = SITE.defaultTheme, pageKind = 'page', image, published, updated, tags, noindex } = Astro.props;
-const showIntro = Astro.url.pathname === '/';
+const { title, description, theme = SITE.defaultTheme, pageKind = 'page', image, published, updated, tags, noindex, schemaType } = Astro.props;
+const showIntro = Astro.url.pathname === withBase('/');
 ---
 
-<BaseLayout title={title} description={description ?? SITE.description} theme={theme} pageKind={pageKind} {image} {published} {updated} {tags} {noindex}>
+<BaseLayout title={title} description={description ?? SITE.description} theme={theme} pageKind={pageKind} {image} {published} {updated} {tags} {noindex} {schemaType}>
   <a class="skip-link" href="#main-content">跳到正文</a>
   {showIntro && <SiteIntro />}
   <AmbientField />
   <SiteHeader />
-  {!showIntro && <BackBadge />}
-  <main class="shell-main" id="main-content"><slot /></main>
+  <main class="shell-main" id="main-content" tabindex="-1"><slot /></main>
   <SiteFooter />
   <Analytics />
+  <PerformanceVitals />
 </BaseLayout>

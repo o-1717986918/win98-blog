@@ -1,0 +1,96 @@
+---
+import { PROFILE, SITE } from '../config/site';
+import { withBase } from '../lib/site-path';
+
+interface Props {
+  posts: number;
+  columns: number;
+  notes: number;
+}
+
+const { posts, columns, notes } = Astro.props;
+const links = PROFILE.links.map((link) => ({
+  ...link,
+  resolved: link.external ? link.href : withBase(link.href),
+}));
+---
+
+<aside class="profile-card" aria-labelledby="profile-card-title" data-profile-card>
+  <header class="profile-card__register">
+    <span>AUTHOR DOSSIER</span>
+    <i aria-hidden="true"></i>
+    <b>01 / 01</b>
+  </header>
+  <div class="profile-card__identity">
+    <a class="profile-card__portrait" href={withBase('/about/')} aria-label={`查看${SITE.author}的个人介绍`}>
+      <img src={withBase('/brand/logo.jpg')} alt={`${SITE.author}的头像`} width="640" height="640" decoding="async" />
+      <span aria-hidden="true">ABOUT ↗</span>
+    </a>
+    <div>
+      <p class="profile-card__role">{PROFILE.role}</p>
+      <h2 id="profile-card-title">{SITE.author}</h2>
+      <span class="profile-card__accent" aria-hidden="true"></span>
+    </div>
+  </div>
+  <p class="profile-card__bio">{PROFILE.bio}</p>
+  <p class="profile-card__focus"><span>当前项目</span>{PROFILE.focus}</p>
+  <dl aria-label="公开内容统计">
+    <div><dt>文章</dt><dd>{String(posts).padStart(2, '0')}</dd></div>
+    <div><dt>主题</dt><dd>{String(columns).padStart(2, '0')}</dd></div>
+    <div><dt>笔记</dt><dd>{String(notes).padStart(2, '0')}</dd></div>
+  </dl>
+  <nav aria-label="个人链接">
+    {links.map((link) => (
+      <a href={link.resolved} target={link.external ? '_blank' : undefined} rel={link.external ? 'me noreferrer' : undefined}>
+        <span>{link.label}</span><small>{link.detail}</small><i aria-hidden="true">{link.external ? '↗' : '→'}</i>
+      </a>
+    ))}
+  </nav>
+</aside>
+
+<style>
+  .profile-card { position: relative; box-sizing: border-box; display: grid; grid-template-areas: 'register' 'identity' 'bio' 'focus' 'stats' 'links'; grid-template-rows: auto auto auto auto auto 1fr; gap: .5rem; padding: .85rem .9rem .8rem; overflow: hidden; border: 1px solid rgba(var(--brand-primary-rgb), .42); background: linear-gradient(150deg, rgba(var(--brand-primary-rgb), .13), rgba(var(--surface-rgb), .98) 42%, rgba(var(--brand-secondary-rgb), .08)); clip-path: polygon(0 0, calc(100% - 1.35rem) 0, 100% 1.35rem, 100% 100%, 0 100%); box-shadow: inset .22rem 0 0 rgba(var(--brand-primary-rgb), .12); }
+  .profile-card::before { content: ''; position: absolute; right: -1px; top: .66rem; width: 1.9rem; height: 1px; background: rgba(var(--brand-primary-rgb), .62); transform: rotate(45deg); }
+  .profile-card::after { content: ''; position: absolute; right: .75rem; bottom: .75rem; width: 1.8rem; height: .18rem; background: linear-gradient(90deg, rgb(var(--brand-primary-rgb)) 0 62%, rgb(var(--brand-secondary-rgb)) 62%); transform: skewX(-20deg); }
+  .profile-card__register { grid-area: register; display: flex; align-items: center; gap: .6rem; padding-bottom: .4rem; border-bottom: 1px solid var(--line); color: rgba(var(--text-rgb), .48); font: .5rem/1 var(--font-mono); letter-spacing: .08em; }
+  .profile-card__register i { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(var(--brand-primary-rgb), .52), transparent); }
+  .profile-card__register b { color: rgb(var(--spectrum-gold-rgb)); font-weight: 500; }
+  .profile-card__identity { grid-area: identity; display: grid; grid-template-columns: 6.2rem minmax(0, 1fr); gap: .85rem; align-items: center; }
+  .profile-card__portrait { position: relative; display: block; aspect-ratio: 1; overflow: hidden; border: 1px solid rgba(var(--brand-primary-rgb), .55); border-radius: 50%; background: rgb(var(--raised-rgb)); box-shadow: 0 0 0 .28rem rgba(var(--brand-primary-rgb), .08), 0 0 0 .34rem rgba(var(--brand-secondary-rgb), .2); }
+  .profile-card__portrait::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(5, 12, 18, .7)); opacity: .76; transition: opacity .22s var(--ease); pointer-events: none; }
+  .profile-card__portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform .34s var(--ease), filter .34s var(--ease); }
+  .profile-card__portrait > span { position: absolute; z-index: 1; right: 0; bottom: 1rem; left: 0; color: rgba(255, 255, 255, .92); font: .47rem/1 var(--font-mono); letter-spacing: .08em; text-align: center; transition: transform .2s var(--ease); }
+  .profile-card__portrait:is(:hover, :focus-visible)::after { opacity: .92; }
+  .profile-card__portrait:is(:hover, :focus-visible) img { filter: saturate(.86) contrast(1.04); transform: scale(1.025); }
+  .profile-card__portrait:is(:hover, :focus-visible) > span { transform: translateY(-.12rem); }
+  .profile-card__role { color: rgb(var(--brand-primary-rgb)); font: .54rem/1 var(--font-mono); letter-spacing: .11em; }
+  .profile-card h2 { margin-top: .42rem; font: 660 clamp(2.15rem, 2.7vw, 2.65rem)/.88 var(--font-display); letter-spacing: -.075em; }
+  .profile-card__accent { display: block; width: 2rem; height: 3px; margin-top: .72rem; background: linear-gradient(90deg, rgb(var(--brand-primary-rgb)) 0 58%, rgb(var(--brand-secondary-rgb)) 58%); transform: skewX(-18deg); }
+  .profile-card__bio { grid-area: bio; color: rgba(var(--text-rgb), .66); font-size: .67rem; line-height: 1.62; }
+  .profile-card__focus { grid-area: focus; display: grid; gap: .25rem; padding: .38rem 0; border-block: 1px solid var(--line); color: rgba(var(--text-rgb), .7); font-size: .6rem; line-height: 1.45; }
+  .profile-card__focus span { color: rgb(var(--spectrum-coral-rgb)); font: .5rem/1 var(--font-mono); letter-spacing: .08em; }
+  .profile-card dl { grid-area: stats; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); }
+  .profile-card dl div { display: grid; gap: .16rem; padding: .38rem .25rem; background: rgba(var(--raised-rgb), .68); text-align: center; }
+  .profile-card dt { color: rgba(var(--text-rgb), .46); font: .49rem/1 var(--font-mono); }
+  .profile-card dd { margin: 0; color: rgb(var(--spectrum-gold-rgb)); font: .72rem/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+  .profile-card nav { grid-area: links; display: grid; align-content: end; border-top: 1px solid var(--line); }
+  .profile-card nav a { display: grid; grid-template-columns: 3.25rem minmax(0, 1fr) auto; gap: .65rem; align-items: center; padding: .4rem .1rem; border-bottom: 1px solid var(--line); color: inherit; text-align: left; text-decoration: none; }
+  .profile-card nav a:is(:hover, :focus-visible) { color: rgb(var(--brand-primary-rgb)); }
+  .profile-card nav span { color: rgba(var(--text-rgb), .5); font: .51rem/1 var(--font-mono); }
+  .profile-card nav small { overflow: hidden; font-size: .64rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  .profile-card nav i { color: rgb(var(--brand-secondary-rgb)); font-style: normal; transition: transform .2s var(--ease); }
+  .profile-card nav a:is(:hover, :focus-visible) i { transform: translateX(.18rem); }
+  @media (min-width: 621px) and (max-width: 900px) {
+    .profile-card { grid-template-areas: 'register register' 'identity bio' 'identity focus' 'stats links'; grid-template-columns: minmax(15rem, .85fr) minmax(0, 1.15fr); grid-template-rows: auto auto auto 1fr; gap: .8rem 1.4rem; min-height: 0; }
+    .profile-card__identity { align-self: center; }
+    .profile-card nav { align-self: stretch; }
+  }
+  @media (max-width: 620px) {
+    .profile-card { gap: .72rem; padding: .9rem; }
+    .profile-card__identity { grid-template-columns: 6.5rem minmax(0, 1fr); }
+    .profile-card h2 { font-size: 2.45rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .profile-card__portrait img, .profile-card__portrait > span, .profile-card nav i { transition: none; }
+  }
+</style>

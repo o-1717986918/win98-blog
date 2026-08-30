@@ -14,7 +14,9 @@ pnpm content:new column stable-kebab-slug "主题标题"
 | 字段 | 作用 |
 |---|---|
 | `title` / `description` | 列表、搜索和 SEO 的准确摘要 |
+| `shortTitle` | 可选，长标题在窄屏显示的编辑版标题，最多 32 字；canonical/SEO 仍使用完整标题 |
 | `date` / `updated` | 首次发布与最近实质更新；`updated` 不得早于 `date` |
+| `format` | `essay / field-note / experiment`；essay 发布前至少 1200 个非空白字符 |
 | `draft` | `true` 时仅开发预览可见 |
 | `tags` | 主题标签；自动生成标签目录 |
 | `columns` | 主题 ID 数组；至少保留一个真实主题引用 |
@@ -22,6 +24,8 @@ pnpm content:new column stable-kebab-slug "主题标题"
 | `chrome` | `full / minimal / none`，只表示装配的外壳资源 |
 | `theme` | `mist / abyss`；旧名称仅作为迁移兼容输入，不再形成额外视觉主题 |
 | `featured` | 精选标记，供策展排序扩展使用 |
+| `evidence` | 实测、决策、图解、交互、源码快照或对照证据；精选文章至少一条 |
+| `syndication` | 可选的外部同步发布 URL，渲染为 POSSE `u-syndication` 链接 |
 | `comments` | `inherit / enabled / disabled`；外部 provider 未配置时仍不加载 |
 | `noindex` | 输出搜索引擎 robots 指令 |
 | `license` | 文章页尾许可说明 |
@@ -30,7 +34,9 @@ pnpm content:new column stable-kebab-slug "主题标题"
 
 程序化封面只保证默认状态完整。重要内容应在内容目录中共置一张与正文有关的真实图片，并写具体 `alt`。`pnpm content:covers` 会检查尺寸、比例、可读性与默认封面数量；详细比例与 none 边界见 `docs/handover/CONTENT_COVER_SYSTEM.md`。
 
-正文可从 `src/components/content/` 显式导入 `Callout.astro`、`DataChart.astro` 与 `CodePlayground.astro`。图表必须同时提供准确的标题、说明和数据；代码预览只适合可以在无同源权限 iframe 中运行的前端片段。
+正文可从 `src/components/content/` 显式导入 `Callout.astro`、`DataChart.astro`、`CodePlayground.astro` 与 `EvidenceLedger.astro`。图表必须同时提供准确的标题、说明和数据；代码预览只适合可以在无同源权限 iframe 中运行的前端片段。`evidence` 是可审计元数据，`EvidenceLedger` 是 none 页面需要自行放置的可见表达；full/minimal 会自动渲染元数据账本。
+
+公开笔记另有 `maturity: seedling | growing | evergreen` 与 `relations: [note-slug]`。构建会把显式关系、Wiki 链接和站内 Markdown 链接解析成同一张图，校验悬空目标，并在独立笔记页显示反向链接与延伸阅读。
 
 标准 full/minimal 文章会自动把正文包入 Pagefind 索引边界。`none` 文章自行控制 DOM，仍需在希望被搜索的正文容器上写 `data-pagefind-body`；否则页面只保留 SEO 元数据，不会把交互说明等整页外壳误收为正文。
 
@@ -49,6 +55,7 @@ pnpm content:new column stable-kebab-slug "主题标题"
 4. `none` 页面只显式导入自己需要的资源，并为可搜索正文声明 `data-pagefind-body`；
 5. 更新文章时同步 `updated`，必要时在正文说明重大修订；
 6. 合并通过 CI 后再由托管平台发布预览或生产版本。
+7. `featured:true` 必须有证据账本；标题超过 32 字时提供 `shortTitle`；外部同步发布后把真实 URL 写入 `syndication`。
 
 ## 5. 回滚
 

@@ -1,9 +1,10 @@
 import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import { mkdir, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
-import { extname, relative, resolve, sep } from 'node:path';
+import { extname, relative, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createContentPathPolicy } from './path-policy.mjs';
 
 const root = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const studioRoot = resolve(root, 'tools', 'blog-studio');
@@ -11,21 +12,11 @@ const allowedRoots = ['src/content/posts', 'src/content/columns', 'src/content/n
 const port = Number(process.env.BLOG_STUDIO_PORT ?? 4317);
 const token = process.env.BLOG_STUDIO_TOKEN ?? randomBytes(18).toString('base64url');
 const contentTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
+const contentPaths = await createContentPathPolicy(root, allowedRoots);
 
 function json(response, status, value) {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
   response.end(JSON.stringify(value));
-}
-
-function safeContentPath(value, extensionRequired = true) {
-  if (typeof value !== 'string' || value.includes('\0')) return null;
-  const candidate = resolve(root, value.replaceAll('/', sep));
-  const allowed = allowedRoots.some((base) => {
-    const absolute = resolve(root, base);
-    return candidate === absolute || candidate.startsWith(`${absolute}${sep}`);
-  });
-  if (!allowed || (extensionRequired && !/\.(?:md|mdx)$/iu.test(candidate))) return null;
-  return candidate;
 }
 
 async function readBody(request) {
@@ -44,6 +35,7 @@ async function tree() {
   async function walk(directory) {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       if (entry.name.startsWith('.')) continue;
+      if (entry.isSymbolicLink()) continue;
       const path = resolve(directory, entry.name);
       if (entry.isDirectory()) await walk(path);
       else if (/index\.(?:md|mdx)$/iu.test(entry.name)) result.push(relative(root, path).replaceAll('\\', '/'));
@@ -54,31 +46,30 @@ async function tree() {
 }
 
 function run(command, args) {
-  return new Promise((resolveRun) => {
-    const child = spawn(command, args, { cwd: root, shell: process.platform === 'win32', windowsHide: true });
+  return new Promise((resolveRun, rejectRun) => {
+    const child = spawn(command, args, { cwd: root, shell: false, windowsHide: true });
     const chunks = [];
     child.stdout.on('data', (data) => chunks.push(data));
     child.stderr.on('data', (data) => chunks.push(data));
+    child.on('error', rejectRun);
     child.on('close', (code) => resolveRun({ code, output: Buffer.concat(chunks).toString('utf8').slice(-120_000) }));
   });
 }
 
-const commands = {
-  audit: ['pnpm', ['content:audit']], covers: ['pnpm', ['content:covers']],
-  test: ['pnpm', ['test']], build: ['pnpm', ['build']], verify: ['pnpm', ['verify']],
-};
+const commands = new Set(['audit', 'covers', 'test', 'build', 'verify']);
+const commandScripts = { audit: 'content:audit', covers: 'content:covers', test: 'test', build: 'build', verify: 'verify' };
 
 async function api(request, response, url) {
   const supplied = request.headers['x-blog-studio-token'] ?? url.searchParams.get('token');
   if (supplied !== token) return json(response, 401, { error: '无效的本地 Studio token' });
   if (request.method === 'GET' && url.pathname === '/api/tree') return json(response, 200, { files: await tree() });
   if (request.method === 'GET' && url.pathname === '/api/file') {
-    const path = safeContentPath(url.searchParams.get('path'));
+    const path = await contentPaths.existing(url.searchParams.get('path'));
     if (!path) return json(response, 400, { error: '路径不在允许的内容目录内' });
     return json(response, 200, { path: relative(root, path).replaceAll('\\', '/'), content: await readFile(path, 'utf8') });
   }
   if (request.method === 'PUT' && url.pathname === '/api/file') {
-    const body = await readBody(request); const path = safeContentPath(body.path);
+    const body = await readBody(request); const path = await contentPaths.existing(body.path);
     if (!path || typeof body.content !== 'string') return json(response, 400, { error: '文件或内容无效' });
     const temporary = `${path}.studio-tmp`;
     await writeFile(temporary, body.content, 'utf8'); await rename(temporary, path);
@@ -89,22 +80,25 @@ async function api(request, response, url) {
     const collection = { post: 'posts', theme: 'columns', note: 'notes' }[kind];
     const slug = String(body.slug ?? '').toLowerCase();
     if (!collection || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug)) return json(response, 400, { error: '类型或 slug 无效' });
-    const path = safeContentPath(`src/content/${collection}/${slug}/index.md`);
+    const path = await contentPaths.newFile(`src/content/${collection}/${slug}/index.md`);
+    if (!path) return json(response, 400, { error: '新内容路径无效' });
     try { await stat(path); return json(response, 409, { error: '内容已存在' }); } catch {}
-    const title = String(body.title ?? slug).replaceAll('"', '\\"');
+    const title = JSON.stringify(String(body.title ?? slug));
     const today = new Date().toISOString().slice(0, 10);
     const templates = {
-      post: `---\ntitle: "${title}"\ndescription: ""\ndate: ${today}\ntags: []\ncolumns: []\ndraft: true\n---\n\n从这里开始写作。\n`,
-      theme: `---\ntitle: "${title}"\ndescription: ""\nchrome: full\ntheme: abyss\naccent: aqua\nnav: false\norder: 100\nshowPosts: true\ndraft: true\n---\n\n说明这个主题收录什么。\n`,
-      note: `---\ntitle: "${title}"\ndescription: ""\ncreated: ${today}\ntags: []\naliases: []\npublish: false\ndraft: false\n---\n\n从这里开始记录。\n`,
+      post: `---\ntitle: ${title}\ndescription: ""\ndate: ${today}\nformat: essay\ntags: []\ncolumns: []\nevidence: []\nsyndication: []\ndraft: true\n---\n\n从这里开始写作。\n`,
+      theme: `---\ntitle: ${title}\ndescription: ""\nchrome: full\ntheme: abyss\naccent: aqua\nnav: false\norder: 100\nshowPosts: true\ndraft: true\n---\n\n说明这个主题收录什么。\n`,
+      note: `---\ntitle: ${title}\ndescription: ""\ncreated: ${today}\ntags: []\naliases: []\nmaturity: seedling\nrelations: []\npublish: false\ndraft: false\n---\n\n从这里开始记录。\n`,
     };
     await mkdir(resolve(path, '..'), { recursive: true }); await writeFile(path, templates[kind], 'utf8');
     return json(response, 201, { path: relative(root, path).replaceAll('\\', '/') });
   }
   if (request.method === 'POST' && url.pathname === '/api/run') {
-    const body = await readBody(request); const selected = commands[body.command];
-    if (!selected) return json(response, 400, { error: '命令不在白名单内' });
-    const result = await run(selected[0], selected[1]); return json(response, result.code === 0 ? 200 : 422, result);
+    const body = await readBody(request); const selected = String(body.command ?? '');
+    if (!commands.has(selected)) return json(response, 400, { error: '命令不在白名单内' });
+    const pnpmCli = process.env.npm_execpath;
+    if (!pnpmCli) return json(response, 500, { error: '请通过 pnpm studio 启动维护台' });
+    const result = await run(process.execPath, [pnpmCli, commandScripts[selected]]); return json(response, result.code === 0 ? 200 : 422, result);
   }
   if (request.method === 'POST' && url.pathname === '/api/notes/sync') {
     const body = await readBody(request); const source = String(body.source ?? '');

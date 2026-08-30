@@ -1,6 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
-import PostList from '../components/PostList.astro';
+import ArchiveTimeline from '../components/ArchiveTimeline.astro';
 import PostSearch from '../components/PostSearch.astro';
 import { allTags, isPublished, sortPosts } from '../lib/content';
 import FullShell from '../layouts/FullShell.astro';
@@ -8,12 +8,12 @@ const posts = sortPosts((await getCollection('posts')).filter(isPublished));
 const tags = allTags(posts);
 ---
 
-<FullShell title="文章归档" description="某人的小站全部文章，按时间倒序排列。">
+<FullShell title="文章归档" description="某人的小站全部文章，按时间倒序排列。" schemaType="CollectionPage">
   <div class="page-wrap">
     <header class="page-intro">
       <div><p class="eyebrow">ARCHIVE</p><h1 class="display-title">文章<br />归档</h1></div>
-      <div class="page-intro__copy"><p>所有文章按发布日期排列。想从某个问题继续，可以再用标签、主题或搜索缩小范围。</p><div class="page-intro__meta"><span><b>{posts.length}</b> 篇文章</span><span>按时间倒序</span></div></div>
+      <div class="page-intro__copy"><p>文章沿真实发布日期落入年份与月份刻度。想从某个问题继续，可以再用标签、主题或搜索缩小范围。</p><div class="page-intro__meta"><span><b>{posts.length}</b> 篇文章</span><span>按年月倒序</span></div></div>
     </header>
-    <section class="section-block"><PostSearch tags={tags} /><PostList posts={posts} /></section>
+    <section class="section-block" data-post-archive><PostSearch tags={tags} /><ArchiveTimeline posts={posts} /></section>
   </div>
 </FullShell>

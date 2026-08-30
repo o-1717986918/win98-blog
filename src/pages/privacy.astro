@@ -4,6 +4,8 @@ const comments = import.meta.env.PUBLIC_COMMENTS_PROVIDER ?? 'none';
 const analytics = import.meta.env.PUBLIC_ANALYTICS_PROVIDER ?? 'none';
 const commentLabel = comments === 'giscus' ? 'Giscus / GitHub Discussions' : comments === 'waline' ? 'Waline' : '未启用';
 const analyticsLabel = analytics === 'cloudflare' ? 'Cloudflare Web Analytics' : analytics === 'umami' ? 'Umami' : '未启用';
+const performanceEnabled = Boolean(import.meta.env.PUBLIC_PERFORMANCE_ENDPOINT);
+const webmentionEnabled = Boolean(import.meta.env.PUBLIC_WEBMENTION_ENDPOINT);
 ---
 
 <FullShell title="隐私说明" description="某人的小站当前启用服务、浏览器存储与隐私边界。">
@@ -19,11 +21,15 @@ const analyticsLabel = analytics === 'cloudflare' ? 'Cloudflare Web Analytics' :
       <p>全文索引随静态网站一同下载，查询在浏览器本地执行；本站不接收搜索关键词。</p>
       <h2>访问统计</h2>
       <p><strong>当前状态：{analyticsLabel}</strong>。未启用时不会加载统计脚本；启用时，数据处理边界由对应部署方的配置与隐私政策决定。</p>
+      <h2>现场性能</h2>
+      <p><strong>当前状态：{performanceEnabled ? '已配置性能接收端点' : '仅保存在当前会话'}</strong>。标准页面会在浏览器内计算 LCP、CLS 与最长交互延迟样本；未配置接收端点时只写入当前标签页的 <code>sessionStorage</code>，不会上传。启用后仅发送路径、指标值和采集时间，不发送搜索词、正文或身份信息。</p>
+      <h2>Webmention</h2>
+      <p><strong>当前状态：{webmentionEnabled ? '已声明接收端点' : '未启用'}</strong>。端点未配置时不会发送或接收 Webmention；启用后的来源核验、保存与删除由部署方负责。</p>
       <h2>文章评论</h2>
       <p><strong>当前状态：{commentLabel}</strong>。未启用时不会发起评论服务请求；启用后，评论内容与必要身份信息由对应服务处理。</p>
       <h2>外部链接</h2>
       <p>访问外部链接后适用目标站点的隐私政策。本站不对第三方站点的存储和网络请求作代理。</p>
-      <p><small>本页随构建配置自动显示启用状态，更新日期：2026-08-28。</small></p>
+      <p><small>本页随构建配置自动显示启用状态，更新日期：2026-08-30。</small></p>
     </div>
   </div>
 </FullShell>

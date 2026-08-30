@@ -1,10 +1,12 @@
 ---
 import { getCollection } from 'astro:content';
-import ColumnDirectory from '../components/ColumnDirectory.astro';
 import ContentCover from '../components/ContentCover.astro';
-import PostList from '../components/PostList.astro';
+import HomePostStream from '../components/HomePostStream.astro';
+import PortalControls from '../components/PortalControls.astro';
+import ProfileCard from '../components/ProfileCard.astro';
+import PublicationCalendar from '../components/PublicationCalendar.astro';
 import { SITE } from '../config/site';
-import { allTags, formatDate, isPublished, sortColumns, sortPosts } from '../lib/content';
+import { allTags, belongsToColumn, formatDate, isPublished, sortColumns, sortPosts } from '../lib/content';
 import { accentStyle, postAccent } from '../lib/visual';
 import { withBase } from '../lib/site-path';
 import FullShell from '../layouts/FullShell.astro';
@@ -16,9 +18,11 @@ const notes = (await getCollection('notes'))
   .sort((a, b) => (b.data.updated ?? b.data.created).getTime() - (a.data.updated ?? a.data.created).getTime());
 const columnMap = new Map(columns.map((column) => [column.id, column]));
 const spotlight = posts.find((post) => post.data.featured) ?? posts[0];
-const recent = posts.filter((post) => post.id !== spotlight?.id).slice(0, 3);
+const streamPosts = posts.filter((post) => post.id !== spotlight?.id);
 const spotlightStyle = spotlight ? accentStyle(postAccent(spotlight, columnMap)) : accentStyle('aqua');
-const topTags = allTags(posts).slice(0, 4);
+const tags = allTags(posts);
+const topTags = tags.slice(0, 4);
+const portalTags = tags.slice(0, 10);
 const totalMinutes = posts.reduce((sum, post) => sum + (post.data.minutes ?? 0), 0);
 const latestDate = spotlight ? spotlight.data.updated ?? spotlight.data.date : undefined;
 const noteTags = [...new Set(notes.flatMap((note) => note.data.tags))].slice(0, 5);
@@ -44,13 +48,115 @@ const latestNote = notes[0];
         </dl>
       </div>
 
+      <section class="home-signal" aria-label="站点内容概况">
+        <a href={withBase('/archive/')}><span>PUBLISHED / 01</span><strong>{posts.length} 篇文章</strong><small>{columns.length} 个长期主题</small></a>
+        <div><span>READING / 02</span><strong>{totalMinutes} 分钟</strong><small>已标注预计阅读量</small></div>
+        <div><span>LATEST / 03</span><strong>{latestDate ? formatDate(latestDate) : '待续'}</strong><small>最近一次更新</small></div>
+        <div class="home-signal__tags"><span>TOPICS / 04</span><p>{topTags.map((tag) => <a href={withBase(`/tags/${encodeURIComponent(tag.name)}/`)}>#{tag.name}</a>)}</p></div>
+      </section>
+      <p class="home-signal-cue" aria-hidden="true">横向滑动查看全部内容信号 <span>→</span></p>
+      <PortalControls />
+
+    </header>
+
+    <section class="home-portal" aria-label="个人门户" data-right-visible="true">
+        <div class="portal-profile"><ProfileCard posts={posts.length} columns={columns.length} notes={notes.length} /></div>
+
+        <section class="notes-feature" data-notes-feature aria-labelledby="notes-feature-title">
+          <span class="notes-feature__glow" aria-hidden="true"></span>
+          <header><p>PUBLIC VAULT / LOCAL KNOWLEDGE</p><span><i></i> {String(notes.length).padStart(2, '0')} NOTES</span></header>
+          <div class="notes-feature__identity">
+            <h2 id="notes-feature-title">学习<br />笔记</h2>
+            <p>像翻开一组仍在生长的卡片：正文、属性、双向链接与局部关系图共同描述一个知识节点。</p>
+          </div>
+          <div class="notes-feature__modes" role="tablist" aria-label="预览学习笔记视图">
+            <button id="note-tab-note" type="button" role="tab" aria-selected="true" aria-controls="note-panel-note" tabindex="0" data-note-mode="note"><b>NOTE</b><span>笔记</span></button>
+            <button id="note-tab-links" type="button" role="tab" aria-selected="false" aria-controls="note-panel-links" tabindex="-1" data-note-mode="links"><b>LINKS</b><span>关系</span></button>
+            <button id="note-tab-properties" type="button" role="tab" aria-selected="false" aria-controls="note-panel-properties" tabindex="-1" data-note-mode="properties"><b>YAML</b><span>属性</span></button>
+          </div>
+          <div class="notes-feature__canvas">
+            <div id="note-panel-note" role="tabpanel" aria-labelledby="note-tab-note" tabindex="0" data-note-panel="note">
+              <span>LATEST PUBLIC NOTE</span>
+              <strong>{latestNote?.data.title ?? '等待第一条公开笔记'}</strong>
+              <p>{latestNote?.data.description ?? '在本地知识库中标记公开后，笔记会出现在这里。'}</p>
+            </div>
+            <div id="note-panel-links" role="tabpanel" aria-labelledby="note-tab-links" tabindex="0" data-note-panel="links" hidden>
+              <span>LOCAL GRAPH</span>
+              <div class="notes-feature__nodes"><i></i>{notes.slice(0, 3).map((note) => <a href={withBase(`/notes/${note.id}/`)}>{note.data.title}</a>)}</div>
+              <p>节点来自真实公开笔记；内容增加后，关系视图会沿 Wiki 链接继续生长。</p>
+            </div>
+            <div id="note-panel-properties" role="tabpanel" aria-labelledby="note-tab-properties" tabindex="0" data-note-panel="properties" hidden>
+              <span>NOTE PROPERTIES</span>
+              <dl><div><dt>updated</dt><dd>{latestNote ? formatDate(latestNote.data.updated ?? latestNote.data.created) : '—'}</dd></div><div><dt>tags</dt><dd>{noteTags.join(', ') || '—'}</dd></div><div><dt>publish</dt><dd>true</dd></div></dl>
+            </div>
+          </div>
+          <a class="notes-feature__enter" href={withBase('/notes/')}><span>进入知识空间</span><i>↗</i></a>
+        </section>
+
+        <nav class="portal-panel portal-topics" aria-labelledby="portal-topics-title" data-portal-widget="topics">
+          <header class="portal-panel__heading">
+            <div><p>LONG-RUNNING THEMES</p><h2 id="portal-topics-title">长期主题</h2></div>
+            <span>{String(columns.length).padStart(2, '0')}</span>
+          </header>
+          <p class="portal-panel__intro">沿着长期问题组织文章，而不是按栏目制造一次性入口。</p>
+          <ol>
+            {columns.map((column, index) => (
+              <li style={accentStyle(column.data.accent)}>
+                <a href={withBase(`/columns/${column.id}/`)}>
+                  <small>{String(index + 1).padStart(2, '0')}</small>
+                  <span><strong>{column.data.title}</strong><i>{posts.filter((post) => belongsToColumn(post, column.id)).length} 篇记录</i></span>
+                  <b aria-hidden="true">↗</b>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+
+        <section class="writing-stream" aria-labelledby="writing-stream-title">
+          <header class="portal-section-heading">
+            <div><p>CHRONOLOGICAL DISPATCH</p><h2 id="writing-stream-title">最近写作</h2></div>
+            <a href={withBase('/archive/')}>全部 {posts.length} 篇 →</a>
+          </header>
+          <p class="writing-stream__intro">文章按时间进入同一条发表航线；主题、标签和预计阅读量负责提供上下文。</p>
+          <HomePostStream posts={streamPosts} columns={columns} />
+        </section>
+
+        <aside class="portal-right" aria-label="发表状态与内容发现">
+          <PublicationCalendar posts={streamPosts} />
+
+          <nav class="portal-panel portal-tags" aria-labelledby="portal-tags-title" data-portal-widget="tags">
+            <header class="portal-panel__heading">
+              <div><p>INDEX / TAGS</p><h2 id="portal-tags-title">发现索引</h2></div>
+              <span>{String(tags.length).padStart(2, '0')}</span>
+            </header>
+            <div>
+              {portalTags.map((tag) => <a href={withBase(`/tags/${encodeURIComponent(tag.name)}/`)}><span>#{tag.name}</span><small>{tag.count}</small></a>)}
+            </div>
+            <a class="portal-panel__more" href={withBase('/tags/')}>查看全部标签 <i aria-hidden="true">→</i></a>
+          </nav>
+
+          <nav class="portal-panel portal-gateway" aria-labelledby="portal-gateway-title" data-portal-widget="gateway">
+            <header class="portal-panel__heading">
+              <div><p>PORTAL DIRECTORY</p><h2 id="portal-gateway-title">站内入口</h2></div>
+            </header>
+            <a href={withBase('/projects/')}><span>项目陈列</span><small>查看正在维护的真实系统</small><i aria-hidden="true">01</i></a>
+            <a href={withBase('/skills/')}><span>能力图谱</span><small>按证据连接工程能力</small><i aria-hidden="true">02</i></a>
+            <a href={withBase('/timeline/')}><span>成长时间线</span><small>回看项目与站点里程碑</small><i aria-hidden="true">03</i></a>
+            <a href={withBase('/archive/')}><span>文章归档</span><small>按年月回看全部写作</small><i aria-hidden="true">04</i></a>
+            <a href={withBase('/notes/')}><span>学习笔记</span><small>进入公开知识关系图</small><i aria-hidden="true">05</i></a>
+            <a href={withBase('/search/')}><span>全文搜索</span><small>检索文章正文与主题</small><i aria-hidden="true">06</i></a>
+          </nav>
+        </aside>
+    </section>
+
+    <section class="home-featured-return" aria-label="最近重点">
       {spotlight ? (
         <a class="spotlight" href={withBase(`/posts/${spotlight.id}/`)} style={spotlightStyle}>
           <span class="spotlight-glow" aria-hidden="true"></span>
           <span class="spotlight-mark" aria-hidden="true"><i></i><i></i><i></i></span>
           <div class="spotlight-main">
             <p class="spotlight-label"><span>最近重点</span><time datetime={spotlight.data.date.toISOString()}>{formatDate(spotlight.data.date)}</time></p>
-            <h2>{spotlight.data.title}</h2>
+            <h2 aria-label={spotlight.data.title}><span class="spotlight-title__full">{spotlight.data.title}</span>{spotlight.data.shortTitle && <span class="spotlight-title__short" aria-hidden="true">{spotlight.data.shortTitle}</span>}</h2>
           </div>
           <div class="spotlight-detail">
             <p>{spotlight.data.description}</p>
@@ -63,71 +169,11 @@ const latestNote = notes[0];
             </div>
             <span class="spotlight-link">开始阅读 <i aria-hidden="true">↗</i></span>
           </div>
-          <ContentCover className="spotlight-cover" title={spotlight.data.title} seed={spotlight.id} kind="post" accent={postAccent(spotlight, columnMap)} cover={spotlight.data.cover} variant="spotlight" eager />
+          <ContentCover className="spotlight-cover" title={spotlight.data.title} seed={spotlight.id} kind="post" accent={postAccent(spotlight, columnMap)} cover={spotlight.data.cover} variant="spotlight" />
         </a>
       ) : (
         <div class="spotlight spotlight--empty"><p>第一篇文章正在准备中。</p></div>
       )}
-      <section class="home-signal" aria-label="站点内容概况">
-        <a href={withBase('/archive/')}><span>PUBLISHED / 01</span><strong>{posts.length} 篇文章</strong><small>{columns.length} 个长期主题</small></a>
-        <div><span>READING / 02</span><strong>{totalMinutes} 分钟</strong><small>已标注预计阅读量</small></div>
-        <div><span>LATEST / 03</span><strong>{latestDate ? formatDate(latestDate) : '待续'}</strong><small>最近一次更新</small></div>
-        <div class="home-signal__tags"><span>TOPICS / 04</span><p>{topTags.map((tag) => <a href={withBase(`/tags/${encodeURIComponent(tag.name)}/`)}>#{tag.name}</a>)}</p></div>
-      </section>
-
-    </header>
-
-    <section class="home-library" aria-label="主题、近文与学习笔记">
-        <aside class="column-browser" aria-labelledby="columns-heading">
-          <div class="library-heading">
-            <div><p>LONG-RUNNING THEMES</p><h2 id="columns-heading">主题</h2></div>
-          </div>
-          <p class="column-note">沿着长期问题整理文章；轨道内可独立向下滚动。</p>
-          <div class="column-viewport">
-            <div class="column-rail" aria-hidden="true"><span>01</span><i></i><b>{String(columns.length).padStart(2, '0')}</b></div>
-            <ColumnDirectory columns={columns} posts={posts} compact />
-            <p class="column-scroll-cue">滚动浏览 {columns.length} 个主题 <span aria-hidden="true">↓</span></p>
-          </div>
-        </aside>
-
-        <section class="recent-writing" aria-labelledby="latest-heading">
-          <div class="library-heading">
-            <div><p>LATEST WRITING</p><h2 id="latest-heading">继续阅读</h2></div>
-            <a href={withBase('/archive/')}>全部文章 →</a>
-          </div>
-          <PostList posts={recent} compact />
-        </section>
-
-        <section class="notes-feature" data-notes-feature aria-labelledby="notes-feature-title">
-          <span class="notes-feature__glow" aria-hidden="true"></span>
-          <header><p>PUBLIC VAULT / LOCAL KNOWLEDGE</p><span><i></i> {String(notes.length).padStart(2, '0')} NOTES</span></header>
-          <div class="notes-feature__identity">
-            <h2 id="notes-feature-title">学习<br />笔记</h2>
-            <p>像翻开一组仍在生长的卡片：正文、属性、双向链接与局部关系图共同描述一个知识节点。</p>
-          </div>
-          <div class="notes-feature__modes" role="tablist" aria-label="预览学习笔记视图">
-            <button type="button" role="tab" aria-selected="true" data-note-mode="note"><b>NOTE</b><span>笔记</span></button>
-            <button type="button" role="tab" aria-selected="false" data-note-mode="links"><b>LINKS</b><span>关系</span></button>
-            <button type="button" role="tab" aria-selected="false" data-note-mode="properties"><b>YAML</b><span>属性</span></button>
-          </div>
-          <div class="notes-feature__canvas">
-            <div data-note-panel="note">
-              <span>LATEST PUBLIC NOTE</span>
-              <strong>{latestNote?.data.title ?? '等待第一条公开笔记'}</strong>
-              <p>{latestNote?.data.description ?? '在本地知识库中标记公开后，笔记会出现在这里。'}</p>
-            </div>
-            <div data-note-panel="links" hidden>
-              <span>LOCAL GRAPH</span>
-              <div class="notes-feature__nodes"><i></i>{notes.slice(0, 3).map((note) => <a href={withBase(`/notes/${note.id}/`)}>{note.data.title}</a>)}</div>
-              <p>节点来自真实公开笔记；内容增加后，关系视图会沿 Wiki 链接继续生长。</p>
-            </div>
-            <div data-note-panel="properties" hidden>
-              <span>NOTE PROPERTIES</span>
-              <dl><div><dt>updated</dt><dd>{latestNote ? formatDate(latestNote.data.updated ?? latestNote.data.created) : '—'}</dd></div><div><dt>tags</dt><dd>{noteTags.join(', ') || '—'}</dd></div><div><dt>publish</dt><dd>true</dd></div></dl>
-            </div>
-          </div>
-          <a class="notes-feature__enter" href={withBase('/notes/')}><span>进入知识空间</span><i>↗</i></a>
-        </section>
     </section>
   </div>
 </FullShell>
@@ -138,7 +184,7 @@ const latestNote = notes[0];
   .home-identity { display: flex; align-items: end; justify-content: space-between; gap: 2rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
   .home-kicker { color: rgb(var(--spectrum-aqua-rgb)); font-family: var(--font-mono); font-size: .68rem; letter-spacing: .1em; }
   .home-title-lockup { display: flex; align-items: center; justify-content: flex-end; gap: .8rem; min-width: min(100%, 13rem); }
-  .home-title-lockup h1 { display: flex; justify-content: flex-end; gap: .3em; font-family: var(--font-display); font-size: clamp(1.65rem, 3.2vw, 2.5rem); font-stretch: condensed; font-weight: 660; line-height: .95; letter-spacing: -.055em; }
+  .home-title-lockup h1 { display: flex; justify-content: flex-end; gap: .3em; font-family: var(--font-signature); font-size: clamp(1.65rem, 3.2vw, 2.5rem); font-stretch: condensed; font-weight: 660; line-height: .95; letter-spacing: -.055em; }
   .home-title-lockup h1 span { color: rgb(var(--text-rgb)); }
   .home-title-lockup h1 em { color: rgb(var(--brand-secondary-rgb)); font-style: normal; }
   .home-register { display: grid; grid-template-columns: repeat(4, .52rem); gap: .18rem; align-items: center; transform: rotate(-6deg); }
@@ -152,16 +198,17 @@ const latestNote = notes[0];
   dl div { display: grid; gap: .12rem; }
   dt { color: rgba(var(--text-rgb), .68); font-family: var(--font-mono); font-size: .61rem; }
   dd { margin: 0; color: rgb(var(--spectrum-gold-rgb)); font-family: var(--font-mono); font-size: .72rem; }
-  .spotlight { position: relative; isolation: isolate; display: grid; grid-template-areas: 'main cover' 'detail cover'; grid-template-columns: minmax(25rem, .86fr) minmax(34rem, 1.14fr); grid-template-rows: auto 1fr; gap: 1rem clamp(2.5rem, 4vw, 5rem); align-items: center; min-height: clamp(29rem, 36vw, 36rem); padding: clamp(1.6rem, 2.7vw, 3rem); overflow: hidden; border: 1px solid rgba(var(--content-accent-rgb), .42); border-radius: .36rem; color: inherit; background: linear-gradient(112deg, rgba(var(--content-accent-rgb), .16), rgba(var(--surface-rgb), .93) 38%, rgba(var(--content-secondary-rgb), .11) 82%, rgba(var(--surface-rgb), .86)); box-shadow: .7rem .82rem 0 rgba(var(--content-secondary-rgb), .1), 0 1.8rem 4.2rem rgba(8, 19, 28, .13), inset 0 1px rgba(255, 255, 255, .12); text-decoration: none; transition: transform .24s var(--ease), border-color .24s var(--ease), box-shadow .24s var(--ease); cursor: pointer; }
+  .home-featured-return { padding-top: clamp(4.5rem, 8vw, 7.5rem); }
+  .spotlight { position: relative; isolation: isolate; display: grid; grid-template-areas: 'main cover' 'detail cover'; grid-template-columns: minmax(0, 1fr) minmax(21rem, .72fr); grid-template-rows: auto 1fr; gap: .55rem clamp(1.4rem, 2.6vw, 2.8rem); align-items: center; min-height: clamp(15rem, 18vw, 17rem); padding: clamp(.9rem, 1.45vw, 1.3rem); overflow: hidden; border: 1px solid rgba(var(--content-accent-rgb), .42); border-radius: .36rem; color: inherit; background: linear-gradient(112deg, rgba(var(--content-accent-rgb), .16), rgba(var(--surface-rgb), .93) 38%, rgba(var(--content-secondary-rgb), .11) 82%, rgba(var(--surface-rgb), .86)); box-shadow: .55rem .62rem 0 rgba(var(--content-secondary-rgb), .09), 0 1.2rem 3rem rgba(8, 19, 28, .11), inset 0 1px rgba(255, 255, 255, .12); text-decoration: none; transition: transform .24s var(--ease), border-color .24s var(--ease), box-shadow .24s var(--ease); cursor: pointer; }
   .spotlight::before { content: ''; position: absolute; inset: 0 auto 0 0; width: .46rem; background: rgb(var(--content-accent-rgb)); }
   .spotlight::after { content: ''; position: absolute; inset: auto 1.35rem 1.2rem auto; width: clamp(5rem, 12vw, 9rem); height: 1px; background: linear-gradient(90deg, transparent, rgb(var(--content-accent-rgb))); opacity: .7; }
   .spotlight:hover { border-color: rgba(var(--content-accent-rgb), .72); box-shadow: .92rem 1rem 0 rgba(var(--content-secondary-rgb), .13), 0 2.2rem 5rem rgba(8, 19, 28, .16); transform: translateY(-3px); }
   .spotlight-glow { position: absolute; inset: 0; z-index: 0; background: radial-gradient(26rem circle at var(--spot-x, 32%) var(--spot-y, 48%), rgba(var(--content-accent-rgb), .2), transparent 66%); opacity: 0; transition: opacity .28s ease; pointer-events: none; }
   .spotlight[data-pointer='true'] .spotlight-glow { opacity: 1; }
-  :global(.spotlight-cover) { grid-area: cover; align-self: center; width: 100%; height: auto; min-height: 0; aspect-ratio: 16 / 9; box-shadow: .65rem .72rem 0 rgba(var(--content-secondary-rgb), .12); transition: transform .32s var(--ease), border-color .24s var(--ease); }
+  :global(.spotlight-cover) { grid-area: cover; justify-self: end; align-self: center; width: min(100%, 25rem); height: auto; min-height: 0; aspect-ratio: 16 / 9; box-shadow: .55rem .62rem 0 rgba(var(--content-secondary-rgb), .1); transition: transform .32s var(--ease), border-color .24s var(--ease); }
   .spotlight:hover :global(.spotlight-cover) { border-color: rgba(var(--content-accent-rgb), .72); }
   .spotlight[data-pointer='true'] :global(.spotlight-cover) { transform: translate3d(calc(var(--spot-nx, 0) * 5px), calc(var(--spot-ny, 0) * 5px), 0) rotate(calc(var(--spot-nx, 0) * .35deg)); }
-  .spotlight-main, .spotlight-detail { position: relative; z-index: 1; padding-left: clamp(1rem, 3vw, 2.4rem); }
+  .spotlight-main, .spotlight-detail { position: relative; z-index: 1; padding-left: clamp(.75rem, 1.7vw, 1.4rem); }
   .spotlight-main { grid-area: main; align-self: end; }
   .spotlight-detail { grid-area: detail; align-self: start; }
   .spotlight-mark { position: absolute; top: .85rem; right: 1rem; display: flex; gap: .24rem; align-items: end; }
@@ -169,15 +216,16 @@ const latestNote = notes[0];
   .spotlight-mark i:nth-child(2) { width: .65rem; transform: translateY(.22rem); }
   .spotlight-mark i:nth-child(3) { width: .3rem; height: .3rem; border: 1px solid rgb(var(--content-accent-rgb)); background: transparent; transform: translateY(.12rem); }
   .spotlight:focus-visible { outline: 3px solid rgb(var(--brand-primary-rgb)); outline-offset: 4px; }
-  .spotlight-label { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.1rem; color: rgba(var(--text-rgb), .7); font-family: var(--font-mono); font-size: .66rem; }
+  .spotlight-label { display: flex; align-items: center; gap: 1rem; margin-bottom: .65rem; color: rgba(var(--text-rgb), .7); font-family: var(--font-mono); font-size: .61rem; }
   .spotlight-label span { color: rgb(var(--content-accent-rgb)); }
-  .spotlight h2 { max-width: 15ch; font-family: var(--font-display); font-size: clamp(2.9rem, 4.25vw, 5.1rem); font-stretch: condensed; font-weight: 640; line-height: .97; letter-spacing: -.058em; text-wrap: balance; }
+  .spotlight h2 { max-width: 17ch; font-family: var(--font-display); font-size: clamp(2.2rem, 2.85vw, 3.3rem); font-stretch: condensed; font-weight: 640; line-height: .98; letter-spacing: -.055em; text-wrap: balance; }
+  .spotlight-title__short { display: none; }
   .spotlight:hover h2, .spotlight:focus-visible h2 { color: rgb(var(--content-accent-rgb)); }
-  .spotlight-detail > p { color: rgba(var(--text-rgb), .72); font-size: .92rem; line-height: 1.85; }
-  .spotlight-taxonomy { display: flex; flex-wrap: wrap; gap: .45rem .9rem; margin-top: 1.1rem; color: rgba(var(--text-rgb), .64); font-family: var(--font-mono); font-size: .63rem; }
+  .spotlight-detail > p { display: none; }
+  .spotlight-taxonomy { display: flex; flex-wrap: wrap; gap: .35rem .75rem; margin-top: .72rem; color: rgba(var(--text-rgb), .6); font-family: var(--font-mono); font-size: .57rem; }
   .spotlight-taxonomy span { color: inherit; }
   .spotlight-taxonomy span:first-child { color: rgb(var(--content-accent-rgb)); }
-  .spotlight-link { display: inline-flex; gap: .6rem; align-items: center; margin-top: 1.5rem; color: rgb(var(--content-accent-rgb)); font-size: .84rem; font-weight: 650; }
+  .spotlight-link { display: inline-flex; gap: .6rem; align-items: center; margin-top: .8rem; color: rgb(var(--content-accent-rgb)); font-size: .72rem; font-weight: 650; }
   .spotlight-link i { font-style: normal; transition: transform .2s var(--ease); }
   .spotlight:hover .spotlight-link i { transform: translate(.2rem, -.2rem); }
   .spotlight--empty { min-height: 18rem; align-items: center; }
@@ -191,33 +239,34 @@ const latestNote = notes[0];
   .home-signal__tags p { display: flex; flex-wrap: wrap; gap: .15rem .65rem; margin-top: .3rem; }
   .home-signal__tags a { color: rgba(var(--text-rgb), .7); font-size: .67rem; text-decoration: none; }
   .home-signal__tags a:hover { color: rgb(var(--signal-rgb)); }
-  .home-library { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0 clamp(2.2rem, 3.3vw, 4rem); align-items: start; padding-top: clamp(5rem, 8vw, 8rem); }
-  .column-browser { grid-column: 1 / 9; grid-row: 1; }
-  .recent-writing { grid-column: 9 / 13; grid-row: 1; min-width: 0; margin-top: clamp(3.2rem, 5vw, 5.8rem); }
-  .notes-feature { --note-x: 72%; --note-y: 30%; position: relative; isolation: isolate; grid-column: 5 / 13; grid-row: 2; display: grid; grid-template-areas: 'header header' 'identity canvas' 'modes canvas' 'enter enter'; grid-template-columns: minmax(15rem, .72fr) minmax(0, 1.28fr); gap: 1.15rem clamp(1.6rem, 3vw, 3.2rem); min-height: 28rem; margin-top: clamp(3.5rem, 7vw, 7rem); padding: clamp(1.6rem, 2.8vw, 2.7rem); overflow: hidden; border: 1px solid rgba(var(--spectrum-violet-rgb), .46); background: linear-gradient(145deg, rgba(var(--spectrum-violet-rgb), .13), rgba(var(--surface-rgb), .96) 43%, rgba(var(--spectrum-gold-rgb), .08)); box-shadow: .72rem .8rem 0 rgba(var(--spectrum-violet-rgb), .09); }
+  .home-signal-cue { display: none; }
+  .home-portal { display: grid; grid-template-areas: 'profile stream notes' 'topics stream right'; grid-template-columns: minmax(13.5rem, .72fr) minmax(28rem, 1.65fr) minmax(13.5rem, .68fr); gap: clamp(1.25rem, 1.8vw, 2rem); align-items: start; padding-top: clamp(3.5rem, 5.5vw, 5.5rem); }
+  .portal-profile { grid-area: profile; min-width: 0; }
+  :global(.portal-profile > .profile-card) { width: 100%; }
+  .notes-feature { --note-x: 72%; --note-y: 30%; position: relative; isolation: isolate; grid-area: notes; display: grid; grid-template-areas: 'header' 'identity' 'modes' 'canvas' 'enter'; grid-template-columns: minmax(0, 1fr); gap: .75rem; min-width: 0; min-height: 0; padding: 1rem; overflow: hidden; border: 1px solid rgba(var(--spectrum-violet-rgb), .46); background: linear-gradient(145deg, rgba(var(--spectrum-violet-rgb), .13), rgba(var(--surface-rgb), .96) 43%, rgba(var(--spectrum-gold-rgb), .08)); box-shadow: .55rem .62rem 0 rgba(var(--spectrum-violet-rgb), .08); }
   .notes-feature::before { content: ''; position: absolute; z-index: -1; inset: 0; background-image: linear-gradient(rgba(var(--spectrum-violet-rgb), .08) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--spectrum-violet-rgb), .08) 1px, transparent 1px); background-size: 2.4rem 2.4rem; mask-image: linear-gradient(115deg, #000, transparent 72%); }
-  .notes-feature__glow { position: absolute; z-index: -1; width: 22rem; aspect-ratio: 1; left: var(--note-x); top: var(--note-y); border: 1px solid rgba(var(--spectrum-gold-rgb), .28); border-radius: 50%; box-shadow: 0 0 0 2rem rgba(var(--spectrum-violet-rgb), .04), 0 0 0 4rem rgba(var(--spectrum-gold-rgb), .025); opacity: .55; transform: translate(-50%, -50%); transition: left .18s ease, top .18s ease, opacity .2s ease; pointer-events: none; }
+  .notes-feature__glow { position: absolute; z-index: -1; width: 13rem; aspect-ratio: 1; left: var(--note-x); top: var(--note-y); border: 1px solid rgba(var(--spectrum-gold-rgb), .28); border-radius: 50%; box-shadow: 0 0 0 1.4rem rgba(var(--spectrum-violet-rgb), .04), 0 0 0 2.8rem rgba(var(--spectrum-gold-rgb), .025); opacity: .55; transform: translate(-50%, -50%); transition: left .18s ease, top .18s ease, opacity .2s ease; pointer-events: none; }
   .notes-feature:hover .notes-feature__glow, .notes-feature:focus-within .notes-feature__glow { opacity: 1; }
   .notes-feature > header { grid-area: header; display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding-bottom: .8rem; border-bottom: 1px solid rgba(var(--spectrum-violet-rgb), .25); }
   .notes-feature > header p, .notes-feature > header span { font: .53rem/1 var(--font-mono); letter-spacing: .1em; }
   .notes-feature > header p { color: rgb(var(--spectrum-violet-rgb)); }
   .notes-feature > header span { display: flex; gap: .4rem; align-items: center; color: rgba(var(--text-rgb), .52); }
   .notes-feature > header i { width: .42rem; aspect-ratio: 1; border-radius: 50%; background: rgb(var(--spectrum-aqua-rgb)); box-shadow: 0 0 .65rem rgba(var(--spectrum-aqua-rgb), .7); }
-  .notes-feature__identity { grid-area: identity; display: grid; align-content: end; gap: 1.2rem; }
-  .notes-feature__identity h2 { font: 650 clamp(3.8rem, 6vw, 6.4rem)/.76 var(--font-display); letter-spacing: -.075em; }
-  .notes-feature__identity p { max-width: 24rem; color: rgba(var(--text-rgb), .65); font-size: .78rem; line-height: 1.8; }
+  .notes-feature__identity { grid-area: identity; display: grid; gap: .55rem; }
+  .notes-feature__identity h2 { font: 650 clamp(2.2rem, 3vw, 3rem)/.84 var(--font-display); letter-spacing: -.065em; }
+  .notes-feature__identity p { color: rgba(var(--text-rgb), .62); font-size: .65rem; line-height: 1.65; }
   .notes-feature__modes { grid-area: modes; align-self: end; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); background: rgba(var(--surface-rgb), .7); }
-  .notes-feature__modes button { display: grid; gap: .38rem; padding: .72rem .65rem; border: 0; border-right: 1px solid var(--line); color: rgba(var(--text-rgb), .5); background: transparent; text-align: left; cursor: pointer; }
+  .notes-feature__modes button { display: grid; gap: .28rem; padding: .52rem .4rem; border: 0; border-right: 1px solid var(--line); color: rgba(var(--text-rgb), .5); background: transparent; text-align: left; cursor: pointer; }
   .notes-feature__modes button:last-child { border-right: 0; }
   .notes-feature__modes button:hover, .notes-feature__modes button[aria-selected='true'] { color: rgb(var(--text-rgb)); background: rgba(var(--spectrum-violet-rgb), .13); }
   .notes-feature__modes b { color: rgb(var(--spectrum-coral-rgb)); font: .5rem/1 var(--font-mono); }
-  .notes-feature__modes span { font-size: .72rem; }
-  .notes-feature__canvas { grid-area: canvas; min-width: 0; min-height: 18rem; padding: clamp(1.2rem, 2vw, 1.8rem); border: 1px solid rgba(var(--spectrum-violet-rgb), .32); background: linear-gradient(rgba(var(--spectrum-violet-rgb), .07) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--spectrum-violet-rgb), .07) 1px, transparent 1px), rgba(var(--surface-rgb), .76); background-size: 2.2rem 2.2rem; }
+  .notes-feature__modes span { font-size: .62rem; }
+  .notes-feature__canvas { grid-area: canvas; min-width: 0; min-height: 11.5rem; padding: .9rem; border: 1px solid rgba(var(--spectrum-violet-rgb), .32); background: linear-gradient(rgba(var(--spectrum-violet-rgb), .07) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--spectrum-violet-rgb), .07) 1px, transparent 1px), rgba(var(--surface-rgb), .76); background-size: 2.2rem 2.2rem; }
   .notes-feature__canvas > div { display: grid; align-content: center; height: 100%; }
   .notes-feature__canvas > div[hidden] { display: none; }
   .notes-feature__canvas span { color: rgb(var(--spectrum-violet-rgb)); font: .53rem/1 var(--font-mono); letter-spacing: .09em; }
-  .notes-feature__canvas strong { max-width: 19ch; margin: 1.4rem 0 .75rem; font: 640 clamp(1.65rem, 2.8vw, 2.8rem)/1.03 var(--font-display); letter-spacing: -.045em; }
-  .notes-feature__canvas p { max-width: 34rem; color: rgba(var(--text-rgb), .64); font-size: .73rem; line-height: 1.8; }
+  .notes-feature__canvas strong { max-width: 18ch; margin: .85rem 0 .55rem; font: 640 clamp(1.25rem, 1.7vw, 1.65rem)/1.04 var(--font-display); letter-spacing: -.04em; }
+  .notes-feature__canvas p { display: -webkit-box; overflow: hidden; color: rgba(var(--text-rgb), .62); font-size: .64rem; line-height: 1.65; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
   .notes-feature__canvas dl { display: grid; gap: .75rem; margin-top: 1.4rem; }
   .notes-feature__canvas dl div { grid-template-columns: 6rem 1fr; gap: 1rem; padding-bottom: .55rem; border-bottom: 1px solid var(--line); }
   .notes-feature__canvas dt, .notes-feature__canvas dd { font-size: .62rem; }
@@ -229,39 +278,64 @@ const latestNote = notes[0];
   .notes-feature__enter { grid-area: enter; display: flex; justify-content: space-between; align-items: center; padding-top: .95rem; border-top: 1px solid rgba(var(--spectrum-violet-rgb), .25); color: rgb(var(--spectrum-coral-rgb)); font-size: .78rem; font-weight: 650; text-decoration: none; }
   .notes-feature__enter i { font-style: normal; transition: transform .2s var(--ease); }
   .notes-feature__enter:hover i { transform: translate(.25rem, -.25rem); }
-  .column-browser { display: flex; height: clamp(58rem, 78vw, 72rem); min-height: 0; flex-direction: column; overflow: hidden; }
-  .column-viewport { position: relative; display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); min-height: 0; flex: 1; overflow: hidden; border-top: 1px solid rgba(var(--spectrum-violet-rgb), .35); border-bottom: 1px solid rgba(var(--spectrum-violet-rgb), .28); background: linear-gradient(90deg, rgba(var(--spectrum-violet-rgb), .07), transparent 18%); }
-  .column-rail { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: .5rem 0 2rem; color: rgb(var(--spectrum-violet-rgb)); font: .5rem/1 var(--font-mono); }
-  .column-rail i { width: 1px; flex: 1; margin: .45rem 0; background: linear-gradient(rgb(var(--spectrum-violet-rgb)), transparent); opacity: .52; }
-  .column-rail b { font-weight: 500; }
-  :global(.column-browser .column-directory) { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .5rem .6rem 2.6rem .45rem; scrollbar-color: rgba(var(--spectrum-violet-rgb), .62) transparent; scrollbar-width: thin; }
-  .column-scroll-cue { position: absolute; right: .85rem; bottom: .45rem; padding: .28rem .45rem; color: rgba(var(--text-rgb), .62); background: rgba(var(--surface-rgb), .86); font: .53rem/1 var(--font-mono); letter-spacing: .04em; pointer-events: none; }
-  .library-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.15rem; }
-  .library-heading p { margin-bottom: .32rem; color: rgb(var(--spectrum-coral-rgb)); font-family: var(--font-mono); font-size: .62rem; letter-spacing: .09em; }
-  .library-heading h2 { font-family: var(--font-display); font-size: clamp(1.65rem, 3vw, 2.5rem); letter-spacing: -.045em; }
-  .library-heading > a { color: rgba(var(--text-rgb), .7); font-size: .72rem; text-decoration: none; }
-  .library-heading > a:hover { color: rgb(var(--spectrum-aqua-rgb)); }
-  .column-note { margin: -.35rem 0 1rem; color: rgba(var(--text-rgb), .52); font-size: .72rem; line-height: 1.75; }
-  :global(.home-page .column-directory--compact .column-card) { grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr) 1rem; min-height: 12rem; padding: .82rem; }
-  :global(.home-page .column-directory--compact .column-card__cover) { width: 100%; }
-  :global(.home-page .recent-writing .post-list--compact) { gap: 1.15rem; }
-  :global(.home-page .recent-writing .post-list--compact .post-row) { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto; gap: .55rem 1rem; min-height: 0; padding: .78rem .82rem 1rem; }
-  :global(.home-page .recent-writing .post-list--compact .post-cover) { grid-column: 1 / -1; grid-row: 1; width: 100%; height: auto; aspect-ratio: 16 / 9; }
-  :global(.home-page .recent-writing .post-list--compact time) { grid-column: 1; grid-row: 2; align-self: end; padding-top: .12rem; font-size: .6rem; }
-  :global(.home-page .recent-writing .post-list--compact .post-copy) { grid-column: 1; grid-row: 3; align-self: start; }
-  :global(.home-page .recent-writing .post-list--compact h3) { font-size: clamp(1.2rem, 1.5vw, 1.48rem); line-height: 1.28; -webkit-line-clamp: 2; }
-  :global(.home-page .recent-writing .post-list--compact .post-arrow) { grid-column: 2; grid-row: 2 / 4; align-self: center; }
+  .portal-panel { min-width: 0; padding: 1rem; border-top: 1px solid rgba(var(--spectrum-aqua-rgb), .4); border-bottom: 1px solid var(--line); background: linear-gradient(145deg, rgba(var(--surface-rgb), .74), rgba(var(--raised-rgb), .2)); }
+  .portal-panel__heading, .portal-section-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: end; padding-bottom: .8rem; border-bottom: 1px solid var(--line); }
+  .portal-panel__heading p, .portal-section-heading p { color: rgb(var(--spectrum-coral-rgb)); font: .5rem/1 var(--font-mono); letter-spacing: .09em; }
+  .portal-panel__heading h2, .portal-section-heading h2 { margin-top: .32rem; font: 620 clamp(1.35rem, 2vw, 1.8rem)/1 var(--font-display); letter-spacing: -.04em; }
+  .portal-panel__heading > span { color: rgb(var(--spectrum-gold-rgb)); font: .58rem/1 var(--font-mono); }
+  .portal-panel__intro, .writing-stream__intro { color: rgba(var(--text-rgb), .55); font-size: .65rem; line-height: 1.7; }
+  .portal-panel__intro { padding: .8rem 0; }
+  .portal-topics { grid-area: topics; align-self: start; }
+  .portal-topics ol { margin: 0; padding: 0; border-top: 1px solid var(--line); list-style: none; }
+  .portal-topics li { border-bottom: 1px solid var(--line); }
+  .portal-topics li a { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) auto; gap: .65rem; align-items: center; padding: .72rem .08rem; color: inherit; text-decoration: none; }
+  .portal-topics li small { color: rgba(var(--text-rgb), .38); font: .49rem/1 var(--font-mono); }
+  .portal-topics li span { display: grid; min-width: 0; gap: .18rem; }
+  .portal-topics li strong { overflow: hidden; font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
+  .portal-topics li i { color: rgba(var(--text-rgb), .46); font: normal .51rem/1 var(--font-mono); }
+  .portal-topics li b { color: rgb(var(--content-accent-rgb)); font-size: .7rem; font-weight: 500; opacity: .55; transition: opacity .2s var(--ease), transform .2s var(--ease); }
+  .portal-topics li a:is(:hover, :focus-visible) strong { color: rgb(var(--content-accent-rgb)); }
+  .portal-topics li a:is(:hover, :focus-visible) b { opacity: 1; transform: translate(.12rem, -.12rem); }
+  .writing-stream { grid-area: stream; min-width: 0; }
+  .portal-section-heading { margin-bottom: .2rem; }
+  .portal-section-heading > a { color: rgba(var(--text-rgb), .65); font-size: .66rem; text-decoration: none; }
+  .portal-section-heading > a:hover { color: rgb(var(--spectrum-aqua-rgb)); }
+  .writing-stream__intro { padding: .75rem 0 .35rem 3.55rem; }
+  .portal-right { grid-area: right; display: grid; gap: 1.2rem; align-content: start; min-width: 0; }
+  .portal-right[hidden], [data-portal-widget][hidden] { display: none; }
+  .home-portal[data-right-visible='false'] { grid-template-areas: 'profile stream notes' 'topics stream .'; }
+  .portal-tags > div { display: flex; flex-wrap: wrap; gap: .35rem; padding: .85rem 0; }
+  .portal-tags > div a { display: flex; gap: .45rem; align-items: center; padding: .33rem .45rem; border: 1px solid var(--line); color: inherit; background: rgba(var(--surface-rgb), .62); font: .54rem/1 var(--font-mono); text-decoration: none; }
+  .portal-tags > div a:hover { border-color: rgba(var(--spectrum-violet-rgb), .55); color: rgb(var(--spectrum-violet-rgb)); }
+  .portal-tags > div small { color: rgb(var(--spectrum-gold-rgb)); font: inherit; }
+  .portal-panel__more { display: flex; justify-content: space-between; padding-top: .72rem; border-top: 1px solid var(--line); color: rgb(var(--spectrum-aqua-rgb)); font-size: .63rem; font-weight: 650; text-decoration: none; }
+  .portal-panel__more i { font-style: normal; }
+  .portal-gateway { display: grid; }
+  .portal-gateway > a { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .18rem .8rem; padding: .72rem .1rem; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none; }
+  .portal-gateway > a span { font-size: .69rem; font-weight: 650; }
+  .portal-gateway > a small { grid-column: 1; color: rgba(var(--text-rgb), .46); font-size: .54rem; }
+  .portal-gateway > a i { grid-column: 2; grid-row: 1 / 3; align-self: center; color: rgba(var(--text-rgb), .3); font: normal .5rem/1 var(--font-mono); }
+  .portal-gateway > a:is(:hover, :focus-visible) span { color: rgb(var(--spectrum-coral-rgb)); }
+  .portal-gateway > a:is(:hover, :focus-visible) i { color: rgb(var(--spectrum-coral-rgb)); }
+  :global(html[data-portal-density='compact']) .home-portal { gap: 1.6rem; }
+  :global(html[data-portal-density='compact']) :is(.portal-panel__intro, .writing-stream__intro, .portal-gateway > a small) { display: none; }
+  :global(html[data-portal-density='compact']) .portal-topics li a,
+  :global(html[data-portal-density='compact']) .portal-gateway > a { padding-block: .52rem; }
+  @media (max-width: 1200px) {
+    .home-portal { grid-template-areas: 'profile stream' 'notes stream' 'topics stream' 'right right'; grid-template-columns: minmax(16rem, .72fr) minmax(0, 1.28fr); }
+    .home-portal[data-right-visible='false'] { grid-template-areas: 'profile stream' 'notes stream' 'topics stream'; grid-template-columns: minmax(16rem, .72fr) minmax(0, 1.28fr); }
+    .portal-right { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
   @media (max-width: 900px) {
     .spotlight { grid-template-columns: minmax(0, 1fr) minmax(13rem, .55fr); gap: .8rem 1.5rem; min-height: 18rem; transform: none !important; }
-    :global(.spotlight-cover) { min-height: 16.4rem; }
+    :global(.spotlight-cover) { min-height: 0; }
     .spotlight h2 { max-width: 16ch; }
     .spotlight-detail { max-width: 38rem; align-self: start; }
-    .home-library { grid-template-columns: 1fr; gap: 3.5rem; }
-    .column-browser, .recent-writing, .notes-feature { grid-column: 1; grid-row: auto; margin-top: 0; }
-    .column-browser { height: auto; }
-    .column-viewport { height: 31rem; flex: none; }
-    .notes-feature { grid-template-columns: minmax(14rem, .7fr) minmax(0, 1.3fr); }
-    :global(.home-page .column-directory--compact .column-card) { grid-template-columns: minmax(13rem, 17rem) minmax(0, 1fr) 1rem; min-height: 10.6rem; }
+    .home-portal { grid-template-areas: 'profile' 'notes' 'stream' 'topics' 'right'; grid-template-columns: minmax(0, 1fr); gap: 3rem; }
+    .home-portal[data-right-visible='false'] { grid-template-areas: 'profile' 'notes' 'stream' 'topics'; grid-template-columns: minmax(0, 1fr); }
+    .portal-profile { min-height: 0; }
+    .portal-right { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .portal-gateway { grid-column: 1 / -1; }
   }
   @media (max-width: 620px) {
     .home-hero { padding-top: 2.25rem; }
@@ -273,6 +347,8 @@ const latestNote = notes[0];
     .spotlight-main { padding-inline: .38rem; }
     .spotlight-label { margin-bottom: .5rem; }
     .spotlight h2 { display: -webkit-box; max-width: 16ch; overflow: hidden; font-size: clamp(1.85rem, 8.7vw, 2.45rem); line-height: 1.02; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+    .spotlight h2:has(.spotlight-title__short) .spotlight-title__full { display: none; }
+    .spotlight-title__short { display: inline; }
     .spotlight-detail { padding: 0 .38rem; }
     .spotlight-detail > p { display: none; }
     .spotlight-taxonomy { display: none; }
@@ -280,53 +356,20 @@ const latestNote = notes[0];
     .home-signal { grid-auto-flow: column; grid-auto-columns: minmax(9.5rem, 43vw); grid-template-columns: none; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; }
     .home-signal::-webkit-scrollbar { display: none; }
     .home-signal > * { min-height: 4.7rem; padding: .65rem .8rem; scroll-snap-align: start; }
-    .home-library { gap: 3rem; padding-top: 4.2rem; }
-    .notes-feature { grid-template-areas: 'header' 'identity' 'modes' 'canvas' 'enter'; grid-template-columns: 1fr; min-height: 0; padding: 1.15rem; }
-    .notes-feature__identity h2 { font-size: 3.25rem; line-height: .82; }
+    .home-signal-cue { display: flex; justify-content: flex-end; gap: .5rem; margin-top: .55rem; color: rgba(var(--text-rgb), .5); font: .56rem/1 var(--font-mono); letter-spacing: .04em; }
+    .home-signal-cue span { color: rgb(var(--spectrum-coral-rgb)); }
+    .home-portal { gap: 2.7rem; padding-top: 4.2rem; }
+    .notes-feature { padding: 1.15rem; }
+    .notes-feature__identity h2 { font-size: 2.75rem; line-height: .82; }
     .notes-feature__identity p { max-width: none; }
-    .notes-feature__canvas { min-height: 15rem; }
-    :global(.home-page .recent-writing .post-list--compact .post-row) { grid-template-columns: 7.2rem minmax(0, 1fr) auto; grid-template-rows: auto 1fr; gap: .4rem .75rem; min-height: 8rem; padding: .62rem .7rem .62rem .62rem; }
-    :global(.home-page .recent-writing .post-list--compact .post-cover) { grid-column: 1; grid-row: 1 / 3; width: 7.2rem; }
-    :global(.home-page .recent-writing .post-list--compact time) { grid-column: 2; grid-row: 1; }
-    :global(.home-page .recent-writing .post-list--compact .post-copy) { grid-column: 2; grid-row: 2; }
-    :global(.home-page .recent-writing .post-list--compact h3) { font-size: 1.04rem; -webkit-line-clamp: 3; }
-    :global(.home-page .recent-writing .post-list--compact .post-arrow) { grid-column: 3; grid-row: 1 / 3; }
-    :global(.home-page .column-directory--compact .column-card) { grid-template-columns: 7.2rem minmax(0, 1fr) .8rem; min-height: 7.2rem; }
+    .notes-feature__canvas { min-height: 13rem; }
+    .writing-stream__intro { padding-left: 1.1rem; }
+    .portal-right { grid-template-columns: minmax(0, 1fr); }
+    .portal-gateway { grid-column: auto; }
   }
 </style>
 
 <script>
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    document.querySelectorAll<HTMLElement>('.spotlight').forEach((spotlight) => {
-      spotlight.addEventListener('pointermove', (event) => {
-        if (event.pointerType === 'touch') return;
-        const bounds = spotlight.getBoundingClientRect();
-        const x = event.clientX - bounds.left;
-        const y = event.clientY - bounds.top;
-        spotlight.style.setProperty('--spot-x', `${x}px`);
-        spotlight.style.setProperty('--spot-y', `${y}px`);
-        spotlight.style.setProperty('--spot-nx', String(x / bounds.width * 2 - 1));
-        spotlight.style.setProperty('--spot-ny', String(y / bounds.height * 2 - 1));
-        spotlight.dataset.pointer = 'true';
-      });
-      spotlight.addEventListener('pointerleave', () => { spotlight.dataset.pointer = 'false'; });
-    });
-  }
-
-  document.querySelectorAll<HTMLElement>('[data-notes-feature]').forEach((feature) => {
-    const modes = [...feature.querySelectorAll<HTMLButtonElement>('[data-note-mode]')];
-    const panels = [...feature.querySelectorAll<HTMLElement>('[data-note-panel]')];
-    modes.forEach((mode) => mode.addEventListener('click', () => {
-      modes.forEach((item) => item.setAttribute('aria-selected', String(item === mode)));
-      panels.forEach((panel) => { panel.hidden = panel.dataset.notePanel !== mode.dataset.noteMode; });
-    }));
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      feature.addEventListener('pointermove', (event) => {
-        if (event.pointerType === 'touch') return;
-        const bounds = feature.getBoundingClientRect();
-        feature.style.setProperty('--note-x', `${event.clientX - bounds.left}px`);
-        feature.style.setProperty('--note-y', `${event.clientY - bounds.top}px`);
-      });
-    }
-  });
+  import { initHomeInteractions } from '../lib/home-interactions';
+  initHomeInteractions();
 </script>

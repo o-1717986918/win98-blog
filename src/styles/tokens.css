@@ -1,7 +1,17 @@
+@font-face {
+  font-family: 'Site Signature';
+  src: url('../assets/fonts/site-signature.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 600 700;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+0041-005A, U+4EBA, U+5C0F, U+67D0, U+7684, U+7AD9;
+}
+
 @layer reset, tokens, shell, components, prose, utilities;
 
 @layer tokens {
   :root {
+    --font-signature: 'Site Signature', Bahnschrift, 'Aptos Display', 'Microsoft YaHei UI', sans-serif;
     --font-display: Bahnschrift, 'Aptos Display', 'Segoe UI Variable Display', 'Microsoft YaHei UI', sans-serif;
     --font-ui: 'Segoe UI Variable Text', Aptos, 'SF Pro Text', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
     --font-reading: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', STSong, SimSun, serif;
@@ -9,6 +19,7 @@
     --content: 96rem;
     --reading: 40em;
     --header: 4.25rem;
+    --site-rail: 13rem;
     --radius: 3px;
     --ease: cubic-bezier(.22, 1, .36, 1);
     --reader-scale: 1;

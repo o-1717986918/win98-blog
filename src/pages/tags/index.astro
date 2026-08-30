@@ -6,7 +6,7 @@ const posts = sortPosts((await getCollection('posts')).filter(isPublished));
 const tags = allTags(posts);
 ---
 
-<FullShell title="文章标签" description="按主题标签浏览某人的小站。">
+<FullShell title="文章标签" description="按主题标签浏览某人的小站。" schemaType="CollectionPage">
   <div class="page-wrap tags-page">
     <header class="page-intro">
       <div><p class="eyebrow">TAGS</p><h1 class="display-title">文章<br />标签</h1></div>

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const workspaceRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const requestedRoot = process.argv[2] ?? 'prototype';
 const root = resolve(workspaceRoot, requestedRoot);
-const port = Number.parseInt(process.env.PORT ?? '8765', 10);
+const port = Number.parseInt(process.argv[3] ?? process.env.PORT ?? '8765', 10);
 
 if (root !== workspaceRoot && !root.startsWith(`${workspaceRoot}${sep}`)) {
   throw new Error(`Site directory must stay inside the workspace: ${requestedRoot}`);
@@ -18,22 +18,33 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 const mime = {
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
+  '.jpeg': 'image/jpeg',
+  '.jpg': 'image/jpeg',
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
   '.svg': 'image/svg+xml',
+  '.txt': 'text/plain; charset=utf-8',
+  '.wasm': 'application/wasm',
   '.webp': 'image/webp',
+  '.woff2': 'font/woff2',
+  '.xml': 'application/xml; charset=utf-8',
 };
 
 const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url ?? '/', `http://${request.headers.host ?? '127.0.0.1'}`);
     const relativePath = decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html';
-    const filePath = resolve(root, relativePath);
+    let filePath = resolve(root, relativePath);
     if (filePath !== root && !filePath.startsWith(`${root}${sep}`)) {
       response.writeHead(403).end('Forbidden');
       return;
     }
-    const info = await stat(filePath);
+    let info = await stat(filePath);
+    if (info.isDirectory()) {
+      filePath = resolve(filePath, 'index.html');
+      info = await stat(filePath);
+    }
     if (!info.isFile()) throw new Error('Not a file');
     const contents = await readFile(filePath);
     response.writeHead(200, {

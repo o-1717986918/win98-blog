@@ -77,6 +77,6 @@ import FieldIndex from './FieldIndex.astro'
 ## 字段
 
 - 栏目：`title`、`description`、`chrome`、`theme`、`accent`、`back`、`nav`、`navLabel`、`order`、`showPosts`、`draft`；
-- 文章：`title`、`description`、`date`、`tags`、`columns[]`、`chrome`、`theme`、`back`、`wide`、`hideToc`、`draft`。
+- 文章：`title`、`shortTitle`、`description`、`date`、`updated`、`format`、`tags`、`columns[]`、`evidence`、`syndication`、`chrome`、`theme`、`back`、`wide`、`hideToc`、`draft`。
 
 新增或调整后运行 `pnpm verify`；测试会检查引用有效性、三档代表页、路由分派和 `none` 产物隔离。

@@ -18,6 +18,7 @@ const socialImage = post.data.cover ? (await getImage({ src: post.data.cover.src
   tags={post.data.tags}
   noindex={post.data.noindex}
   image={socialImage}
+  back={post.data.back}
 >
   <Content />
 </StandaloneLayout>

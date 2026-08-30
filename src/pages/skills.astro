@@ -1,0 +1,30 @@
+---
+import { PORTAL_SKILLS } from '../config/portal';
+import { withBase } from '../lib/site-path';
+import { accentStyle } from '../lib/visual';
+import FullShell from '../layouts/FullShell.astro';
+import '../styles/portal-pages.css';
+---
+
+<FullShell title="能力图谱" description="由真实项目、文章和笔记支撑的能力索引。" schemaType="CollectionPage">
+  <div class="page-wrap portal-feature-page">
+    <header class="page-intro">
+      <div><p class="eyebrow">SKILLS</p><h1 class="display-title">能力<br />图谱</h1></div>
+      <div class="page-intro__copy">
+        <p>能力不是百分比进度条。每一项都指向本站中可以阅读、运行或复查的证据。</p>
+        <dl class="portal-feature-summary"><div><dt>DOMAINS</dt><dd>{PORTAL_SKILLS.length}</dd></div><div><dt>MEASURE</dt><dd>公开证据</dd></div><div><dt>STATE</dt><dd>持续演进</dd></div></dl>
+      </div>
+    </header>
+    <section class="portal-feature-grid" aria-label="能力列表">
+      {PORTAL_SKILLS.map((skill) => (
+        <a class="portal-record" href={withBase(skill.evidence)} style={accentStyle(skill.accent)}>
+          <div class="portal-record__meta"><span>CAPABILITY</span><span>{skill.scope}</span></div>
+          <h2>{skill.name}</h2>
+          <p>{skill.description}</p>
+          <i class="portal-record__arrow" aria-hidden="true">查看支撑证据 ↗</i>
+        </a>
+      ))}
+    </section>
+    <p class="portal-feature-note">这份图谱刻意不使用“熟练度 90%”一类不可验证的自我评分；内容增加时，证据链接会继续扩展。</p>
+  </div>
+</FullShell>

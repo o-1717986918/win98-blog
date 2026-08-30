@@ -1,0 +1,37 @@
+---
+const configured = import.meta.env.PUBLIC_PERFORMANCE_ENDPOINT?.trim() ?? '';
+let endpoint = '';
+try {
+  const parsed = new URL(configured);
+  if (parsed.protocol === 'https:') endpoint = parsed.href;
+} catch {}
+---
+
+<script is:inline define:vars={{ endpoint }} data-performance-vitals>
+  (() => {
+    if (!('PerformanceObserver' in window)) return;
+    const sample = { path: location.pathname, lcp: 0, cls: 0, interactionLatencyMax: 0, capturedAt: new Date().toISOString() };
+    const observe = (type, handler) => {
+      try {
+        const observer = new PerformanceObserver((list) => list.getEntries().forEach(handler));
+        observer.observe({ type, buffered: true });
+      } catch {}
+    };
+    observe('largest-contentful-paint', (entry) => { sample.lcp = Math.max(sample.lcp, entry.startTime || 0); });
+    observe('layout-shift', (entry) => { if (!entry.hadRecentInput) sample.cls += entry.value || 0; });
+    observe('event', (entry) => { if (entry.interactionId) sample.interactionLatencyMax = Math.max(sample.interactionLatencyMax, entry.duration || 0); });
+    let sent = false;
+    const finish = () => {
+      if (sent) return;
+      sent = true;
+      const payload = JSON.stringify({ ...sample, lcp: Math.round(sample.lcp), cls: Number(sample.cls.toFixed(4)), interactionLatencyMax: Math.round(sample.interactionLatencyMax) });
+      try { sessionStorage.setItem(`someone-site:vitals:${location.pathname}`, payload); } catch {}
+      window.dispatchEvent(new CustomEvent('someone-site:vitals', { detail: JSON.parse(payload) }));
+      if (!endpoint) return;
+      const body = new Blob([payload], { type: 'application/json' });
+      if (!navigator.sendBeacon(endpoint, body)) fetch(endpoint, { method: 'POST', body: payload, headers: { 'content-type': 'application/json' }, keepalive: true, mode: 'cors', credentials: 'omit' }).catch(() => {});
+    };
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') finish(); }, { once: true });
+    addEventListener('pagehide', finish, { once: true });
+  })();
+</script>

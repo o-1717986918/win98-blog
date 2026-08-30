@@ -12,6 +12,8 @@ const requireText = (source, text, label) => { if (!source.includes(text)) failu
 const forbidText = (source, text, label) => { if (source.includes(text)) failures.push(`${label}: unexpectedly contains ${text}`); };
 
 const home = await read('dist/index.html');
+const about = await read('dist/about/index.html');
+const archive = await read('dist/archive/index.html');
 const full = await read('dist/posts/theme-as-data/index.html');
 const minimal = await read('dist/posts/reader-control/index.html');
 const nonePost = await read('dist/posts/particle-field/index.html');
@@ -29,25 +31,49 @@ const sitemap = await read('dist/sitemap-0.xml');
 const search = await read('dist/search/index.html');
 const tags = await read('dist/tags/index.html');
 const privacy = await read('dist/privacy/index.html');
+const projects = await read('dist/projects/index.html');
+const skills = await read('dist/skills/index.html');
+const timeline = await read('dist/timeline/index.html');
 const robots = await read('dist/robots.txt');
 const llms = await read('dist/llms.txt');
 const searchScript = await read('dist/scripts/search.js');
 
 requireText(home, '<title>某人的小站</title>', 'home');
+requireText(home, 'data-site-intro', 'home session intro');
+requireText(about, 'ProfilePage', 'about structured data');
+requireText(about, 'h-card', 'about IndieWeb identity');
+requireText(archive, 'data-archive-ledger', 'archive chronological ledger');
+requireText(archive, 'data-archive-year', 'archive year grouping');
+requireText(archive, 'data-archive-month', 'archive month grouping');
+requireText(archive, 'PUBLICATION YEAR', 'archive visual chronology');
 requireText(home, '/columns/engineering/', 'home');
 requireText(home, 'data-content-cover', 'home content covers');
-requireText(home, 'data-default-cover="true"', 'home default cover fallback');
+requireText(home, 'data-home-post-stream', 'home chronological stream');
+requireText(home, 'data-publication-calendar', 'home publication calendar');
+requireText(home, 'data-portal-controls', 'home persisted portal preferences');
+requireText(home, 'data-stream-more', 'home progressive writing stream');
+requireText(home, 'home-featured-return', 'home bottom featured return');
+requireText(projects, '项目<br>陈列', 'projects feature page');
+requireText(projects, 'ArcVellum', 'projects real data');
+requireText(skills, '能力<br>图谱', 'skills feature page');
+requireText(skills, '查看支撑证据', 'skills evidence links');
+requireText(timeline, 'data-feature-timeline', 'filterable timeline feature page');
+requireText(timeline, 'data-timeline-filter="PROJECT"', 'timeline project filter');
 requireText(full, '<header class="site-header"', 'full post');
 requireText(full, '<footer class="site-footer"', 'full post');
 requireText(full, 'class="reader-controls"', 'full post');
 requireText(full, 'BlogPosting', 'full post SEO');
+requireText(full, 'h-entry', 'full post IndieWeb entry');
+requireText(full, 'data-performance-vitals', 'full post field performance sample');
 requireText(full, 'data-reading-progress', 'full post reading progress');
 requireText(full, 'class="motion-toggle"', 'full post motion control');
 requireText(full, 'data-pagefind-body', 'full post search boundary');
 requireText(full, 'data-content-cover', 'full post cover');
+forbidText(full, 'class="back-badge"', 'full post redundant back bridge');
 requireText(full, `property="og:image" content="${publicUrl}/_astro/cover.`, 'full post real-cover social image');
 requireText(componentPost, 'data-code-playground', 'MDX component library');
 requireText(componentPost, 'data-chart', 'accessible MDX chart');
+requireText(componentPost, 'data-evidence-ledger', 'article evidence ledger');
 for (const [label, source] of [
   ['ArcVellum release', arcRelease],
   ['ArcVellum column', arcColumn],
@@ -57,6 +83,7 @@ for (const [label, source] of [
   forbidText(source, '<header class="site-header"', `${label} isolated chrome`);
   forbidText(source, '<footer class="site-footer"', `${label} isolated chrome`);
 }
+forbidText(arcColumn, 'class="back-badge"', 'ArcVellum owns its return navigation');
 requireText(solverPost, 'data-solver-viz', 'solver functional module');
 requireText(solverPost, 'LIVE CORE / C99', 'solver Wasm interface');
 await access(resolve(root, 'dist/solver/solver-engine.wasm')).catch(() => failures.push('solver Wasm artifact: missing'));
@@ -65,11 +92,16 @@ requireText(notesIndex, 'PUBLIC VAULT', 'learning notes module');
 requireText(notesIndex, 'data-note-workbench', 'learning notes functional workbench');
 requireText(notesIndex, 'data-note-search', 'learning notes search');
 requireText(notesIndex, 'data-note-panel', 'learning notes rendered preview');
+requireText(notesIndex, 'data-preview-maturity', 'learning notes maturity model');
+requireText(notesIndex, 'data-preview-backlinks', 'learning notes parsed graph');
 forbidText(notesIndex, 'garden-hero', 'learning notes promotional hero');
 forbidText(notesIndex, '<header class="site-header"', 'learning notes isolated chrome');
 forbidText(notesIndex, '<footer class="site-footer"', 'learning notes isolated chrome');
+forbidText(notesIndex, 'class="back-badge"', 'learning notes owns its return navigation');
+requireText(notesIndex, 'CollectionPage', 'learning notes structured data');
 requireText(publicNote, 'data-pagefind-body', 'public note search boundary');
 requireText(publicNote, '反向链接', 'public note backlink area');
+requireText(publicNote, '延伸阅读', 'public note outgoing relations');
 forbidText(minimal, '<header class="site-header"', 'minimal post');
 forbidText(minimal, '<footer class="site-footer"', 'minimal post');
 requireText(minimal, 'class="reader-controls"', 'minimal post');
@@ -77,6 +109,7 @@ requireText(minimal, 'class="back-badge"', 'minimal post');
 requireText(minimal, 'data-pagefind-body', 'minimal post search boundary');
 requireText(minimal, 'data-content-cover', 'minimal post cover');
 requireText(fullColumn, 'data-content-cover', 'full column cover');
+requireText(fullColumn, 'CollectionPage', 'column structured data');
 requireText(minimalColumn, 'data-content-cover', 'minimal column cover');
 
 for (const [label, source] of [['none post', nonePost], ['none column', noneColumn]]) {
@@ -88,6 +121,7 @@ for (const [label, source] of [['none post', nonePost], ['none column', noneColu
   forbidText(source, 'giscus.app', label);
   forbidText(source, 'cloudflareinsights.com', label);
   forbidText(source, 'data-motion-toggle', label);
+  forbidText(source, 'data-performance-vitals', `${label} field performance adapter`);
   forbidText(source, 'data-content-cover', `${label} automatic cover injection`);
   requireText(source, 'class="back-badge"', label);
 }

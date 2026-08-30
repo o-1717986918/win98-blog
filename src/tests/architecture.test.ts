@@ -125,6 +125,15 @@ describe('blog-architecture contracts', () => {
     await expect(read('src/components/Comments.astro')).resolves.toContain('PUBLIC_COMMENTS_PROVIDER');
   });
 
+  it('keeps navigation bridges additive and controlled by content data', async () => {
+    const fullShell = await read('src/layouts/FullShell.astro');
+    const standalone = await read('src/layouts/StandaloneLayout.astro');
+    expect(fullShell).not.toContain('BackBadge');
+    expect(standalone).toContain('back && <BackBadge />');
+    await expect(read('src/routes/posts-none.astro')).resolves.toContain('back={post.data.back}');
+    await expect(read('src/routes/columns-none.astro')).resolves.toContain('back={column.data.back}');
+  });
+
   it('preserves the ambient field with user and system pause controls', async () => {
     const ambient = await read('src/components/AmbientField.astro');
     const engine = await read('src/lib/pixi-field.ts');
@@ -151,6 +160,50 @@ describe('blog-architecture contracts', () => {
     expect(list).not.toContain('post-hitbox');
   });
 
+  it('separates the homepage link from the personal profile display', async () => {
+    const header = await read('src/components/chrome/SiteHeader.astro');
+    const profile = await read('src/components/ProfileCard.astro');
+    const home = await read('src/pages/index.astro');
+    expect(header).toContain("href={withBase('/')}");
+    expect(header).not.toContain('profile-dialog');
+    expect(profile).toContain('data-profile-card');
+    expect(profile).not.toContain('<script>');
+    expect(home).toContain('<ProfileCard');
+  });
+
+  it('uses a desktop navigation rail and returns the featured story after the portal', async () => {
+    const header = await read('src/components/chrome/SiteHeader.astro');
+    const shell = await read('src/styles/shell.css');
+    const tokens = await read('src/styles/tokens.css');
+    const home = await read('src/pages/index.astro');
+    expect(tokens).toContain('--site-rail: 13rem');
+    expect(header).toContain('@media (min-width: 1101px)');
+    expect(header).toContain('width: var(--site-rail)');
+    expect(shell).toContain('margin-left: var(--site-rail)');
+    expect(home).toContain('class="home-featured-return"');
+    expect(home.indexOf('class="home-featured-return"')).toBeGreaterThan(home.indexOf('class="home-portal"'));
+  });
+
+  it('implements portal functionality as static-first progressive enhancement', async () => {
+    const home = await read('src/pages/index.astro');
+    const controls = await read('src/components/PortalControls.astro');
+    const calendar = await read('src/components/PublicationCalendar.astro');
+    const interactions = await read('src/lib/home-interactions.ts');
+    const config = await read('src/config/portal.ts');
+    const timeline = await read('src/pages/timeline.astro');
+    expect(home).toContain('<PortalControls');
+    expect(home).toContain('<PublicationCalendar');
+    expect(controls).toContain('someone-site:portal-preferences:v1');
+    expect(controls).toContain('showModal');
+    expect(calendar).toContain('data-calendar-date');
+    expect(interactions).toContain('data-stream-more');
+    expect(interactions).toContain('data-calendar-date');
+    expect(config).toContain('projects: true');
+    expect(config).toContain('albums: false');
+    expect(timeline).toContain('data-timeline-filter');
+    expect(`${controls}\n${interactions}`).not.toMatch(/from ['"](?:react|svelte|vue)/);
+  });
+
   it('keeps the homepage intro session-scoped, skippable and motion-aware', async () => {
     const intro = await read('src/components/SiteIntro.astro');
     const particles = await read('src/lib/intro-particles.ts');
@@ -166,7 +219,7 @@ describe('blog-architecture contracts', () => {
     expect(intro).not.toContain('clip-path: inset(0 100% 0 0)');
     expect(particles).toContain('sampleText');
     expect(particles).toContain('scatter');
-    expect(shell).toContain("Astro.url.pathname === '/'");
+    expect(shell).toContain("Astro.url.pathname === withBase('/')");
   });
 
   it('uses content-owned accents and a shared article body', async () => {
@@ -181,6 +234,17 @@ describe('blog-architecture contracts', () => {
     }
     expect(full).toContain('ArticleBody');
     expect(minimal).toContain('ArticleBody');
+  });
+
+  it('keeps the enhanced reading route static-first and progressive', async () => {
+    const body = await read('src/components/ArticleBody.astro');
+    const toc = await read('src/components/chrome/TableOfContents.astro');
+    const tools = await read('src/components/ArticleTools.astro');
+    expect(body).toContain('<TableOfContents headings={headings} minutes={post.data.minutes} />');
+    expect(toc).toContain('data-reading-route');
+    expect(toc).toContain('aria-current');
+    expect(tools).toContain('[data-reading-surface]');
+    expect(tools).toContain('[data-reading-route-progress]');
   });
 
   it('renders only mist and abyss while accepting legacy content during migration', async () => {

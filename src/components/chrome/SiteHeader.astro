@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import SearchIndex from '../SearchIndex.astro';
+import { PORTAL_FEATURES } from '../../config/portal';
 import { SITE } from '../../config/site';
 import { isPublished, sortColumns } from '../../lib/content';
 import { withBase } from '../../lib/site-path';
@@ -11,15 +12,22 @@ const current = (href: string) => {
   const resolved = withBase(href);
   return href === '/' ? pathname === resolved : pathname.startsWith(resolved);
 };
+const portalLinks = [
+  { label: '项目', href: '/projects/', enabled: PORTAL_FEATURES.projects },
+  { label: '能力', href: '/skills/', enabled: PORTAL_FEATURES.skills },
+  { label: '时间线', href: '/timeline/', enabled: PORTAL_FEATURES.timeline },
+  { label: '标签索引', href: '/tags/', enabled: true },
+].filter((item) => item.enabled);
+const portalCurrent = portalLinks.some((item) => current(item.href));
 ---
 
 <header class="site-header" data-site-header data-pagefind-ignore>
   <div class="header-inner">
-    <button class="site-brand" type="button" aria-haspopup="dialog" aria-controls="profile-dialog" aria-label={`${SITE.title} · 打开个人资料`} data-profile-open>
+    <a class="site-brand" href={withBase('/')} aria-label={`${SITE.title} · 返回首页`}>
       <span class="brand-mark" aria-hidden="true"><img src={withBase('/brand/logo.jpg')} alt="" width="640" height="640" decoding="async" /></span>
       <span>{SITE.title}<small>ESSAYS · NOTES · EXPERIMENTS</small></span>
-      <i class="brand-open" aria-hidden="true">＋</i>
-    </button>
+      <i class="brand-home" aria-hidden="true">HOME</i>
+    </a>
     <button class="menu-button" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="site-navigation" data-menu-button>
       <i></i><i></i>
     </button>
@@ -38,6 +46,16 @@ const current = (href: string) => {
           </div>
         </details>
         <a href={withBase('/notes/')} aria-current={current('/notes/') ? 'page' : undefined}>笔记</a>
+        <details class="column-menu explore-menu">
+          <summary data-current={portalCurrent ? 'true' : undefined}>探索 <span aria-hidden="true">⌄</span></summary>
+          <div class="column-menu__panel">
+            {portalLinks.map((item) => (
+              <a href={withBase(item.href)} aria-current={current(item.href) ? 'page' : undefined}>
+                <span>{item.label}</span><i aria-hidden="true">↗</i>
+              </a>
+            ))}
+          </div>
+        </details>
         <a href={withBase('/about/')} aria-current={current('/about/') ? 'page' : undefined}>关于</a>
       </nav>
       <div class="header-search-slot"><SearchIndex /></div>
@@ -50,39 +68,16 @@ const current = (href: string) => {
   </div>
 </header>
 
-<dialog class="profile-dialog" id="profile-dialog" aria-labelledby="profile-title" data-profile-dialog>
-  <div class="profile-dialog__sheet">
-    <div class="profile-dialog__rail" aria-hidden="true"><span>PERSON / 001</span><i></i><b>2026</b></div>
-    <div class="profile-dialog__main">
-      <button class="profile-dialog__close" type="button" aria-label="关闭个人资料" data-profile-close>×</button>
-      <div class="profile-dialog__identity">
-        <img src={withBase('/brand/logo.jpg')} alt="某人的小站头像" width="640" height="640" decoding="async" />
-        <div><p>AUTHOR / BUILDER</p><h2 id="profile-title">某人</h2><span>在文学工程、可视化交互、求解系统与个人知识工具之间持续做项目。</span></div>
-      </div>
-      <p class="profile-dialog__statement">这里不是一张固定履历卡，而是作者与项目之间的入口。公开文章保留判断和工程证据，独立项目则允许形成自己的视觉与叙事语言。</p>
-      <dl>
-        <div><dt>NOW</dt><dd>ArcVellum · Blog Studio · 求解器</dd></div>
-        <div><dt>BASE</dt><dd>本地优先 / 人在回路 / 可验证交付</dd></div>
-      </dl>
-      <nav aria-label="个人链接">
-        <a href="https://github.com/o-1717986918" rel="me noreferrer"><span>GitHub</span><b>o-1717986918</b><i aria-hidden="true">↗</i></a>
-        <a href={withBase('/about/')}><span>站内介绍</span><b>关于这个网站</b><i aria-hidden="true">→</i></a>
-      </nav>
-      <p class="profile-dialog__extensible">更多身份与联络方式可以在这里继续扩展，而不挤占主导航。</p>
-    </div>
-  </div>
-</dialog>
-
 <style>
   .site-header { position: fixed; inset: 0 0 auto; z-index: 50; height: var(--header); border-bottom: 1px solid rgba(var(--brand-primary-rgb), .34); background: rgba(var(--header-panel-rgb), .96); box-shadow: 0 .8rem 2.6rem rgba(4, 12, 22, .16); backdrop-filter: blur(18px); }
   .header-inner { position: relative; display: flex; align-items: center; width: min(var(--content), calc(100% - clamp(2.5rem, 5vw, 6rem))); height: 100%; margin-inline: auto; }
-  .site-brand { display: flex; align-items: center; gap: .72rem; margin-right: auto; padding: 0 1rem 0 0; border: 0; border-right: 1px solid rgba(var(--brand-primary-rgb), .38); color: rgb(var(--text-rgb)); background: transparent; font-family: var(--font-display); font-size: .88rem; font-weight: 680; letter-spacing: .06em; text-align: left; cursor: pointer; }
+  .site-brand { display: flex; align-items: center; gap: .72rem; margin-right: auto; padding: 0 1rem 0 0; border-right: 1px solid rgba(var(--brand-primary-rgb), .38); color: rgb(var(--text-rgb)); font-family: var(--font-signature); font-size: .88rem; font-weight: 680; letter-spacing: .06em; text-align: left; text-decoration: none; }
   .site-brand small { display: block; margin-top: .12rem; color: rgba(var(--text-rgb), .42); font-family: var(--font-mono); font-size: .49rem; font-weight: 500; letter-spacing: .12em; }
   .brand-mark { position: relative; display: block; flex: 0 0 auto; width: 2rem; height: 2rem; padding: 2px; overflow: hidden; border: 1px solid rgba(var(--brand-primary-rgb), .52); border-radius: .42rem; background: linear-gradient(145deg, rgb(var(--brand-primary-rgb)), rgb(var(--brand-secondary-rgb))); box-shadow: 0 .35rem 1rem rgba(var(--bg-rgb), .18), 0 0 1.1rem rgba(var(--brand-primary-rgb), .08); }
   .brand-mark::after { content: ''; position: absolute; inset: 2px; border: 1px solid rgba(255, 255, 255, .2); border-radius: .28rem; pointer-events: none; }
   .brand-mark img { display: block; width: 100%; height: 100%; border-radius: .28rem; object-fit: cover; object-position: center; }
-  .brand-open { color: rgb(var(--brand-primary-rgb)); font: normal .8rem/1 var(--font-mono); transition: transform .2s var(--ease); }
-  .site-brand:hover .brand-open, .site-brand:focus-visible .brand-open { transform: rotate(90deg); }
+  .brand-home { color: rgb(var(--brand-primary-rgb)); font: normal .47rem/1 var(--font-mono); letter-spacing: .08em; transition: color .2s var(--ease), transform .2s var(--ease); }
+  .site-brand:hover .brand-home, .site-brand:focus-visible .brand-home { color: rgb(var(--brand-secondary-rgb)); transform: translateX(.15rem); }
   .navigation-shell, .site-navigation { display: flex; align-items: center; }
   .navigation-shell { gap: 1rem; margin-left: auto; }
   .header-search-slot { position: absolute; left: 50%; width: max-content; transform: translateX(-50%); }
@@ -111,6 +106,24 @@ const current = (href: string) => {
   .menu-button i { display: block; width: 1rem; height: 1px; margin: .28rem auto; background: currentColor; transition: transform .22s var(--ease); }
   .menu-button[aria-expanded='true'] i:first-child { transform: translateY(.145rem) rotate(45deg); }
   .menu-button[aria-expanded='true'] i:last-child { transform: translateY(-.145rem) rotate(-45deg); }
+  @media (min-width: 1101px) {
+    .site-header { inset: 0 auto 0 0; width: var(--site-rail); height: 100dvh; border-right: 1px solid rgba(var(--brand-primary-rgb), .34); border-bottom: 0; box-shadow: .8rem 0 2.6rem rgba(4, 12, 22, .12); }
+    .header-inner { flex-direction: column; align-items: stretch; width: 100%; height: 100%; margin: 0; padding: 1.15rem 1rem; }
+    .site-brand { width: 100%; margin: 0; padding: 0 0 1rem; border-right: 0; border-bottom: 1px solid rgba(var(--brand-primary-rgb), .38); }
+    .brand-home { margin-left: auto; }
+    .navigation-shell { flex: 1; flex-direction: column; align-items: stretch; gap: .65rem; min-height: 0; margin: 1rem 0 0; }
+    .site-navigation { display: grid; gap: .18rem; align-items: stretch; }
+    .site-navigation > a, .column-menu > summary { display: flex; justify-content: space-between; width: 100%; padding: .62rem .25rem; border-bottom: 1px solid var(--line); font-size: .72rem; }
+    .site-navigation a::after { right: auto; bottom: -.5px; width: 2.4rem; }
+    .column-menu__panel { top: -.35rem; left: calc(100% + 1.75rem); min-width: 13rem; transform: none; }
+    .header-search-slot { position: static; order: -1; width: 100%; transform: none; }
+    :global(.header-search) { width: 100%; }
+    :global(.header-search .search-results-panel) { top: 0; right: auto; left: calc(100% + 1rem); max-height: calc(100dvh - 2rem); }
+    .header-motion { display: flex; align-items: center; gap: .55rem; width: 100%; margin-top: auto; padding: .62rem; border: 1px solid var(--line); color: rgba(var(--text-rgb), .68); background: transparent; font-family: var(--font-mono); font-size: .56rem; cursor: pointer; }
+    .header-motion i { width: .72rem; height: 2px; background: rgb(var(--signal-rgb)); box-shadow: .22rem .22rem 0 rgba(var(--signal-rgb), .32); }
+    .header-motion[aria-pressed='true'] i { background: rgba(var(--text-rgb), .34); box-shadow: none; }
+    .theme-button { width: 100%; min-width: 0; }
+  }
   @media (max-width: 1100px) {
     .menu-button { display: block; }
     .navigation-shell { position: fixed; top: calc(var(--header) + .5rem); right: 1rem; left: 1rem; display: block; padding: .5rem; border: 1px solid var(--line-strong); border-radius: .65rem; background: rgb(var(--header-panel-rgb)); opacity: 0; visibility: hidden; transform: translateY(-.5rem); pointer-events: none; transition: .22s var(--ease); }
@@ -128,36 +141,6 @@ const current = (href: string) => {
   }
   @media (max-width: 430px) { .site-brand small { display: none; } }
 
-  .profile-dialog { width: min(41rem, calc(100% - 1.5rem)); max-width: none; max-height: min(43rem, calc(100vh - 2rem)); margin: auto; padding: 0; overflow: auto; border: 1px solid rgba(var(--brand-primary-rgb), .54); color: rgb(var(--text-rgb)); background: rgb(var(--surface-rgb)); box-shadow: 1rem 1rem 0 rgba(var(--brand-secondary-rgb), .13), 0 2rem 7rem rgba(0, 0, 0, .34); }
-  .profile-dialog::backdrop { background: rgba(5, 10, 17, .64); backdrop-filter: blur(8px); }
-  .profile-dialog__sheet { display: grid; grid-template-columns: 3rem minmax(0, 1fr); min-height: 32rem; }
-  .profile-dialog__rail { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 1rem 0; border-right: 1px solid var(--line); color: rgb(var(--spectrum-violet-rgb)); font: .5rem/1 var(--font-mono); writing-mode: vertical-rl; }
-  .profile-dialog__rail i { width: 1px; flex: 1; margin: .8rem 0; background: linear-gradient(rgb(var(--spectrum-violet-rgb)), transparent); }
-  .profile-dialog__main { position: relative; padding: clamp(1.3rem, 4vw, 3rem); }
-  .profile-dialog__close { position: absolute; top: .75rem; right: .8rem; display: grid; width: 2.3rem; height: 2.3rem; place-items: center; border: 1px solid var(--line); background: transparent; font: 1.1rem/1 var(--font-mono); cursor: pointer; }
-  .profile-dialog__identity { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 1.4rem; align-items: end; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
-  .profile-dialog__identity img { width: 7.5rem; height: 7.5rem; aspect-ratio: 1; overflow: hidden; border: 1px solid var(--line-strong); object-fit: cover; object-position: center 18%; }
-  .profile-dialog__identity p { color: rgb(var(--brand-primary-rgb)); font: .58rem/1 var(--font-mono); letter-spacing: .1em; }
-  .profile-dialog__identity h2 { margin-top: .5rem; font: 650 clamp(2.4rem, 7vw, 4.3rem)/.9 var(--font-display); letter-spacing: -.07em; }
-  .profile-dialog__identity span { display: block; margin-top: .75rem; color: rgba(var(--text-rgb), .62); font-size: .76rem; line-height: 1.7; }
-  .profile-dialog__statement { margin: 1.5rem 0; color: rgba(var(--text-rgb), .76); font-size: .9rem; line-height: 1.95; }
-  .profile-dialog dl { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 0 0 1.2rem; background: var(--line); }
-  .profile-dialog dl div { padding: .8rem; background: rgb(var(--raised-rgb)); }
-  .profile-dialog dt { color: rgb(var(--spectrum-coral-rgb)); font: .52rem/1 var(--font-mono); }
-  .profile-dialog dd { margin: .42rem 0 0; color: rgba(var(--text-rgb), .7); font-size: .67rem; line-height: 1.55; }
-  .profile-dialog nav { display: grid; border-top: 1px solid var(--line); }
-  .profile-dialog nav a { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: .85rem .2rem; border-bottom: 1px solid var(--line); text-decoration: none; }
-  .profile-dialog nav a:hover { color: rgb(var(--brand-primary-rgb)); }
-  .profile-dialog nav span { color: rgba(var(--text-rgb), .48); font: .55rem/1 var(--font-mono); }
-  .profile-dialog nav b { font-size: .78rem; font-weight: 600; }
-  .profile-dialog nav i { color: rgb(var(--spectrum-coral-rgb)); font-style: normal; }
-  .profile-dialog__extensible { margin-top: 1rem; color: rgba(var(--text-rgb), .42); font: .55rem/1.7 var(--font-mono); }
-  @media (max-width: 560px) {
-    .profile-dialog__sheet { grid-template-columns: 1.7rem minmax(0, 1fr); }
-    .profile-dialog__identity { grid-template-columns: 4.8rem minmax(0, 1fr); gap: .8rem; align-items: start; }
-    .profile-dialog__identity img { width: 4.8rem; height: 4.8rem; }
-    .profile-dialog dl { grid-template-columns: 1fr; }
-  }
 </style>
 
 <script>
@@ -208,18 +191,6 @@ const current = (href: string) => {
     document.addEventListener('click', (event) => { if (!header.contains(event.target as Node)) close(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
   });
-
-  const profileDialog = document.querySelector<HTMLDialogElement>('[data-profile-dialog]');
-  const profileOpen = document.querySelector<HTMLButtonElement>('[data-profile-open]');
-  const profileClose = profileDialog?.querySelector<HTMLButtonElement>('[data-profile-close]');
-  if (profileDialog && profileOpen && profileClose) {
-    profileOpen.addEventListener('click', () => profileDialog.showModal());
-    profileClose.addEventListener('click', () => profileDialog.close());
-    profileDialog.addEventListener('click', (event) => {
-      if (event.target === profileDialog) profileDialog.close();
-    });
-    profileDialog.addEventListener('close', () => profileOpen.focus());
-  }
 
   document.addEventListener('keydown', (event) => {
     const editable = event.target instanceof HTMLElement && Boolean(event.target.closest('input, textarea, select, [contenteditable="true"]'));

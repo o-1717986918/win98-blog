@@ -10,6 +10,13 @@ const theme = z.enum(['mist', 'abyss', 'graphite', 'paper', 'night', 'indigo'])
   .default('abyss')
   .transform((value) => value === 'mist' || value === 'paper' ? 'mist' as const : 'abyss' as const);
 const accent = z.enum(['aqua', 'coral', 'violet', 'gold']).default('aqua');
+const evidenceKind = z.enum(['benchmark', 'decision-record', 'diagram', 'interactive', 'source-snapshot', 'comparison']);
+const evidenceItem = z.object({
+  kind: evidenceKind,
+  label: z.string().min(1),
+  result: z.string().min(1),
+  source: z.string().min(1).optional(),
+});
 const cover = ({ image }: SchemaContext) => z.object({
   src: image(),
   alt: z.string().min(1),
@@ -45,13 +52,17 @@ const posts = defineCollection({
   }),
   schema: ({ image }) => z.object({
     title: z.string().min(1),
+    shortTitle: z.string().min(1).max(32).optional(),
     description: z.string().min(1),
     date: z.coerce.date(),
     updated: z.coerce.date().optional(),
     cover: cover({ image }).optional(),
     tags: z.array(z.string().min(1)).default([]),
+    format: z.enum(['essay', 'field-note', 'experiment']).default('essay'),
     columns: z.array(reference('columns')).default([]),
     featured: z.boolean().default(false),
+    evidence: z.array(evidenceItem).default([]),
+    syndication: z.array(z.url()).default([]),
     comments: z.enum(['inherit', 'enabled', 'disabled']).default('inherit'),
     noindex: z.boolean().default(false),
     license: z.string().min(1).default('CC BY-NC-SA 4.0'),
@@ -88,6 +99,8 @@ const notes = defineCollection({
     aliases: z.array(z.string().min(1)).default([]),
     publish: z.boolean().default(false),
     source: z.string().optional(),
+    maturity: z.enum(['seedling', 'growing', 'evergreen']).default('seedling'),
+    relations: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u)).default([]),
     draft: z.boolean().default(false),
   }).superRefine((note, context) => {
     if (note.updated && note.updated < note.created) {

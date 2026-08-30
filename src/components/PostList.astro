@@ -21,7 +21,7 @@ const columnMap = new Map(columns.map((column) => [column.id, column]));
       <ContentCover className="post-cover" title={post.data.title} seed={post.id} kind="post" accent={postAccent(post, columnMap)} cover={post.data.cover} variant="list" />
       <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
       <div class="post-copy">
-        <h3>{post.data.title}</h3>
+        <h3 aria-label={post.data.title}><span class="post-title__full">{post.data.title}</span>{post.data.shortTitle && <span class="post-title__short" aria-hidden="true">{post.data.shortTitle}</span>}</h3>
         {showDescription && <p>{post.data.description}</p>}
         <div class="post-taxonomy">
           {post.data.columns.map((reference) => {
@@ -47,6 +47,7 @@ const columnMap = new Map(columns.map((column) => [column.id, column]));
   :global(.post-cover) { align-self: center; width: 11rem; height: auto; aspect-ratio: 16 / 9; }
   time { align-self: start; padding-top: .28rem; color: rgb(var(--content-accent-rgb)); font-family: var(--font-mono); font-size: .66rem; }
   h3 { font-family: var(--font-display); font-size: clamp(1.18rem, 2.2vw, 1.55rem); font-weight: 610; line-height: 1.35; letter-spacing: -.032em; }
+  .post-title__short { display: none; }
   .post-row:hover h3, .post-row:focus-visible h3 { color: rgb(var(--content-accent-rgb)); }
   p { max-width: 48rem; margin-top: .45rem; color: rgba(var(--text-rgb), .68); font-size: .84rem; line-height: 1.75; }
   .post-taxonomy { display: flex; flex-wrap: wrap; gap: .4rem .75rem; margin-top: .72rem; color: rgba(var(--text-rgb), .67); font-family: var(--font-mono); font-size: .63rem; }
@@ -61,6 +62,8 @@ const columnMap = new Map(columns.map((column) => [column.id, column]));
   .post-list--compact .post-copy > p, .post-list--compact .post-taxonomy { display: none; }
   .post-list--compact .post-arrow { grid-column: 3; grid-row: 1 / 3; }
   @media (max-width: 660px) {
+    h3:has(.post-title__short) .post-title__full { display: none; }
+    .post-title__short { display: inline; }
     .post-row { grid-template-columns: 5.4rem minmax(0, 1fr) auto; gap: .45rem .8rem; min-height: 6.65rem; padding: .58rem .65rem .58rem .58rem; }
     :global(.post-cover) { grid-row: 1 / 3; width: 5.4rem; min-height: 0; }
     time { grid-column: 2; grid-row: 1; }

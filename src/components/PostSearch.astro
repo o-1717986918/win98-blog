@@ -10,7 +10,7 @@ const { tags = [] } = Astro.props;
     <kbd>LOCAL</kbd>
   </label>
   {tags.length > 0 && (
-    <div class="topic-filters" aria-label="按主题筛选">
+    <div class="topic-filters" aria-label="按标签筛选">
       <button class="is-active" type="button" data-topic-filter="" aria-pressed="true">全部</button>
       {tags.map((tag) => <button type="button" data-topic-filter={tag.name.toLowerCase()} aria-pressed="false">{tag.name}<small>{tag.count}</small></button>)}
     </div>
@@ -26,8 +26,8 @@ const { tags = [] } = Astro.props;
   input:focus { border-color: rgb(var(--signal-rgb)); box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .1), 0 0 0 3px rgba(var(--signal-rgb), .1); }
   input::placeholder { color: rgba(var(--text-rgb), .38); }
   kbd { position: absolute; top: 50%; right: 1rem; padding: .1rem .35rem; border: 1px solid var(--line); border-radius: .22rem; color: rgba(var(--text-rgb), .4); font-family: var(--font-mono); font-size: .58rem; transform: translateY(-50%); }
-  .topic-filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
-  .topic-filters button { display: inline-flex; align-items: center; gap: .42rem; padding: .38rem .65rem; border: 1px solid var(--line); border-radius: 999px; color: rgba(var(--text-rgb), .58); background: rgba(var(--surface-rgb), .42); font-size: .66rem; cursor: pointer; transition: transform .2s var(--ease), background .2s var(--ease), box-shadow .2s var(--ease); }
+  .topic-filters { display: flex; flex-wrap: nowrap; gap: .5rem; margin-top: .8rem; padding: .08rem .12rem .62rem; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-color: rgba(var(--signal-rgb), .35) transparent; scrollbar-width: thin; scroll-snap-type: inline proximity; }
+  .topic-filters button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: .42rem; padding: .38rem .65rem; border: 1px solid var(--line); border-radius: 999px; color: rgba(var(--text-rgb), .58); background: rgba(var(--surface-rgb), .72); font-size: .66rem; cursor: pointer; scroll-snap-align: start; transition: transform .2s var(--ease), background .2s var(--ease), box-shadow .2s var(--ease); }
   .topic-filters button:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .1); }
   .topic-filters button.is-active { border-color: rgba(var(--spectrum-violet-rgb), .55); color: rgb(var(--text-rgb)); background: rgba(var(--spectrum-violet-rgb), .13); box-shadow: inset 0 1px rgba(255, 255, 255, .09); }
   .topic-filters small { color: rgb(var(--spectrum-gold-rgb)); font-family: var(--font-mono); font-size: .52rem; }
@@ -40,15 +40,22 @@ const { tags = [] } = Astro.props;
     const status = filter.querySelector<HTMLElement>('[data-filter-status]');
     const buttons = [...filter.querySelectorAll<HTMLButtonElement>('[data-topic-filter]')];
     if (!input || !status) return;
+    const scope = filter.closest<HTMLElement>('[data-post-archive]') ?? document;
     let activeTopic = '';
     const run = () => {
       const query = input.value.trim().toLowerCase();
       let visible = 0;
-      document.querySelectorAll<HTMLElement>('[data-post-row]').forEach((row) => {
+      scope.querySelectorAll<HTMLElement>('[data-post-row]').forEach((row) => {
         const matchesText = !query || (row.dataset.search ?? '').includes(query);
         const matchesTopic = !activeTopic || (row.dataset.tags ?? '').split('|').includes(activeTopic);
         row.hidden = !(matchesText && matchesTopic);
         if (!row.hidden) visible += 1;
+      });
+      scope.querySelectorAll<HTMLElement>('[data-archive-month]').forEach((month) => {
+        month.hidden = ![...month.querySelectorAll<HTMLElement>('[data-post-row]')].some((row) => !row.hidden);
+      });
+      scope.querySelectorAll<HTMLElement>('[data-archive-year]').forEach((year) => {
+        year.hidden = ![...year.querySelectorAll<HTMLElement>('[data-post-row]')].some((row) => !row.hidden);
       });
       status.textContent = query || activeTopic ? `当前显示 ${visible} 篇文章` : '';
     };

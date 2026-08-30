@@ -12,6 +12,7 @@ import Analytics from '../components/Analytics.astro';
 import type { ColumnEntry, PostEntry } from '../lib/content';
 import { socialImagePath } from '../lib/social-image';
 import BaseLayout from './BaseLayout.astro';
+import PerformanceVitals from '../components/PerformanceVitals.astro';
 
 interface Props { post: PostEntry; columns: ColumnEntry[]; columnLookup: Map<string, ColumnEntry>; headings: MarkdownHeading[]; related: PostEntry[]; }
 const { post, columns, columnLookup, headings, related } = Astro.props;
@@ -20,10 +21,11 @@ const socialImage = post.data.cover ? (await getImage({ src: post.data.cover.src
 
 <BaseLayout title={post.data.title} description={post.data.description} theme={post.data.theme} pageKind="post" image={socialImage} published={post.data.date} updated={post.data.updated} tags={post.data.tags} noindex={post.data.noindex}>
   <AmbientField />
-  <BackBadge />
+  {post.data.back && <BackBadge />}
   <main class="minimal-main">
     <ArticleBody {post} {columns} {columnLookup} {headings} {related} eyebrow="QUIET READING"><slot /></ArticleBody>
   </main>
   <ReaderControls />
   <Analytics />
+  <PerformanceVitals />
 </BaseLayout>

@@ -1,0 +1,53 @@
+---
+interface EvidenceItem {
+  kind: 'benchmark' | 'decision-record' | 'diagram' | 'interactive' | 'source-snapshot' | 'comparison';
+  label: string;
+  result: string;
+  source?: string | undefined;
+}
+
+interface Props {
+  title?: string;
+  items: EvidenceItem[];
+}
+
+const { title = '证据账本', items } = Astro.props;
+const kindLabels: Record<EvidenceItem['kind'], string> = {
+  benchmark: '实测',
+  'decision-record': '决策',
+  diagram: '图解',
+  interactive: '交互',
+  'source-snapshot': '快照',
+  comparison: '对照',
+};
+---
+
+{items.length > 0 && (
+  <figure class="evidence-ledger" data-evidence-ledger>
+    <figcaption><span>EVIDENCE / VERIFIED</span><strong>{title}</strong></figcaption>
+    <ol>
+      {items.map((item, index) => (
+        <li>
+          <span>{String(index + 1).padStart(2, '0')} · {kindLabels[item.kind]}</span>
+          <strong>{item.label}</strong>
+          <p>{item.result}</p>
+          {item.source && <small>来源：{item.source}</small>}
+        </li>
+      ))}
+    </ol>
+  </figure>
+)}
+
+<style>
+  .evidence-ledger { margin: clamp(2.4rem, 5vw, 4.5rem) 0; border: 1px solid currentColor; color: inherit; background: rgba(var(--surface-rgb, 247, 248, 244), .52); }
+  figcaption { display: flex; justify-content: space-between; gap: 1rem; padding: .75rem 1rem; border-bottom: 1px solid currentColor; }
+  figcaption span { color: rgb(var(--content-accent-rgb, var(--spectrum-coral-rgb, 198, 106, 67))); font: .58rem/1 var(--font-mono, ui-monospace, monospace); letter-spacing: .1em; }
+  figcaption strong { font-size: .78rem; }
+  ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); margin: 0; padding: 0; list-style: none; }
+  li { display: grid; align-content: start; gap: .55rem; min-width: 0; padding: 1rem; border-right: 1px solid currentColor; }
+  li:last-child { border-right: 0; }
+  li > span, small { color: rgba(var(--text-rgb, 23, 38, 46), .58); font: .55rem/1.45 var(--font-mono, ui-monospace, monospace); letter-spacing: .06em; }
+  li > strong { font-size: .9rem; line-height: 1.4; }
+  p { margin: 0; color: rgba(var(--text-rgb, 23, 38, 46), .78); font-size: .78rem; line-height: 1.7; }
+  @media (max-width: 620px) { ol { grid-template-columns: 1fr; } li { border-right: 0; border-bottom: 1px solid currentColor; } li:last-child { border-bottom: 0; } }
+</style>

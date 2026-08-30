@@ -7,7 +7,9 @@
 ## 已交付能力
 
 - Astro 7 + TypeScript + MDX Content Collections + 原生 CSS，输出纯静态站点；
-- 首页、主题、学习笔记、归档、中文文章正文搜索、归档内主题筛选、关于、隐私、RSS、sitemap、robots 与 `llms.txt`；
+- 首页、主题、学习笔记、归档、项目、能力、时间线、中文文章正文搜索、归档内主题筛选、关于、隐私、RSS、sitemap、robots 与 `llms.txt`；
+- 可持久化的门户模块/密度偏好、按发表日历筛选的文章流、分段展开，以及只连接真实证据的项目与能力目录；
+- 桌面端固定左侧导航轨道与移动端顶部折叠菜单；首页首屏直接进入个人门户，重点文章在内容末尾作为精选回看；
 - 文章和主题各自支持 `full / minimal / none`，两者的档位互不推导；
 - 主题是开发者可新增的一等内容集合，可拥有私有 Astro 组件、样式、脚本和媒体；
 - 构建期路由分派保证 `none` 产物不包含站点 Header、Footer、阅读控件或全站样式；
@@ -26,6 +28,7 @@
 ```powershell
 pnpm install
 pnpm verify
+pnpm verify:all
 pnpm dev
 ```
 
@@ -39,7 +42,7 @@ pnpm content:new column my-column "主题标题"
 pnpm content:audit
 ```
 
-编辑、发布与资源共置见 `docs/operations/CONTENT_WORKFLOW.md`；GitHub Pages 首发与 Cloudflare Pages 后续迁移路径见 `docs/operations/DEPLOYMENT.md`，逐项上线验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。
+`pnpm verify` 运行单元、求解器与完整静态构建门禁；`pnpm verify:all` 在此基础上再运行真实浏览器回归，适合发布前一次性验收。编辑、发布与资源共置见 `docs/operations/CONTENT_WORKFLOW.md`；GitHub Pages 首发与 Cloudflare Pages 后续迁移路径见 `docs/operations/DEPLOYMENT.md`，逐项上线验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。
 
 ## 目录
 
@@ -50,7 +53,7 @@ src/
 ├── integrations/           # 构建期 chrome 路由分派
 ├── layouts/                # Base + full/minimal/none 装配
 ├── routes/                 # 六个文章/主题构建入口
-├── pages/                  # 首页、搜索、标签、归档、隐私、RSS、404
+├── pages/                  # 首页、搜索、标签、归档、项目、能力、时间线、隐私、RSS、404
 └── styles/                 # 语义主题、站点外壳与长文排版
 docs/source/                # 原项目的确定性架构结论
 docs/handover/              # 接手现状、原则、研究与开发说明

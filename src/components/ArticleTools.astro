@@ -16,16 +16,33 @@
 
 <script>
   const setProgress = () => {
-    const root = document.documentElement;
-    const max = Math.max(1, root.scrollHeight - innerHeight);
-    const value = Math.min(1, Math.max(0, scrollY / max));
+    const article = document.querySelector<HTMLElement>('.article-page');
+    const surface = document.querySelector<HTMLElement>('[data-reading-surface]');
+    if (!article || !surface) return;
+    const start = article.offsetTop;
+    const end = surface.offsetTop + surface.offsetHeight - innerHeight * .68;
+    const value = Math.min(1, Math.max(0, (scrollY - start) / Math.max(1, end - start)));
     document.querySelectorAll<HTMLElement>('[data-reading-progress]').forEach((bar) => {
       bar.style.transform = `scaleX(${value})`;
     });
+    document.querySelectorAll<HTMLElement>('[data-reading-route-progress]').forEach((bar) => {
+      bar.style.transform = `scaleY(${value})`;
+    });
+    document.querySelectorAll<HTMLElement>('[data-reading-percent]').forEach((label) => {
+      label.textContent = `${Math.round(value * 100)}%`;
+    });
+  };
+  let progressFrame = 0;
+  const scheduleProgress = () => {
+    if (progressFrame) return;
+    progressFrame = requestAnimationFrame(() => {
+      progressFrame = 0;
+      setProgress();
+    });
   };
   setProgress();
-  addEventListener('scroll', setProgress, { passive: true });
-  addEventListener('resize', setProgress, { passive: true });
+  addEventListener('scroll', scheduleProgress, { passive: true });
+  addEventListener('resize', scheduleProgress, { passive: true });
 
   document.querySelectorAll<HTMLElement>('.article-tools').forEach((tools) => {
     const status = tools.querySelector<HTMLElement>('[data-tool-status]');

@@ -1,5 +1,6 @@
 ---
 title: 替友人 A 写一份气动弹性复现脚本：一次闲时 vibe coding 记录
+shortTitle: 气动弹性复现脚本
 description: 友人 A 想复现一组马赫反射壁板曲线；我用 vibe coding 把论文公式组成 Python 脚本，也在数值失败中看清了“能画图”与“复现成功”的距离。
 date: 2026-08-28
 minutes: 14
@@ -12,6 +13,9 @@ chrome: full
 theme: mist
 wide: true
 ---
+
+import { Image } from 'astro:assets'
+import figure312 from './figure-312.png'
 
 这不是我自己的毕业课题。一次闲聊里，友人 A 提到他在看 2024 年西北工业大学的硕士论文《马赫反射二维壁板气动弹性理论分析》，想把图 3-11、3-12 和 5-7 重新画出来。我对这个方向并不熟，却正好想试试：一个非本领域的人，借助 vibe coding，能不能把论文中的公式整理成一份有用的复现脚本？
 
@@ -58,7 +62,10 @@ wide: true
 
 ## 图 3-12 教我警惕“很干净的零线”
 
-![为友人 A 编写的复现程序生成的图 3-12：六种静压差下的壁板静变形、静发散解与峰值汇总](./figure-312.png)
+<figure class="media-wide">
+  <Image src={figure312} alt="六种静压差下的壁板静变形、静发散解与峰值汇总" widths={[720, 1200, 1600]} sizes="(max-width: 800px) 100vw, 68rem" />
+  <figcaption>图 3-12 复现输出。零线可能来自 Newton 未收敛后的占位数组，因此图像本身不是复现成功的证据。</figcaption>
+</figure>
 
 六个子图比较整体静压差为 -100、-50、0、忽略、50、100 时的壁板挠度。黑线是较低动压下的静变形，蓝线是输入动压下的静发散解。正静压差工况中某些蓝线干净地落在零上，初看很像有明确物理意义；追到程序才发现，它可能是 Newton 失败后的零数组占位。
 

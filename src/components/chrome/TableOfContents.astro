@@ -1,13 +1,67 @@
 ---
 interface Heading { depth: number; slug: string; text: string; }
-interface Props { headings: Heading[]; }
-const { headings } = Astro.props;
+interface Props { headings: Heading[]; minutes?: number | undefined; }
+const { headings, minutes } = Astro.props;
 const visible = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+const total = String(visible.length).padStart(2, '0');
 ---
 
 {visible.length > 1 && (
-  <nav class="toc" aria-label="文章目录">
-    <p>ON THIS PAGE</p>
-    {visible.map((heading) => <a href={`#${heading.slug}`} data-depth={heading.depth}>{heading.text}</a>)}
+  <nav class="toc" aria-label="文章目录" data-reading-route>
+    <span class="toc__route" aria-hidden="true"><i data-reading-route-progress></i></span>
+    <header class="toc__head">
+      <p>READING ROUTE</p>
+      <span data-reading-percent>0%</span>
+    </header>
+    <ol class="toc__list">
+      {visible.map((heading, index) => (
+        <li data-depth={heading.depth}>
+          <a href={`#${heading.slug}`} data-toc-link data-index={index}>{heading.text}</a>
+        </li>
+      ))}
+    </ol>
+    <footer class="toc__foot">
+      <span><b data-toc-current>01</b> / {total}{minutes && <em> · {minutes} MIN</em>}</span>
+      <a href="#article-start">返回开头 ↑</a>
+    </footer>
   </nav>
 )}
+
+<script>
+  const setupReadingRoutes = () => {
+    document.querySelectorAll<HTMLElement>('[data-reading-route]:not([data-reading-route-ready])').forEach((route) => {
+      route.dataset.readingRouteReady = 'true';
+      const links = [...route.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')];
+      const sections = links.map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))));
+      const counter = route.querySelector<HTMLElement>('[data-toc-current]');
+      if (!links.length || sections.some((section) => !section)) return;
+
+      let frame = 0;
+      const update = () => {
+        frame = 0;
+        const threshold = innerHeight * .28;
+        let activeIndex = 0;
+        sections.forEach((section, index) => {
+          if (section && section.getBoundingClientRect().top <= threshold) activeIndex = index;
+        });
+        links.forEach((link, index) => {
+          const active = index === activeIndex;
+          link.classList.toggle('is-active', active);
+          if (active) link.setAttribute('aria-current', 'location');
+          else link.removeAttribute('aria-current');
+        });
+        if (counter) counter.textContent = String(activeIndex + 1).padStart(2, '0');
+      };
+      const schedule = () => {
+        if (frame) return;
+        frame = requestAnimationFrame(update);
+      };
+      update();
+      addEventListener('scroll', schedule, { passive: true });
+      addEventListener('resize', schedule, { passive: true });
+    });
+  };
+
+  setupReadingRoutes();
+  document.addEventListener('astro:page-load', setupReadingRoutes);
+</script>

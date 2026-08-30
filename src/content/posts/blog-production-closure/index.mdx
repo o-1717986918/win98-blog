@@ -8,6 +8,15 @@ columns: [blog-development]
 cover:
   src: ./cover.png
   alt: 某人的小站桌面首页实际渲染
+evidence:
+  - kind: decision-record
+    label: 三档外壳隔离
+    result: "full、minimal、none 由六个静态入口分派，none 产物不导入主站 chrome。"
+    source: ADR-0005、构建产物合同
+  - kind: benchmark
+    label: 发布前自动门禁
+    result: "类型、内容、封面、路由、链接、搜索索引与资源预算在同一条构建链中核验。"
+    source: pnpm verify
 chrome: full
 theme: abyss
 ---

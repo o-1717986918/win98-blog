@@ -7,6 +7,17 @@ export const SITE = {
   defaultOgImage: '/og-default.svg',
 } as const;
 
+export const PROFILE = {
+  role: 'AUTHOR / BUILDER',
+  bio: '在文学工程、可视化交互、求解系统与个人知识工具之间持续做项目。',
+  focus: 'ArcVellum · Blog Studio · 求解器',
+  links: [
+    { label: 'GitHub', detail: 'o-1717986918', href: 'https://github.com/o-1717986918', external: true },
+    { label: '关于', detail: '个人与网站', href: '/about/', external: false },
+    { label: 'RSS', detail: '订阅文章', href: '/rss.xml', external: false },
+  ],
+} as const;
+
 export const THEMES = ['mist', 'abyss'] as const;
 export type ThemeId = (typeof THEMES)[number];
 

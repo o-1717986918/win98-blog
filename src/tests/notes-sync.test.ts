@@ -56,7 +56,9 @@ publish: false
     const manifest = JSON.parse(await readFile(resolve(output, '.sync-manifest.json'), 'utf8')) as {
       entries: Array<{ source: string; slug: string; publish: boolean; attachments: number }>;
     };
-    expect(publicNote).toContain('[Second public](/notes/second-public/)');
+    expect(publicNote).toContain('[Second public](../second-public/)');
+    expect(publicNote).toContain('maturity: seedling');
+    expect(publicNote).toContain('relations:\n  - second-public');
     expect(publicNote).not.toContain('/notes/private-draft/');
     expect(publicNote).toContain('Private draft');
     expect(publicNote).toMatch(/\.\/assets\/diagram-[a-f0-9]{8}\.svg/u);

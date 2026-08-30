@@ -35,6 +35,10 @@ import { withBase } from '../lib/site-path';
   :global(.search-result h2 span) { float: right; color: rgb(var(--search-accent)); font-weight: 400; }
   :global(.search-result p) { display: -webkit-box; margin: 0; overflow: hidden; color: rgba(var(--text-rgb), .7); font-size: .65rem; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   :global(.search-result mark) { color: rgb(var(--bg-rgb)); background: rgb(var(--search-accent)); }
+  @media (min-width: 1101px) {
+    :global(.site-header) .header-search { width: 100%; }
+    :global(.site-header) .search-results-panel { top: 0; right: auto; left: calc(100% + 1rem); max-height: calc(100dvh - 2rem); }
+  }
   @media (max-width: 1100px) {
     .header-search { width: 100%; margin: .5rem 0; }
     .search-results-panel { position: static; display: none; width: 100%; max-height: 19rem; margin-top: .45rem; opacity: 1; visibility: visible; transform: none; pointer-events: auto; }

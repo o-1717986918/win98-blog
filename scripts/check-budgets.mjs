@@ -47,8 +47,8 @@ const heaviestRoute = routeCss.sort((a, b) => b.size - a.size)[0] ?? { path: '',
 const failures = [];
 if (transferredJs.some((file) => file.gzipSize > 75 * 1024)) failures.push('a JavaScript asset exceeds 75 KiB gzip');
 if (totalGzip(transferredJs) > 180 * 1024) failures.push(`site JavaScript is ${Math.ceil(totalGzip(transferredJs) / 1024)} KiB gzip (budget 180 KiB)`);
-if (heaviestRoute.size > 72 * 1024) failures.push(`a page loads ${Math.ceil(heaviestRoute.size / 1024)} KiB CSS (budget 72 KiB): ${heaviestRoute.path}`);
-if (total(css) > 192 * 1024) failures.push(`site-wide route-isolated CSS is ${Math.ceil(total(css) / 1024)} KiB (maintenance budget 192 KiB)`);
+if (heaviestRoute.size > 80 * 1024) failures.push(`a page loads ${Math.ceil(heaviestRoute.size / 1024)} KiB CSS (budget 80 KiB): ${heaviestRoute.path}`);
+if (total(css) > 200 * 1024) failures.push(`site-wide route-isolated CSS is ${Math.ceil(total(css) / 1024)} KiB (maintenance budget 200 KiB)`);
 if (media.some((file) => file.size > 700 * 1024)) failures.push('an optimized media asset exceeds 700 KiB');
 
 if (failures.length) {

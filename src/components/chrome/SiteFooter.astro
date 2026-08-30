@@ -4,7 +4,7 @@ import { withBase } from '../../lib/site-path';
 ---
 
 <footer class="site-footer" data-pagefind-ignore>
-  <span>© {new Date().getFullYear()} {SITE.title}</span>
+  <span>© {new Date().getFullYear()} <a href={withBase('/about/')} rel="author">{SITE.title}</a></span>
   <span>文章 / 随笔 / 试验</span>
   <nav aria-label="页脚导航"><a href="https://github.com/o-1717986918" rel="me noreferrer">GitHub ↗</a><a href="#site-search">搜索</a><a href={withBase('/archive/')}>文章</a><a href={withBase('/rss.xml')}>RSS</a><a href={withBase('/privacy/')}>隐私</a></nav>
 </footer>
@@ -15,5 +15,6 @@ import { withBase } from '../../lib/site-path';
   .site-footer nav { display: flex; justify-content: flex-end; gap: 1rem; }
   .site-footer a { padding: 0; border: 0; color: inherit; background: none; font: inherit; text-decoration: none; cursor: pointer; }
   .site-footer a:hover { color: rgb(var(--signal-rgb)); }
+  @media (min-width: 1101px) { .site-footer { width: min(calc(100% - var(--site-rail) - 2rem), 78rem); margin-right: auto; margin-left: calc(var(--site-rail) + 1rem); } }
   @media (max-width: 620px) { .site-footer { grid-template-columns: 1fr; } .site-footer nav { justify-content: flex-start; } }
 </style>

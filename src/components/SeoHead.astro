@@ -12,6 +12,7 @@ interface Props {
   updated?: Date | undefined;
   tags?: string[] | undefined;
   noindex?: boolean | undefined;
+  schemaType?: 'WebPage' | 'CollectionPage' | 'ProfilePage' | undefined;
 }
 
 const {
@@ -24,33 +25,62 @@ const {
   updated,
   tags = [],
   noindex = false,
+  schemaType,
 } = Astro.props;
 const documentTitle = title === SITE.title ? title : `${title} · ${SITE.title}`;
 const imageUrl = new URL(withBase(image), Astro.site);
 const isArticle = pageKind === 'post';
+const siteUrl = new URL(withBase('/'), Astro.site).href;
+const websiteId = `${siteUrl}#website`;
+const pageId = `${canonical.href}#webpage`;
+const authorUrl = new URL(withBase('/about/'), Astro.site).href;
+const author = { '@type': 'Person', name: SITE.author, url: authorUrl, sameAs: ['https://github.com/o-1717986918'] };
+const website = {
+  '@type': 'WebSite',
+  '@id': websiteId,
+  name: SITE.title,
+  description: SITE.description,
+  inLanguage: SITE.language,
+  url: siteUrl,
+};
 const structuredData = isArticle
   ? {
       '@context': 'https://schema.org',
-      '@type': 'BlogPosting',
-      headline: title,
-      description,
-      image: imageUrl.href,
-      datePublished: published?.toISOString(),
-      dateModified: (updated ?? published)?.toISOString(),
-      inLanguage: SITE.language,
-      author: { '@type': 'Person', name: SITE.author },
-      publisher: { '@type': 'Person', name: SITE.author },
-      mainEntityOfPage: canonical.href,
-      keywords: tags.join(', '),
+      '@graph': [
+        website,
+        {
+          '@type': 'BlogPosting',
+          '@id': pageId,
+          headline: title,
+          description,
+          image: imageUrl.href,
+          datePublished: published?.toISOString(),
+          dateModified: (updated ?? published)?.toISOString(),
+          inLanguage: SITE.language,
+          author,
+          publisher: author,
+          isPartOf: { '@id': websiteId },
+          mainEntityOfPage: canonical.href,
+          keywords: tags.join(', '),
+        },
+      ],
     }
   : {
       '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: SITE.title,
-      description: SITE.description,
-      inLanguage: SITE.language,
-      url: new URL(withBase('/'), Astro.site).href,
+      '@graph': [
+        website,
+        {
+          '@type': schemaType ?? (pageKind === 'column' ? 'CollectionPage' : 'WebPage'),
+          '@id': pageId,
+          name: title,
+          description,
+          inLanguage: SITE.language,
+          url: canonical.href,
+          isPartOf: { '@id': websiteId },
+        },
+      ],
     };
+const structuredDataJson = JSON.stringify(structuredData).replaceAll('<', '\\u003c');
 ---
 
 <meta name="description" content={description} />
@@ -73,4 +103,4 @@ const structuredData = isArticle
 <meta data-pagefind-meta="description[content]" content={description} />
 <meta data-pagefind-filter="type[content]" content={pageKind === 'post' ? '文章' : pageKind === 'column' ? '主题' : '页面'} />
 {tags.map((tag) => <meta data-pagefind-filter="tag[content]" content={tag} />)}
-<script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+<script is:inline type="application/ld+json" set:html={structuredDataJson} />

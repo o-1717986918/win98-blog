@@ -140,7 +140,7 @@ import { withBase } from '../lib/site-path';
   .intro-title-stack { position: relative; text-align: center; }
   h1, .intro-echo {
     margin: 0;
-    font-family: var(--font-display);
+    font-family: var(--font-signature);
     font-size: clamp(4.3rem, 11.5vw, 9.7rem);
     font-weight: 760;
     line-height: .88;
@@ -269,7 +269,7 @@ import { withBase } from '../lib/site-path';
       text: readRgb('--text-rgb'),
       light: getComputedStyle(document.documentElement).colorScheme.includes('light'),
     });
-    const finish = () => {
+    const finish = (restoreFocus = true) => {
       if (disposed) return;
       disposed = true;
       intro.hidden = true;
@@ -279,6 +279,7 @@ import { withBase } from '../lib/site-path';
       document.removeEventListener('DOMContentLoaded', suspendPage);
       particleController?.destroy();
       removeEventListener('keydown', onKeyDown);
+      if (restoreFocus) document.getElementById('main-content')?.focus({ preventScroll: true });
       dispatchEvent(new CustomEvent('site:intro-end'));
     };
     const leave = () => {
@@ -320,7 +321,7 @@ import { withBase } from '../lib/site-path';
       clearTimeout(leaveTimer);
       clearTimeout(exitTimer);
       clearTimeout(removeTimer);
-      finish();
+      finish(false);
     }, { once: true });
   }
 </script>

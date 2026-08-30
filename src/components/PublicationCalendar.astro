@@ -1,0 +1,75 @@
+---
+import type { PostEntry } from '../lib/content';
+import { withBase } from '../lib/site-path';
+
+interface Props { posts: PostEntry[]; }
+
+const { posts } = Astro.props;
+const anchor = posts[0]?.data.date ?? new Date();
+const year = anchor.getFullYear();
+const month = anchor.getMonth();
+const monthPosts = posts.filter((post) => post.data.date.getFullYear() === year && post.data.date.getMonth() === month);
+const counts = new Map<number, number>();
+monthPosts.forEach((post) => counts.set(post.data.date.getDate(), (counts.get(post.data.date.getDate()) ?? 0) + 1));
+const offset = (new Date(year, month, 1).getDay() + 6) % 7;
+const days = new Date(year, month + 1, 0).getDate();
+const cells = [
+  ...Array.from({ length: offset }, () => null),
+  ...Array.from({ length: days }, (_, index) => ({ day: index + 1, count: counts.get(index + 1) ?? 0 })),
+];
+const monthLabel = `${year}.${String(month + 1).padStart(2, '0')}`;
+const busiest = Math.max(1, ...counts.values());
+---
+
+<section class="publication-calendar" aria-labelledby="publication-calendar-title" data-publication-calendar data-portal-widget="calendar">
+  <header>
+    <div><p>PUBLICATION PULSE</p><h2 id="publication-calendar-title">发表日历</h2></div>
+    <strong>{monthLabel}</strong>
+  </header>
+  <div class="publication-calendar__week" aria-hidden="true">
+    {['一', '二', '三', '四', '五', '六', '日'].map((day) => <span>{day}</span>)}
+  </div>
+  <ol aria-label={`${year}年${month + 1}月发表记录`}>
+    {cells.map((cell) => cell ? (
+      <li class:list={{ active: cell.count > 0 }} style={`--activity:${cell.count / busiest}`}>
+        {cell.count > 0 ? (
+          <button type="button" data-calendar-date={`${year}-${String(month + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`} aria-pressed="false" aria-label={`${month + 1}月${cell.day}日，筛选${cell.count}篇文章`}>
+            <span>{cell.day}</span><i>{cell.count}</i>
+          </button>
+        ) : <span aria-label={`${month + 1}月${cell.day}日，没有发表文章`}>{cell.day}</span>}
+      </li>
+    ) : <li class="empty" aria-hidden="true"></li>)}
+  </ol>
+  <footer>
+    <p><span>{String(monthPosts.length).padStart(2, '0')}</span> 篇写作记录落在本月时间尺上。</p>
+    <button type="button" data-calendar-clear hidden>清除日期筛选</button>
+    <a href={withBase('/archive/')}>查看年月归档 <i aria-hidden="true">→</i></a>
+  </footer>
+</section>
+
+<style>
+  .publication-calendar { padding: 1rem; border: 1px solid rgba(var(--spectrum-gold-rgb), .35); background: linear-gradient(155deg, rgba(var(--spectrum-gold-rgb), .08), rgba(var(--surface-rgb), .94) 44%, rgba(var(--spectrum-violet-rgb), .05)); clip-path: polygon(0 0, calc(100% - .9rem) 0, 100% .9rem, 100% 100%, 0 100%); }
+  header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; padding-bottom: .75rem; border-bottom: 1px solid var(--line); }
+  header p { color: rgb(var(--spectrum-gold-rgb)); font: .5rem/1 var(--font-mono); letter-spacing: .09em; }
+  h2 { margin-top: .3rem; font: 620 1.32rem/1 var(--font-display); letter-spacing: -.035em; }
+  header strong { color: rgba(var(--text-rgb), .54); font: .59rem/1 var(--font-mono); }
+  .publication-calendar__week, ol { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .publication-calendar__week { margin-top: .75rem; color: rgba(var(--text-rgb), .38); font: .48rem/1 var(--font-mono); text-align: center; }
+  ol { gap: 2px; margin: .35rem 0 0; padding: 0; list-style: none; }
+  li { position: relative; display: grid; place-items: center; min-width: 0; aspect-ratio: 1; border: 1px solid rgba(var(--text-rgb), .08); color: rgba(var(--text-rgb), .45); background: rgba(var(--raised-rgb), .25); font: .49rem/1 var(--font-mono); }
+  li.active { border-color: rgba(var(--spectrum-aqua-rgb), calc(.25 + var(--activity) * .45)); color: rgb(var(--text-rgb)); background: rgba(var(--spectrum-aqua-rgb), calc(.08 + var(--activity) * .18)); }
+  li > span, li button { display: grid; width: 100%; height: 100%; place-items: center; }
+  li button { position: relative; padding: 0; border: 0; color: inherit; background: transparent; font: inherit; cursor: pointer; }
+  li button:is(:hover, :focus-visible), li button[aria-pressed='true'] { color: rgb(var(--text-rgb)); background: rgba(var(--spectrum-coral-rgb), .13); }
+  li button[aria-pressed='true'] { outline: 1px solid rgb(var(--spectrum-coral-rgb)); outline-offset: -1px; }
+  li i { position: absolute; top: .16rem; right: .18rem; width: .24rem; aspect-ratio: 1; overflow: hidden; border-radius: 50%; color: transparent; background: rgb(var(--spectrum-coral-rgb)); box-shadow: 0 0 .4rem rgba(var(--spectrum-coral-rgb), .5); }
+  li.empty { border-color: transparent; background: transparent; }
+  footer { display: grid; gap: .65rem; margin-top: .8rem; padding-top: .7rem; border-top: 1px solid var(--line); }
+  footer p { color: rgba(var(--text-rgb), .56); font-size: .61rem; line-height: 1.55; }
+  footer p span { color: rgb(var(--spectrum-coral-rgb)); font-family: var(--font-mono); }
+  footer a { display: flex; justify-content: space-between; color: rgb(var(--spectrum-aqua-rgb)); font-size: .66rem; font-weight: 650; text-decoration: none; }
+  footer a i { font-style: normal; transition: transform .2s var(--ease); }
+  footer a:hover i { transform: translateX(.18rem); }
+  footer button { padding: .38rem .48rem; border: 1px solid rgba(var(--spectrum-coral-rgb), .35); color: rgb(var(--spectrum-coral-rgb)); background: transparent; font-size: .58rem; text-align: left; cursor: pointer; }
+  footer button[hidden] { display: none; }
+</style>

@@ -13,11 +13,13 @@ interface Props {
   tags?: string[] | undefined;
   noindex?: boolean | undefined;
   image?: string | undefined;
+  back?: boolean | undefined;
+  schemaType?: 'WebPage' | 'CollectionPage' | 'ProfilePage' | undefined;
 }
-const { title, description, theme = SITE.defaultTheme, pageKind = 'standalone', published, updated, tags, noindex, image } = Astro.props;
+const { title, description, theme = SITE.defaultTheme, pageKind = 'standalone', published, updated, tags, noindex, image, back = true, schemaType } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description ?? SITE.description} theme={theme} {pageKind} {published} {updated} {tags} {noindex} {image}>
-  <BackBadge />
+<BaseLayout title={title} description={description ?? SITE.description} theme={theme} {pageKind} {published} {updated} {tags} {noindex} {image} {schemaType}>
+  {back && <BackBadge />}
   <slot />
 </BaseLayout>

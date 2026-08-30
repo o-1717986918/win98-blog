@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "artifact": "public/solver/solver-engine.wasm",
+  "sha256": "e7c9a544d93f7daad618f72408407ad748ba7fdf4ad224763289084e72440018",
+  "source": {
+    "repository": "https://github.com/o-1717986918/sokoban-recognition-bomb-solver",
+    "commit": "94f04c22030504bbaeba642fd311584b0841b6a1",
+    "coreSourceFiles": 20,
+    "localBridge": "tools/solver-wasm/bridge.c"
+  },
+  "build": {
+    "script": "tools/solver-wasm/build.ps1",
+    "target": "wasm32-wasi",
+    "optimization": "O2",
+    "language": "C99",
+    "compilerVersion": "not-recorded"
+  },
+  "contract": {
+    "recognition": { "length": 33, "turns": 10 },
+    "planning": { "solved": true, "length": 191, "turns": 86 }
+  }
+}

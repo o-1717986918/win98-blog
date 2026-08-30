@@ -12,6 +12,7 @@ import type { ColumnEntry, PostEntry } from '../lib/content';
 import { accentStyle } from '../lib/visual';
 import { socialImagePath } from '../lib/social-image';
 import BaseLayout from './BaseLayout.astro';
+import PerformanceVitals from '../components/PerformanceVitals.astro';
 
 interface Props { column: ColumnEntry; posts: PostEntry[]; }
 const { column, posts } = Astro.props;
@@ -20,7 +21,7 @@ const socialImage = column.data.cover ? (await getImage({ src: column.data.cover
 
 <BaseLayout title={column.data.title} description={column.data.description} theme={column.data.theme} pageKind="column" image={socialImage}>
   <AmbientField />
-  <BackBadge />
+  {column.data.back && <BackBadge />}
   <main class="minimal-main minimal-column" style={accentStyle(column.data.accent)}>
     <header><p class="eyebrow">A SMALL COLLECTION</p><h1>{column.data.title}</h1><p class="lead">{column.data.description}</p></header>
     <ContentCover className="column-cover" title={column.data.title} seed={column.id} kind="column" accent={column.data.accent} cover={column.data.cover} variant="hero" eager />
@@ -28,6 +29,7 @@ const socialImage = column.data.cover ? (await getImage({ src: column.data.cover
     {column.data.showPosts && <section><h2>主题文章</h2><PostList posts={posts} /></section>}
   </main>
   <Analytics />
+  <PerformanceVitals />
 </BaseLayout>
 
 <style>

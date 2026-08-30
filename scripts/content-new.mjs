@@ -27,7 +27,7 @@ try {
 const today = new Date().toISOString().slice(0, 10);
 const yamlTitle = JSON.stringify(title);
 const frontmatter = kind === 'post'
-  ? `---\ntitle: ${yamlTitle}\ndescription: 请补充一段准确摘要。\ndate: ${today}\ntags: []\ncolumns: []\nchrome: full\ntheme: abyss\ndraft: true\n---\n\n从这里开始写作。\n`
+  ? `---\ntitle: ${yamlTitle}\ndescription: 请补充一段准确摘要。\ndate: ${today}\nformat: essay\ntags: []\ncolumns: []\nevidence: []\nsyndication: []\nchrome: full\ntheme: abyss\ndraft: true\n---\n\n从这里开始写作。\n`
   : `---\ntitle: ${yamlTitle}\ndescription: 请说明这个主题收录什么。\nchrome: full\ntheme: abyss\naccent: aqua\nnav: false\norder: 100\nshowPosts: true\ndraft: true\n---\n\n从这里开始编写主题说明。\n`;
 
 await mkdir(directory, { recursive: false });

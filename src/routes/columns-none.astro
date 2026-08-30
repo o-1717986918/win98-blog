@@ -8,6 +8,6 @@ const { column, Content } = await loadColumnRoute(Astro.url.pathname, 'none');
 const socialImage = column.data.cover ? (await getImage({ src: column.data.cover.src, width: 1200, format: 'webp' })).src : socialImagePath('columns', column.id);
 ---
 
-<StandaloneLayout title={column.data.title} description={column.data.description} theme={column.data.theme} pageKind="column" image={socialImage}>
+<StandaloneLayout title={column.data.title} description={column.data.description} theme={column.data.theme} pageKind="column" image={socialImage} back={column.data.back}>
   <Content />
 </StandaloneLayout>

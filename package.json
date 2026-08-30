@@ -29,6 +29,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "verify": "pnpm test && pnpm solver:full-smoke && pnpm build",
+    "verify:all": "pnpm verify && pnpm test:e2e",
     "preview:prototype": "node scripts/serve-prototype.mjs",
     "preview:visual-experiment": "node scripts/serve-static.mjs experiments/single-file-visual-candidate",
     "preview:experiment": "node scripts/serve-static.mjs experiments/celestial-matrix"

@@ -1,0 +1,135 @@
+---
+import { getCollection } from 'astro:content';
+import { archiveDateParts, groupPostsByYearMonth } from '../lib/archive';
+import { isPublished, type PostEntry } from '../lib/content';
+import { withBase } from '../lib/site-path';
+import { accentStyle, postAccent } from '../lib/visual';
+
+interface Props { posts: PostEntry[]; }
+const { posts } = Astro.props;
+const groups = groupPostsByYearMonth(posts);
+const columns = (await getCollection('columns')).filter(isPublished);
+const columnMap = new Map(columns.map((column) => [column.id, column]));
+const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+const monthCodes = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const formatLabels = { essay: '长文', 'field-note': '现场笔记', experiment: '实验' } as const;
+---
+
+<div class="archive-ledger" data-archive-ledger>
+  {groups.map((group) => (
+    <section class="archive-year" data-archive-year aria-labelledby={`archive-year-${group.year}`}>
+      <header class="archive-year__identity">
+        <p>PUBLICATION YEAR</p>
+        <h2 id={`archive-year-${group.year}`}>{group.year}</h2>
+        <span>{String(group.count).padStart(2, '0')} ENTRIES</span>
+      </header>
+      <div class="archive-year__months">
+        {group.months.map((month) => (
+          <section class="archive-month" data-archive-month aria-labelledby={`archive-month-${group.year}-${month.month}`}>
+            <header class="archive-month__heading">
+              <time datetime={`${group.year}-${String(month.month).padStart(2, '0')}`}>{String(month.month).padStart(2, '0')}</time>
+              <div>
+                <h3 id={`archive-month-${group.year}-${month.month}`}>{monthNames[month.month - 1]} <small>/ {monthCodes[month.month - 1]}</small></h3>
+                <span>{month.posts.length} 篇发布记录</span>
+              </div>
+            </header>
+            <div class="archive-month__entries">
+              {month.posts.map((post) => {
+                const parts = archiveDateParts(post.data.date);
+                const primaryColumn = columnMap.get(post.data.columns[0]?.id ?? '');
+                return (
+                  <a
+                    class="archive-entry"
+                    href={withBase(`/posts/${post.id}/`)}
+                    style={accentStyle(postAccent(post, columnMap))}
+                    data-post-row
+                    data-tags={post.data.tags.map((tag) => tag.toLowerCase()).join('|')}
+                    data-search={`${post.data.title} ${post.data.description} ${post.data.tags.join(' ')} ${post.data.columns.map((reference) => columnMap.get(reference.id)?.data.title ?? '').join(' ')}`.toLowerCase()}
+                  >
+                    <time class="archive-entry__day" datetime={post.data.date.toISOString()}>
+                      <b>{String(parts.day).padStart(2, '0')}</b><span>DAY</span>
+                    </time>
+                    <div class="archive-entry__copy">
+                      <p><span>{formatLabels[post.data.format]}</span>{primaryColumn && <span>{primaryColumn.data.title}</span>}</p>
+                      <h4 aria-label={post.data.title}>
+                        <span class="archive-entry__title-full">{post.data.title}</span>
+                        {post.data.shortTitle && <span class="archive-entry__title-short" aria-hidden="true">{post.data.shortTitle}</span>}
+                      </h4>
+                      <small>{post.data.description}</small>
+                    </div>
+                    <div class="archive-entry__tags" aria-hidden="true">
+                      {post.data.tags.slice(0, 2).map((tag) => <span>#{tag}</span>)}
+                    </div>
+                    <span class="archive-entry__arrow" aria-hidden="true">↗</span>
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  ))}
+</div>
+
+<style>
+  .archive-year[hidden], .archive-month[hidden], .archive-entry[hidden] { display: none; }
+  .archive-ledger { border-top: 1px solid var(--line-strong); }
+  .archive-year { display: grid; grid-template-columns: clamp(7.5rem, 12vw, 10.5rem) minmax(0, 1fr); border-bottom: 1px solid var(--line-strong); }
+  .archive-year__identity { align-self: stretch; padding: 2.35rem 1.6rem 2.35rem 0; border-right: 1px solid var(--line); }
+  .archive-year__identity > * { display: block; }
+  .archive-year__identity p { color: rgba(var(--text-rgb), .4); font-family: var(--font-mono); font-size: .56rem; letter-spacing: .12em; }
+  .archive-year__identity h2 { margin-top: .35rem; font-family: var(--font-display); font-size: clamp(2.8rem, 5.4vw, 4.8rem); font-weight: 640; line-height: 1; letter-spacing: -.065em; }
+  .archive-year__identity span { margin-top: .85rem; color: rgb(var(--spectrum-gold-rgb)); font-family: var(--font-mono); font-size: .58rem; letter-spacing: .08em; }
+  .archive-year__months { min-width: 0; padding-left: clamp(1rem, 3vw, 2.5rem); }
+  .archive-month { position: relative; padding: 1.8rem 0 2.25rem; border-bottom: 1px solid var(--line); }
+  .archive-month:last-child { border-bottom: 0; }
+  .archive-month::before { content: ''; position: absolute; top: 3rem; bottom: 2.25rem; left: 2.28rem; width: 1px; background: linear-gradient(rgb(var(--signal-rgb)), rgba(var(--signal-rgb), .08)); }
+  .archive-month__heading { position: relative; z-index: 1; display: grid; grid-template-columns: 4.6rem minmax(0, 1fr); align-items: center; margin-bottom: .45rem; }
+  .archive-month__heading > time { display: grid; place-items: center; width: 2.7rem; aspect-ratio: 1; margin-left: .94rem; border: 1px solid rgba(var(--signal-rgb), .52); border-radius: 50%; color: rgb(var(--signal-rgb)); background: rgb(var(--bg-rgb)); font-family: var(--font-mono); font-size: .78rem; font-weight: 700; box-shadow: 0 0 0 .35rem rgba(var(--bg-rgb), .96); }
+  .archive-month__heading h3 { font-family: var(--font-display); font-size: clamp(1.25rem, 2.3vw, 1.72rem); font-weight: 620; letter-spacing: -.035em; }
+  .archive-month__heading h3 small { color: rgba(var(--text-rgb), .38); font-family: var(--font-mono); font-size: .55em; font-weight: 500; letter-spacing: .08em; }
+  .archive-month__heading div > span { display: block; margin-top: .18rem; color: rgba(var(--text-rgb), .43); font-family: var(--font-mono); font-size: .58rem; }
+  .archive-month__entries { display: grid; }
+  .archive-entry { --entry-line: rgba(var(--content-accent-rgb), .3); position: relative; display: grid; grid-template-columns: 4.6rem minmax(0, 1fr) minmax(5.5rem, 12rem) 1.2rem; gap: clamp(.6rem, 1.8vw, 1.35rem); align-items: center; min-height: 6.8rem; padding: .85rem .6rem .85rem 0; border-top: 1px solid var(--line); color: inherit; text-decoration: none; transition: background .2s var(--ease), transform .2s var(--ease); }
+  .archive-entry::before { content: ''; position: absolute; left: 2.08rem; z-index: 1; width: .42rem; height: .42rem; border: 1px solid rgb(var(--content-accent-rgb)); border-radius: 50%; background: rgb(var(--bg-rgb)); box-shadow: 0 0 0 .28rem rgb(var(--bg-rgb)); transition: background .2s var(--ease), transform .2s var(--ease); }
+  .archive-entry:hover, .archive-entry:focus-visible { background: linear-gradient(90deg, rgba(var(--content-accent-rgb), .08), rgba(var(--surface-rgb), .45)); transform: translateX(.2rem); }
+  .archive-entry:hover::before, .archive-entry:focus-visible::before { background: rgb(var(--content-accent-rgb)); transform: scale(1.25); }
+  .archive-entry:focus-visible { outline-color: rgb(var(--content-accent-rgb)); outline-offset: 2px; }
+  .archive-entry__day { align-self: center; justify-self: end; display: grid; width: 1.8rem; color: rgb(var(--content-accent-rgb)); font-family: var(--font-mono); line-height: 1; text-align: right; }
+  .archive-entry__day b { font-size: .8rem; }
+  .archive-entry__day span { margin-top: .25rem; color: rgba(var(--text-rgb), .35); font-size: .44rem; letter-spacing: .08em; }
+  .archive-entry__copy { min-width: 0; }
+  .archive-entry__copy > p { display: flex; flex-wrap: wrap; gap: .35rem .75rem; margin-bottom: .22rem; color: rgb(var(--content-accent-rgb)); font-family: var(--font-mono); font-size: .52rem; letter-spacing: .06em; }
+  .archive-entry h4 { font-family: var(--font-display); font-size: clamp(1.02rem, 1.75vw, 1.3rem); font-weight: 610; line-height: 1.38; letter-spacing: -.025em; transition: color .2s var(--ease); }
+  .archive-entry:hover h4, .archive-entry:focus-visible h4 { color: rgb(var(--content-accent-rgb)); }
+  .archive-entry__title-short { display: none; }
+  .archive-entry__copy > small { display: -webkit-box; max-width: 48rem; margin-top: .28rem; overflow: hidden; color: rgba(var(--text-rgb), .55); font-size: .72rem; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+  .archive-entry__tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .25rem .55rem; color: rgba(var(--text-rgb), .4); font-family: var(--font-mono); font-size: .55rem; }
+  .archive-entry__arrow { color: rgb(var(--content-accent-rgb)); opacity: .45; transition: opacity .2s var(--ease), transform .2s var(--ease); }
+  .archive-entry:hover .archive-entry__arrow, .archive-entry:focus-visible .archive-entry__arrow { opacity: 1; transform: translate(.12rem, -.12rem); }
+  @media (max-width: 760px) {
+    .archive-year { display: block; }
+    .archive-year__identity { display: flex; align-items: baseline; gap: .75rem; padding: 1.4rem 0 1rem; border-right: 0; border-bottom: 1px solid var(--line); }
+    .archive-year__identity > * { position: static; }
+    .archive-year__identity p { order: 2; }
+    .archive-year__identity h2 { margin: 0; font-size: 2.8rem; }
+    .archive-year__identity span { order: 3; margin: 0 0 0 auto; }
+    .archive-year__months { padding-left: 0; }
+  }
+  @media (max-width: 580px) {
+    .archive-month { padding: 1.35rem 0 1.7rem; }
+    .archive-month::before { top: 2.4rem; bottom: 1.7rem; left: 1.28rem; }
+    .archive-month__heading { grid-template-columns: 2.7rem minmax(0, 1fr); }
+    .archive-month__heading > time { width: 2.05rem; margin-left: .25rem; font-size: .64rem; box-shadow: 0 0 0 .22rem rgba(var(--bg-rgb), .96); }
+    .archive-entry { grid-template-columns: 2.7rem minmax(0, 1fr) 1rem; gap: .6rem; min-height: 5.7rem; padding: .75rem .1rem .75rem 0; }
+    .archive-entry::before { left: 1.08rem; }
+    .archive-entry__day { width: 1.3rem; font-size: .7rem; }
+    .archive-entry__copy { grid-column: 2; }
+    .archive-entry__tags { display: none; }
+    .archive-entry__arrow { grid-column: 3; }
+    .archive-entry__copy > small { display: none; }
+    .archive-entry h4:has(.archive-entry__title-short) .archive-entry__title-full { display: none; }
+    .archive-entry__title-short { display: inline; }
+  }
+</style>

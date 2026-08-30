@@ -24,6 +24,12 @@ const analytics = process.env.PUBLIC_ANALYTICS_PROVIDER?.trim() || 'none';
 if (analytics === 'cloudflare') required('cloudflare', ['PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN']);
 if (analytics === 'umami') required('umami', ['PUBLIC_UMAMI_SCRIPT_URL', 'PUBLIC_UMAMI_WEBSITE_ID']);
 if (!['none', 'cloudflare', 'umami'].includes(analytics)) failures.push(`unknown analytics provider: ${analytics}`);
+for (const name of ['PUBLIC_WEBMENTION_ENDPOINT', 'PUBLIC_PERFORMANCE_ENDPOINT']) {
+  const value = process.env[name]?.trim();
+  if (!value) continue;
+  try { if (new URL(value).protocol !== 'https:') failures.push(`${name} must use https`); }
+  catch { failures.push(`${name} must be a valid absolute URL`); }
+}
 
 if (failures.length) {
   console.error('Deployment configuration failed:');

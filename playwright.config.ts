@@ -13,7 +13,7 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], channel: process.platform === 'win32' && !process.env.CI ? 'msedge' : undefined } }],
   webServer: {
-    command: 'pnpm exec astro preview --host 127.0.0.1 --port 4323',
+    command: 'node scripts/serve-static.mjs dist 4323',
     url: 'http://127.0.0.1:4323',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -1,14 +1,20 @@
 ---
 import '../styles/prose.css';
 import FullShell from '../layouts/FullShell.astro';
+import { withBase } from '../lib/site-path';
 ---
 
-<FullShell title="关于" description="关于某人的小站、写作范围与长期关心的问题。">
-  <div class="page-wrap about-page">
+<FullShell title="关于" description="关于某人的小站、写作范围与长期关心的问题。" schemaType="ProfilePage">
+  <div class="page-wrap about-page h-card">
     <header class="page-intro">
       <div><p class="eyebrow">ABOUT</p><h1 class="display-title">关于<br />小站</h1></div>
       <div class="page-intro__copy"><p>这里收拢写作、观察和实验。页面会变化，留下来的始终是问题、判断与过程。</p></div>
     </header>
+    <section class="about-identity" aria-label="站点作者身份">
+      <img class="u-photo" src={withBase('/brand/logo.jpg')} alt="某人的小站标识" width="112" height="112" />
+      <div><p>AUTHOR / SITE OWNER</p><h2 class="p-name">某人</h2><p class="p-note">记录 Web 架构、图形学、阅读与工程实践。</p></div>
+      <nav aria-label="作者链接"><a class="u-url u-uid" href={withBase('/about/')}>本站</a><a href="https://github.com/o-1717986918" rel="me noreferrer">GitHub ↗</a></nav>
+    </section>
     <div class="prose about-copy">
       <h2>写什么</h2>
       <p>主要记录 Web 架构、Canvas 图形学、长文阅读界面，以及维护一件作品时遇到的真实问题。结论未必终结问题，但会尽量留下可以复查的过程。</p>
@@ -20,4 +26,9 @@ import FullShell from '../layouts/FullShell.astro';
   </div>
 </FullShell>
 
-<style>.about-page { padding-bottom: 7rem; }.about-copy { margin: 4rem auto 0; }</style>
+<style>
+  .about-page { padding-bottom: 7rem; }.about-copy { margin: 4rem auto 0; }
+  .about-identity { display:grid;grid-template-columns:7rem minmax(0,1fr) auto;gap:1.4rem;align-items:center;width:min(62rem,100%);margin:3.5rem auto 0;padding:1rem;border-top:1px solid var(--line);border-bottom:1px solid var(--line) }
+  .about-identity img{width:7rem;aspect-ratio:1;object-fit:cover}.about-identity p{color:rgba(var(--text-rgb),.58);font:.62rem/1.7 var(--font-mono)}.about-identity h2{margin:.35rem 0;font:650 1.6rem/1 var(--font-signature)}.about-identity nav{display:flex;gap:.8rem}.about-identity a{color:rgb(var(--signal-rgb));font-size:.72rem;text-decoration:none}
+  @media(max-width:620px){.about-identity{grid-template-columns:5rem 1fr}.about-identity img{width:5rem}.about-identity nav{grid-column:1/-1}}
+</style>
