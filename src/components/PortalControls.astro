@@ -1,7 +1,7 @@
 <section class="portal-controls" data-portal-controls aria-label="门户显示设置">
   <div>
     <span aria-hidden="true"><i></i><i></i><i></i></span>
-    <p><b>PORTAL CONFIG</b><small data-portal-summary>标准密度 · 4 个辅助模块</small></p>
+    <p><b>PORTAL CONFIG</b><small data-portal-summary>标准密度 · 3 个辅助模块</small></p>
   </div>
   <button type="button" aria-haspopup="dialog" aria-controls="portal-preferences" data-portal-open>自定义门户 <i aria-hidden="true">⌁</i></button>
   <dialog id="portal-preferences" data-portal-dialog aria-labelledby="portal-preferences-title">
@@ -15,7 +15,6 @@
         <label><input type="checkbox" value="topics" data-portal-toggle checked /><span><b>长期主题</b><small>左栏主题索引</small></span></label>
         <label><input type="checkbox" value="calendar" data-portal-toggle checked /><span><b>发表日历</b><small>按日期筛选写作</small></span></label>
         <label><input type="checkbox" value="tags" data-portal-toggle checked /><span><b>发现索引</b><small>高频标签入口</small></span></label>
-        <label><input type="checkbox" value="gateway" data-portal-toggle checked /><span><b>站内入口</b><small>功能页面目录</small></span></label>
       </fieldset>
       <fieldset>
         <legend>信息密度</legend>
@@ -62,7 +61,7 @@
   const storageKey = 'someone-site:portal-preferences:v1';
   const defaults: PortalPreferences = {
     density: 'standard',
-    widgets: { topics: true, calendar: true, tags: true, gateway: true },
+    widgets: { topics: true, calendar: true, tags: true },
   };
 
   document.querySelectorAll<HTMLElement>('[data-portal-controls]').forEach((controls) => {
@@ -77,7 +76,11 @@
       const stored = JSON.parse(localStorage.getItem(storageKey) ?? 'null') as Partial<PortalPreferences> | null;
       if (stored) preferences = {
         density: stored.density === 'compact' ? 'compact' : 'standard',
-        widgets: { ...defaults.widgets, ...(stored.widgets ?? {}) },
+        widgets: {
+          topics: stored.widgets?.topics !== false,
+          calendar: stored.widgets?.calendar !== false,
+          tags: stored.widgets?.tags !== false,
+        },
       };
     } catch { localStorage.removeItem(storageKey); }
 
@@ -88,7 +91,7 @@
         controls.querySelectorAll<HTMLInputElement>(`[data-portal-toggle][value="${id}"]`).forEach((input) => { input.checked = visible; });
       });
       controls.querySelectorAll<HTMLInputElement>('[data-portal-density]').forEach((input) => { input.checked = input.value === preferences.density; });
-      const visibleRight = ['calendar', 'tags', 'gateway'].some((id) => preferences.widgets[id]);
+      const visibleRight = ['calendar', 'tags'].some((id) => preferences.widgets[id]);
       portal.dataset.rightVisible = String(visibleRight);
       const right = portal.querySelector<HTMLElement>('.portal-right');
       if (right) right.hidden = !visibleRight;

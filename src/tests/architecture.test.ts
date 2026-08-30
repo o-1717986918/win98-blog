@@ -180,8 +180,15 @@ describe('blog-architecture contracts', () => {
     expect(header).toContain('@media (min-width: 1101px)');
     expect(header).toContain('width: var(--site-rail)');
     expect(shell).toContain('margin-left: var(--site-rail)');
+    expect(header).toContain('class="sidebar-overview"');
+    expect(header.indexOf('class="header-search-slot"')).toBeLessThan(header.indexOf('class="site-brand"'));
+    expect(header).toContain("{ label: '学习笔记', href: '/notes/'");
+    expect(header).not.toContain('<a href={withBase(\'/notes/\')} aria-current');
     expect(home).toContain('class="home-featured-return"');
     expect(home.indexOf('class="home-featured-return"')).toBeGreaterThan(home.indexOf('class="home-portal"'));
+    expect(home).not.toContain('home-signal');
+    expect(home).not.toContain('portal-gateway');
+    expect(home).not.toContain('站内入口');
   });
 
   it('implements portal functionality as static-first progressive enhancement', async () => {

@@ -53,6 +53,8 @@ requireText(home, 'data-publication-calendar', 'home publication calendar');
 requireText(home, 'data-portal-controls', 'home persisted portal preferences');
 requireText(home, 'data-stream-more', 'home progressive writing stream');
 requireText(home, 'home-featured-return', 'home bottom featured return');
+forbidText(home, 'portal-gateway', 'home redundant portal directory');
+forbidText(home, '站内入口', 'home redundant portal directory');
 requireText(projects, '项目<br>陈列', 'projects feature page');
 requireText(projects, 'ArcVellum', 'projects real data');
 requireText(skills, '能力<br>图谱', 'skills feature page');

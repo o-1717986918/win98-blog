@@ -47,13 +47,14 @@ test('homepage intro is escapable and desktop content stays inside the viewport'
   const flyoutAlignment = await page.evaluate(() => {
     const rail = document.querySelector('.site-header')?.getBoundingClientRect();
     const panel = document.querySelector('.explore-menu .column-menu__panel')?.getBoundingClientRect();
+    const summary = document.querySelector('.explore-menu > summary')?.getBoundingClientRect();
     return {
-      clearsRail: (panel?.left ?? 0) >= (rail?.right ?? Infinity),
-      insideViewport: (panel?.right ?? Infinity) <= innerWidth,
+      insideRail: (panel?.left ?? -1) >= (rail?.left ?? 0) && (panel?.right ?? Infinity) <= (rail?.right ?? 0),
+      nestedBelowSummary: (panel?.top ?? 0) >= (summary?.bottom ?? Infinity) - 1,
     };
   });
-  expect(flyoutAlignment.clearsRail).toBe(true);
-  expect(flyoutAlignment.insideViewport).toBe(true);
+  expect(flyoutAlignment.insideRail).toBe(true);
+  expect(flyoutAlignment.nestedBelowSummary).toBe(true);
   await page.locator('.explore-menu > summary').click();
   const portalGrid = await page.evaluate(() => ({
     spotlightHeight: document.querySelector('.spotlight')?.getBoundingClientRect().height ?? Infinity,
@@ -91,6 +92,8 @@ test('homepage intro is escapable and desktop content stays inside the viewport'
   expect(portalGrid.topicCount).toBe(6);
   await expect(page.locator('[data-publication-calendar]')).toBeVisible();
   await expect(page.locator('.notes-feature')).toBeVisible();
+  await expect(page.locator('.portal-gateway')).toHaveCount(0);
+  await expect(page.getByText('站内入口', { exact: true })).toHaveCount(0);
   const noteTab = page.locator('[data-note-mode]').first();
   await noteTab.focus();
   await noteTab.press('ArrowRight');
@@ -160,6 +163,9 @@ test('header brand returns home while profile, writing and notes keep their port
   await expect(card).toBeVisible();
   await expect(card.getByRole('link', { name: '查看某人的个人介绍' })).toHaveAttribute('href', '/about/');
   await expect(card.getByRole('navigation', { name: '个人链接' }).getByRole('link')).toHaveCount(3);
+  await expect(page.locator('.site-navigation > a[href$="/notes/"]')).toHaveCount(0);
+  await page.locator('.explore-menu > summary').click();
+  await expect(page.locator('.explore-menu').getByRole('link', { name: /学习笔记/ })).toBeVisible();
   const geometry = await page.evaluate(() => {
     const card = document.querySelector<HTMLElement>('[data-profile-card]');
     const portrait = card?.querySelector<HTMLImageElement>('.profile-card__portrait img');
@@ -211,7 +217,7 @@ test('mobile portal keeps its reading order and the bottom spotlight retains a l
   expect(layout.cover).toBeLessThanOrEqual(230);
   expect(layout.spotlightTop).toBeGreaterThan(layout.portalBottom);
   expect(layout.notesTop).toBeGreaterThan(layout.profileBottom);
-  await expect(page.locator('.home-signal-cue')).toBeVisible();
+  await expect(page.locator('[data-search-input]')).toBeVisible();
   assertNoErrors();
 });
 

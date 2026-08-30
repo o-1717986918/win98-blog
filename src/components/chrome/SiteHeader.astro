@@ -13,6 +13,7 @@ const current = (href: string) => {
   return href === '/' ? pathname === resolved : pathname.startsWith(resolved);
 };
 const portalLinks = [
+  { label: '学习笔记', href: '/notes/', enabled: true },
   { label: '项目', href: '/projects/', enabled: PORTAL_FEATURES.projects },
   { label: '能力', href: '/skills/', enabled: PORTAL_FEATURES.skills },
   { label: '时间线', href: '/timeline/', enabled: PORTAL_FEATURES.timeline },
@@ -23,6 +24,10 @@ const portalCurrent = portalLinks.some((item) => current(item.href));
 
 <header class="site-header" data-site-header data-pagefind-ignore>
   <div class="header-inner">
+    <div class="header-search-slot">
+      <span>SEARCH / SITE</span>
+      <SearchIndex />
+    </div>
     <a class="site-brand" href={withBase('/')} aria-label={`${SITE.title} · 返回首页`}>
       <span class="brand-mark" aria-hidden="true"><img src={withBase('/brand/logo.jpg')} alt="" width="640" height="640" decoding="async" /></span>
       <span>{SITE.title}<small>ESSAYS · NOTES · EXPERIMENTS</small></span>
@@ -32,33 +37,36 @@ const portalCurrent = portalLinks.some((item) => current(item.href));
       <i></i><i></i>
     </button>
     <div class="navigation-shell" id="site-navigation" data-navigation-shell>
+      <section class="sidebar-overview" aria-label="站点说明">
+        <p>PERSONAL PUBLISHING / EST. 2026</p>
+        <strong>文章、笔记与实验的长期工作台</strong>
+        <span>{SITE.description}</span>
+      </section>
       <nav class="site-navigation" aria-label="主导航">
-        <a href={withBase('/')} aria-current={current('/') ? 'page' : undefined}>首页</a>
-        <a href={withBase('/archive/')} aria-current={current('/archive/') ? 'page' : undefined}>文章</a>
-        <details class="column-menu">
-          <summary data-current={current('/columns/') ? 'true' : undefined}>主题 <span aria-hidden="true">⌄</span></summary>
+        <a href={withBase('/')} aria-current={current('/') ? 'page' : undefined}><span>首页</span><small>HOME</small></a>
+        <a href={withBase('/archive/')} aria-current={current('/archive/') ? 'page' : undefined}><span>文章</span><small>ARCHIVE</small></a>
+        <details class="column-menu" open={current('/columns/')} data-nav-layer>
+          <summary data-current={current('/columns/') ? 'true' : undefined}><span>主题</span><small>COLLECTIONS</small><i aria-hidden="true">⌄</i></summary>
           <div class="column-menu__panel">
-            {columns.map((column) => (
+            {columns.map((column, index) => (
               <a href={withBase(`/columns/${column.id}/`)} aria-current={current(`/columns/${column.id}/`) ? 'page' : undefined}>
-                <span>{column.data.navLabel ?? column.data.title}</span><i aria-hidden="true">↗</i>
+                <b>{String(index + 1).padStart(2, '0')}</b><span>{column.data.navLabel ?? column.data.title}</span><i aria-hidden="true">→</i>
               </a>
             ))}
           </div>
         </details>
-        <a href={withBase('/notes/')} aria-current={current('/notes/') ? 'page' : undefined}>笔记</a>
-        <details class="column-menu explore-menu">
-          <summary data-current={portalCurrent ? 'true' : undefined}>探索 <span aria-hidden="true">⌄</span></summary>
+        <details class="column-menu explore-menu" open={portalCurrent} data-nav-layer>
+          <summary data-current={portalCurrent ? 'true' : undefined}><span>探索</span><small>DISCOVER</small><i aria-hidden="true">⌄</i></summary>
           <div class="column-menu__panel">
-            {portalLinks.map((item) => (
+            {portalLinks.map((item, index) => (
               <a href={withBase(item.href)} aria-current={current(item.href) ? 'page' : undefined}>
-                <span>{item.label}</span><i aria-hidden="true">↗</i>
+                <b>{String(index + 1).padStart(2, '0')}</b><span>{item.label}</span><i aria-hidden="true">→</i>
               </a>
             ))}
           </div>
         </details>
-        <a href={withBase('/about/')} aria-current={current('/about/') ? 'page' : undefined}>关于</a>
+        <a href={withBase('/about/')} aria-current={current('/about/') ? 'page' : undefined}><span>关于</span><small>ABOUT</small></a>
       </nav>
-      <div class="header-search-slot"><SearchIndex /></div>
       <button class="header-motion" type="button" data-motion-toggle aria-pressed="false"><i aria-hidden="true"></i><span>暂停背景动效</span></button>
       <button class="theme-button" type="button" data-theme-button aria-label="切换配色">
         <span data-theme-name>MIST</span>
@@ -80,14 +88,17 @@ const portalCurrent = portalLinks.some((item) => current(item.href));
   .site-brand:hover .brand-home, .site-brand:focus-visible .brand-home { color: rgb(var(--brand-secondary-rgb)); transform: translateX(.15rem); }
   .navigation-shell, .site-navigation { display: flex; align-items: center; }
   .navigation-shell { gap: 1rem; margin-left: auto; }
-  .header-search-slot { position: absolute; left: 50%; width: max-content; transform: translateX(-50%); }
+  .header-search-slot { position: absolute; left: 50%; width: clamp(11rem, 20vw, 15rem); transform: translateX(-50%); }
+  .header-search-slot > span { display: none; }
+  .sidebar-overview { display: none; }
   .site-navigation { gap: 1.1rem; }
   .site-navigation > a, .column-menu > summary { position: relative; padding: .6rem 0; border: 0; color: rgba(var(--text-rgb), .56); background: transparent; font-size: .78rem; text-decoration: none; cursor: pointer; }
+  .site-navigation > a small, .column-menu > summary small { display: none; }
   .column-menu { position: relative; }
   .column-menu > summary { display: flex; align-items: center; gap: .35rem; list-style: none; cursor: pointer; }
   .column-menu > summary::-webkit-details-marker { display: none; }
-  .column-menu > summary span { color: rgb(var(--spectrum-violet-rgb)); transition: transform .2s var(--ease); }
-  .column-menu[open] > summary span { transform: rotate(180deg); }
+  .column-menu > summary > i { color: rgb(var(--spectrum-violet-rgb)); font-style: normal; transition: transform .24s var(--ease); }
+  .column-menu[open] > summary > i { transform: rotate(180deg); }
   .column-menu__panel { position: absolute; top: calc(100% + .8rem); left: 50%; display: grid; min-width: 14.5rem; padding: .45rem; border: 1px solid var(--line-strong); background: rgb(var(--surface-rgb)); box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, .2); transform: translateX(-50%); }
   .column-menu__panel a { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem .75rem; color: rgba(var(--text-rgb), .68); font-size: .73rem; text-decoration: none; }
   .column-menu__panel a::after { display: none; }
@@ -108,38 +119,59 @@ const portalCurrent = portalLinks.some((item) => current(item.href));
   .menu-button[aria-expanded='true'] i:last-child { transform: translateY(-.145rem) rotate(-45deg); }
   @media (min-width: 1101px) {
     .site-header { inset: 0 auto 0 0; width: var(--site-rail); height: 100dvh; border-right: 1px solid rgba(var(--brand-primary-rgb), .34); border-bottom: 0; box-shadow: .8rem 0 2.6rem rgba(4, 12, 22, .12); }
-    .header-inner { flex-direction: column; align-items: stretch; width: 100%; height: 100%; margin: 0; padding: 1.15rem 1rem; }
-    .site-brand { width: 100%; margin: 0; padding: 0 0 1rem; border-right: 0; border-bottom: 1px solid rgba(var(--brand-primary-rgb), .38); }
+    .header-inner { flex-direction: column; align-items: stretch; width: 100%; height: 100%; margin: 0; padding: .9rem 1rem 1rem; }
+    .header-search-slot { position: static; order: -2; width: 100%; padding-bottom: .75rem; border-bottom: 1px solid var(--line); transform: none; }
+    .header-search-slot > span { display: block; margin-bottom: .45rem; color: rgba(var(--text-rgb), .4); font: .47rem/1 var(--font-mono); letter-spacing: .11em; }
+    .site-brand { order: -1; width: 100%; margin: .78rem 0 0; padding: 0 0 .78rem; border-right: 0; border-bottom: 1px solid rgba(var(--brand-primary-rgb), .38); }
     .brand-home { margin-left: auto; }
-    .navigation-shell { flex: 1; flex-direction: column; align-items: stretch; gap: .65rem; min-height: 0; margin: 1rem 0 0; }
+    .navigation-shell { flex: 1; flex-direction: column; align-items: stretch; gap: .7rem; min-height: 0; margin: .7rem 0 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(var(--brand-primary-rgb), .35) transparent; }
+    .sidebar-overview { display: grid; gap: .38rem; padding: .05rem .18rem .72rem; border-bottom: 1px solid var(--line); }
+    .sidebar-overview p { color: rgb(var(--spectrum-coral-rgb)); font: .46rem/1.25 var(--font-mono); letter-spacing: .08em; }
+    .sidebar-overview strong { font-size: .67rem; line-height: 1.45; }
+    .sidebar-overview span { color: rgba(var(--text-rgb), .5); font-size: .55rem; line-height: 1.55; }
     .site-navigation { display: grid; gap: .18rem; align-items: stretch; }
-    .site-navigation > a, .column-menu > summary { display: flex; justify-content: space-between; width: 100%; padding: .62rem .25rem; border-bottom: 1px solid var(--line); font-size: .72rem; }
+    .site-navigation > a, .column-menu > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .45rem; align-items: center; width: 100%; padding: .58rem .25rem; border-bottom: 1px solid var(--line); font-size: .7rem; }
+    .site-navigation > a small, .column-menu > summary small { display: block; color: rgba(var(--text-rgb), .34); font: .43rem/1 var(--font-mono); letter-spacing: .06em; }
     .site-navigation a::after { right: auto; bottom: -.5px; width: 2.4rem; }
-    .column-menu__panel { top: -.35rem; left: calc(100% + 1.75rem); min-width: 13rem; transform: none; }
-    .header-search-slot { position: static; order: -1; width: 100%; transform: none; }
+    .column-menu__panel { position: relative; top: auto; left: auto; min-width: 0; padding: .25rem 0 .35rem .65rem; overflow: hidden; border: 0; border-bottom: 1px solid var(--line); background: transparent; box-shadow: none; transform: none; animation: rail-layer-in .24s var(--ease) both; }
+    .column-menu__panel::before { content: ''; position: absolute; top: 0; bottom: .45rem; left: .24rem; width: 1px; background: linear-gradient(rgb(var(--spectrum-violet-rgb)), rgba(var(--spectrum-aqua-rgb), .14)); }
+    .column-menu__panel a { position: relative; display: grid; grid-template-columns: 1.25rem minmax(0, 1fr) auto; gap: .35rem; align-items: center; padding: .42rem .2rem .42rem .45rem; font-size: .6rem; }
+    .column-menu__panel a::before { content: ''; position: absolute; left: -.45rem; width: .4rem; height: 1px; background: rgba(var(--spectrum-violet-rgb), .55); }
+    .column-menu__panel b { color: rgba(var(--text-rgb), .3); font: .42rem/1 var(--font-mono); }
+    .column-menu__panel i { color: rgba(var(--spectrum-violet-rgb), .7); }
     :global(.header-search) { width: 100%; }
     :global(.header-search .search-results-panel) { top: 0; right: auto; left: calc(100% + 1rem); max-height: calc(100dvh - 2rem); }
-    .header-motion { display: flex; align-items: center; gap: .55rem; width: 100%; margin-top: auto; padding: .62rem; border: 1px solid var(--line); color: rgba(var(--text-rgb), .68); background: transparent; font-family: var(--font-mono); font-size: .56rem; cursor: pointer; }
+    .header-motion { display: flex; flex: 0 0 auto; align-items: center; gap: .55rem; width: 100%; margin-top: auto; padding: .58rem; border: 1px solid var(--line); color: rgba(var(--text-rgb), .68); background: transparent; font-family: var(--font-mono); font-size: .53rem; cursor: pointer; }
     .header-motion i { width: .72rem; height: 2px; background: rgb(var(--signal-rgb)); box-shadow: .22rem .22rem 0 rgba(var(--signal-rgb), .32); }
     .header-motion[aria-pressed='true'] i { background: rgba(var(--text-rgb), .34); box-shadow: none; }
     .theme-button { width: 100%; min-width: 0; }
   }
+  @keyframes rail-layer-in { from { opacity: 0; transform: translateY(-.35rem); } }
   @media (max-width: 1100px) {
     .menu-button { display: block; }
-    .navigation-shell { position: fixed; top: calc(var(--header) + .5rem); right: 1rem; left: 1rem; display: block; padding: .5rem; border: 1px solid var(--line-strong); border-radius: .65rem; background: rgb(var(--header-panel-rgb)); opacity: 0; visibility: hidden; transform: translateY(-.5rem); pointer-events: none; transition: .22s var(--ease); }
+    .navigation-shell { position: fixed; top: calc(var(--header) + .5rem); right: 1rem; left: 1rem; display: block; max-height: calc(100dvh - var(--header) - 1.5rem); padding: .5rem; overflow-y: auto; border: 1px solid var(--line-strong); border-radius: .65rem; background: rgb(var(--header-panel-rgb)); opacity: 0; visibility: hidden; transform: translateY(-.5rem); pointer-events: none; transition: .22s var(--ease); }
     .navigation-shell[data-open='true'] { opacity: 1; visibility: visible; transform: none; pointer-events: auto; }
     .site-navigation { display: grid; gap: 0; }
-    .site-navigation > a, .column-menu > summary { width: 100%; padding: .8rem .7rem; border-bottom: 1px solid var(--line); text-align: left; }
+    .sidebar-overview { display: grid; gap: .32rem; margin: .15rem .7rem .5rem; padding: .55rem 0 .75rem; border-bottom: 1px solid var(--line); }
+    .sidebar-overview p { color: rgb(var(--spectrum-coral-rgb)); font: .48rem/1 var(--font-mono); letter-spacing: .08em; }
+    .sidebar-overview strong { font-size: .72rem; }
+    .sidebar-overview span { color: rgba(var(--text-rgb), .52); font-size: .58rem; }
+    .site-navigation > a, .column-menu > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .6rem; width: 100%; padding: .8rem .7rem; border-bottom: 1px solid var(--line); text-align: left; }
+    .site-navigation > a small, .column-menu > summary small { display: block; color: rgba(var(--text-rgb), .34); font: .46rem/1 var(--font-mono); }
     .site-navigation a::after { display: none; }
     .column-menu__panel { position: static; min-width: 0; padding: 0 0 0 .65rem; border: 0; border-bottom: 1px solid var(--line); background: transparent; box-shadow: none; transform: none; }
     .column-menu__panel a { padding: .65rem .75rem; border-left: 1px solid var(--line); }
-    .header-search-slot { position: static; width: 100%; transform: none; }
     .theme-button { width: 100%; margin-top: .5rem; padding: .72rem; }
     .header-motion { display: flex; align-items: center; gap: .55rem; width: 100%; margin-top: .5rem; padding: .72rem; border: 1px solid var(--line); color: rgba(var(--text-rgb), .68); background: transparent; font-family: var(--font-mono); font-size: .6rem; cursor: pointer; }
     .header-motion i { width: .72rem; height: 2px; background: rgb(var(--signal-rgb)); box-shadow: .22rem .22rem 0 rgba(var(--signal-rgb), .32); }
     .header-motion[aria-pressed='true'] i { background: rgba(var(--text-rgb), .34); box-shadow: none; }
   }
-  @media (max-width: 430px) { .site-brand small { display: none; } }
+  @media (max-width: 620px) {
+    .header-inner { width: calc(100% - 1.4rem); }
+    .site-brand { gap: 0; padding-right: 0; border-right: 0; }
+    .site-brand > span:not(.brand-mark), .brand-home { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .header-search-slot { width: calc(100% - 7rem); }
+  }
 
 </style>
 
@@ -170,6 +202,11 @@ const portalCurrent = portalLinks.some((item) => current(item.href));
       button.setAttribute('aria-label', '打开导航');
       header.querySelectorAll<HTMLDetailsElement>('details[open]').forEach((details) => { details.open = false; });
     };
+    const layers = [...header.querySelectorAll<HTMLDetailsElement>('[data-nav-layer]')];
+    layers.forEach((layer) => layer.addEventListener('toggle', () => {
+      if (!layer.open) return;
+      layers.forEach((peer) => { if (peer !== layer) peer.open = false; });
+    }));
     button.addEventListener('click', (event) => {
       event.stopPropagation();
       const open = shell.dataset.open !== 'true';
@@ -188,7 +225,9 @@ const portalCurrent = portalLinks.some((item) => current(item.href));
     });
     header.querySelector('[data-motion-toggle]')?.addEventListener('click', close);
     header.querySelectorAll('a').forEach((control) => control.addEventListener('click', close));
-    document.addEventListener('click', (event) => { if (!header.contains(event.target as Node)) close(); });
+    document.addEventListener('click', (event) => {
+      if (!header.contains(event.target as Node) && matchMedia('(max-width: 1100px)').matches) close();
+    });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
   });
 
