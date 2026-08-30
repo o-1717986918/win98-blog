@@ -3,6 +3,7 @@ import type { ColumnEntry, PostEntry } from '../lib/content';
 import ContentCover from './ContentCover.astro';
 import { belongsToColumn } from '../lib/content';
 import { accentStyle } from '../lib/visual';
+import { withBase } from '../lib/site-path';
 
 interface Props { columns: ColumnEntry[]; posts: PostEntry[]; compact?: boolean; }
 const { columns, posts, compact = false } = Astro.props;
@@ -10,7 +11,7 @@ const { columns, posts, compact = false } = Astro.props;
 
 <div class:list={['column-directory', { 'column-directory--compact': compact }]}>
   {columns.map((column) => (
-    <a class="column-card" href={`/columns/${column.id}/`} style={accentStyle(column.data.accent)}>
+    <a class="column-card" href={withBase(`/columns/${column.id}/`)} style={accentStyle(column.data.accent)}>
       <ContentCover className="column-card__cover" title={column.data.title} seed={column.id} kind="column" accent={column.data.accent} cover={column.data.cover} variant="directory" />
       <div class="column-copy"><h3>{column.data.title}</h3><p>{column.data.description}</p></div>
       <span class="column-meta">{posts.filter((post) => belongsToColumn(post, column.id)).length} 篇 · 进入主题</span>

@@ -1,12 +1,13 @@
 import { getCollection } from 'astro:content';
 import { SITE } from '../config/site';
 import { isPublished, sortColumns, sortPosts } from '../lib/content';
+import { withBase } from '../lib/site-path';
 
 export async function GET({ site }: { site: URL | undefined }) {
   const root = site ?? new URL('https://example.com');
   const posts = sortPosts((await getCollection('posts')).filter(isPublished));
   const columns = sortColumns((await getCollection('columns')).filter(isPublished));
-  const absolute = (path: string) => new URL(path, root).href;
+  const absolute = (path: string) => new URL(withBase(path), root).href;
   const lines = [
     `# ${SITE.title}`,
     '',

@@ -1,3 +1,7 @@
+---
+import { withBase } from '../lib/site-path';
+---
+
 <section class="header-search" data-search-index data-pagefind-ignore>
   <label for="site-search">搜索本站</label>
   <div class="search-box">
@@ -38,4 +42,4 @@
   }
 </style>
 
-<script is:inline type="module" src="/scripts/search.js"></script>
+<script is:inline type="module" src={withBase('/scripts/search.js')}></script>

@@ -6,6 +6,7 @@ import PostList from '../components/PostList.astro';
 import { SITE } from '../config/site';
 import { allTags, formatDate, isPublished, sortColumns, sortPosts } from '../lib/content';
 import { accentStyle, postAccent } from '../lib/visual';
+import { withBase } from '../lib/site-path';
 import FullShell from '../layouts/FullShell.astro';
 
 const posts = sortPosts((await getCollection('posts')).filter(isPublished));
@@ -44,7 +45,7 @@ const latestNote = notes[0];
       </div>
 
       {spotlight ? (
-        <a class="spotlight" href={`/posts/${spotlight.id}/`} style={spotlightStyle}>
+        <a class="spotlight" href={withBase(`/posts/${spotlight.id}/`)} style={spotlightStyle}>
           <span class="spotlight-glow" aria-hidden="true"></span>
           <span class="spotlight-mark" aria-hidden="true"><i></i><i></i><i></i></span>
           <div class="spotlight-main">
@@ -68,10 +69,10 @@ const latestNote = notes[0];
         <div class="spotlight spotlight--empty"><p>第一篇文章正在准备中。</p></div>
       )}
       <section class="home-signal" aria-label="站点内容概况">
-        <a href="/archive/"><span>PUBLISHED / 01</span><strong>{posts.length} 篇文章</strong><small>{columns.length} 个长期主题</small></a>
+        <a href={withBase('/archive/')}><span>PUBLISHED / 01</span><strong>{posts.length} 篇文章</strong><small>{columns.length} 个长期主题</small></a>
         <div><span>READING / 02</span><strong>{totalMinutes} 分钟</strong><small>已标注预计阅读量</small></div>
         <div><span>LATEST / 03</span><strong>{latestDate ? formatDate(latestDate) : '待续'}</strong><small>最近一次更新</small></div>
-        <div class="home-signal__tags"><span>TOPICS / 04</span><p>{topTags.map((tag) => <a href={`/tags/${encodeURIComponent(tag.name)}/`}>#{tag.name}</a>)}</p></div>
+        <div class="home-signal__tags"><span>TOPICS / 04</span><p>{topTags.map((tag) => <a href={withBase(`/tags/${encodeURIComponent(tag.name)}/`)}>#{tag.name}</a>)}</p></div>
       </section>
 
     </header>
@@ -92,7 +93,7 @@ const latestNote = notes[0];
         <section class="recent-writing" aria-labelledby="latest-heading">
           <div class="library-heading">
             <div><p>LATEST WRITING</p><h2 id="latest-heading">继续阅读</h2></div>
-            <a href="/archive/">全部文章 →</a>
+            <a href={withBase('/archive/')}>全部文章 →</a>
           </div>
           <PostList posts={recent} compact />
         </section>
@@ -117,7 +118,7 @@ const latestNote = notes[0];
             </div>
             <div data-note-panel="links" hidden>
               <span>LOCAL GRAPH</span>
-              <div class="notes-feature__nodes"><i></i>{notes.slice(0, 3).map((note) => <a href={`/notes/${note.id}/`}>{note.data.title}</a>)}</div>
+              <div class="notes-feature__nodes"><i></i>{notes.slice(0, 3).map((note) => <a href={withBase(`/notes/${note.id}/`)}>{note.data.title}</a>)}</div>
               <p>节点来自真实公开笔记；内容增加后，关系视图会沿 Wiki 链接继续生长。</p>
             </div>
             <div data-note-panel="properties" hidden>
@@ -125,7 +126,7 @@ const latestNote = notes[0];
               <dl><div><dt>updated</dt><dd>{latestNote ? formatDate(latestNote.data.updated ?? latestNote.data.created) : '—'}</dd></div><div><dt>tags</dt><dd>{noteTags.join(', ') || '—'}</dd></div><div><dt>publish</dt><dd>true</dd></div></dl>
             </div>
           </div>
-          <a class="notes-feature__enter" href="/notes/"><span>进入知识空间</span><i>↗</i></a>
+          <a class="notes-feature__enter" href={withBase('/notes/')}><span>进入知识空间</span><i>↗</i></a>
         </section>
     </section>
   </div>

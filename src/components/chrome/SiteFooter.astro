@@ -1,11 +1,12 @@
 ---
 import { SITE } from '../../config/site';
+import { withBase } from '../../lib/site-path';
 ---
 
 <footer class="site-footer" data-pagefind-ignore>
   <span>© {new Date().getFullYear()} {SITE.title}</span>
   <span>文章 / 随笔 / 试验</span>
-  <nav aria-label="页脚导航"><a href="https://github.com/o-1717986918" rel="me noreferrer">GitHub ↗</a><a href="#site-search">搜索</a><a href="/archive/">文章</a><a href="/rss.xml">RSS</a><a href="/privacy/">隐私</a></nav>
+  <nav aria-label="页脚导航"><a href="https://github.com/o-1717986918" rel="me noreferrer">GitHub ↗</a><a href="#site-search">搜索</a><a href={withBase('/archive/')}>文章</a><a href={withBase('/rss.xml')}>RSS</a><a href={withBase('/privacy/')}>隐私</a></nav>
 </footer>
 
 <style>

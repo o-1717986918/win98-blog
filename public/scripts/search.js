@@ -1,5 +1,6 @@
 let pagefind;
 let requestId = 0;
+const siteRoot = new URL('../', import.meta.url);
 
 const escapeHtml = (value) => value.replace(/[&<>"']/g, (character) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -11,7 +12,7 @@ document.querySelectorAll('[data-search-index]').forEach((root) => {
   const list = root.querySelector('[data-search-results]');
   if (!input || !status || !list) return;
 
-  const load = async () => (pagefind ??= await import('/pagefind/pagefind.js'));
+  const load = async () => (pagefind ??= await import(new URL('pagefind/pagefind.js', siteRoot).href));
 
   const run = async () => {
     const id = ++requestId;

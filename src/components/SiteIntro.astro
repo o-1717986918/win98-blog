@@ -1,10 +1,14 @@
+---
+import { withBase } from '../lib/site-path';
+---
+
 <div class="site-intro" data-site-intro data-state="idle" data-pagefind-ignore role="dialog" aria-modal="true" aria-label="进入某人的小站">
   <canvas class="intro-particles" data-intro-particles aria-hidden="true"></canvas>
   <div class="intro-grain" aria-hidden="true"></div>
   <div class="intro-scan" aria-hidden="true"></div>
 
   <header class="intro-header">
-    <p><img src="/brand/logo.jpg" alt="" width="640" height="640" decoding="async" /><span>SOMEONE'S SITE</span><i></i><span>SESSION / 001</span></p>
+    <p><img src={withBase('/brand/logo.jpg')} alt="" width="640" height="640" decoding="async" /><span>SOMEONE'S SITE</span><i></i><span>SESSION / 001</span></p>
     <button class="intro-skip" type="button" data-intro-skip>跳过动画 <kbd>ESC</kbd></button>
   </header>
 

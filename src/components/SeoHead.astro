@@ -1,5 +1,6 @@
 ---
 import { SITE } from '../config/site';
+import { withBase } from '../lib/site-path';
 
 interface Props {
   title: string;
@@ -25,7 +26,7 @@ const {
   noindex = false,
 } = Astro.props;
 const documentTitle = title === SITE.title ? title : `${title} · ${SITE.title}`;
-const imageUrl = new URL(image, Astro.site);
+const imageUrl = new URL(withBase(image), Astro.site);
 const isArticle = pageKind === 'post';
 const structuredData = isArticle
   ? {
@@ -48,7 +49,7 @@ const structuredData = isArticle
       name: SITE.title,
       description: SITE.description,
       inLanguage: SITE.language,
-      url: new URL('/', Astro.site).href,
+      url: new URL(withBase('/'), Astro.site).href,
     };
 ---
 

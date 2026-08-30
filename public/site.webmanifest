@@ -3,11 +3,11 @@
   "short_name": "小站",
   "description": "记录 Web 架构、图形学、阅读与工程实践的个人博客。",
   "lang": "zh-CN",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#deebed",
   "theme_color": "#deebed",
   "icons": [
-    { "src": "/brand/logo.jpg", "sizes": "640x640", "type": "image/jpeg", "purpose": "any" }
+    { "src": "brand/logo.jpg", "sizes": "640x640", "type": "image/jpeg", "purpose": "any" }
   ]
 }

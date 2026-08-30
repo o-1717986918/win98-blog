@@ -2,6 +2,7 @@
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 import { arcDocGroups, arcDocs } from './docs';
+import { withBase } from '../../lib/site-path';
 
 interface Props {
   index: string;
@@ -18,9 +19,9 @@ const { index, section, title, deck, image, imageAlt, nextHref, nextLabel } = As
 
 <main class="arc-doc" data-pagefind-body>
   <nav class="arc-doc__nav">
-    <a class="arc-doc__brand" href="/columns/arcvellum/"><b>AV</b><span>ARC VELLUM / FIELD MANUAL</span></a>
-    <div><a href="https://github.com/o-1717986918/arcvellum" rel="noreferrer">SOURCE</a><a href="https://github.com/o-1717986918/arcvellum/releases" rel="noreferrer">v0.99.1</a><a href="/columns/arcvellum/#evidence">BETA LEDGER</a></div>
-    <a href="/">小站 ↗</a>
+    <a class="arc-doc__brand" href={withBase('/columns/arcvellum/')}><b>AV</b><span>ARC VELLUM / FIELD MANUAL</span></a>
+    <div><a href="https://github.com/o-1717986918/arcvellum" rel="noreferrer">SOURCE</a><a href="https://github.com/o-1717986918/arcvellum/releases" rel="noreferrer">v0.99.1</a><a href={withBase('/columns/arcvellum/#evidence')}>BETA LEDGER</a></div>
+    <a href={withBase('/')}>小站 ↗</a>
   </nav>
   <header class="arc-doc__hero">
     <div class="arc-doc__number"><span>{index}</span><small>{section}</small></div>
@@ -28,11 +29,11 @@ const { index, section, title, deck, image, imageAlt, nextHref, nextLabel } = As
     <figure><Image src={image} alt={imageAlt} widths={[640, 960, 1280]} sizes="(max-width: 800px) 100vw, 44vw" loading="eager" /><figcaption>仓库内真实产品界面 / RELEASE EVIDENCE</figcaption></figure>
   </header>
   <div class="arc-doc__body">
-    <aside class="arc-doc__sidebar"><div><span>FIELD NOTE</span><p>本文依据源码、开发文档、发布证据与设计评审整理；已证明、未证明和个人判断分开表述。</p></div><nav aria-label="ArcVellum 文章目录">{arcDocGroups.map((group) => <section><h2>{group}</h2>{arcDocs.filter((doc) => doc.group === group).map((doc) => <a class:list={{ active: doc.no === index }} href={`/posts/${doc.id}/`} aria-current={doc.no === index ? 'page' : undefined}><i>{doc.no}</i><span>{doc.label}</span><b>{doc.title}</b></a>)}</section>)}</nav></aside>
+    <aside class="arc-doc__sidebar"><div><span>FIELD NOTE</span><p>本文依据源码、开发文档、发布证据与设计评审整理；已证明、未证明和个人判断分开表述。</p></div><nav aria-label="ArcVellum 文章目录">{arcDocGroups.map((group) => <section><h2>{group}</h2>{arcDocs.filter((doc) => doc.group === group).map((doc) => <a class:list={{ active: doc.no === index }} href={withBase(`/posts/${doc.id}/`)} aria-current={doc.no === index ? 'page' : undefined}><i>{doc.no}</i><span>{doc.label}</span><b>{doc.title}</b></a>)}</section>)}</nav></aside>
     <article class="arc-prose"><slot /></article>
   </div>
-  {nextHref && <a class="arc-doc__next" href={nextHref}><span>NEXT DOCUMENT</span><strong>{nextLabel}</strong><i>↗</i></a>}
-  <footer><a href="/columns/arcvellum/">← 返回 ArcVellum 文档入口</a><span>LOCAL-FIRST / HUMAN-IN-COMMAND</span></footer>
+  {nextHref && <a class="arc-doc__next" href={withBase(nextHref)}><span>NEXT DOCUMENT</span><strong>{nextLabel}</strong><i>↗</i></a>}
+  <footer><a href={withBase('/columns/arcvellum/')}>← 返回 ArcVellum 文档入口</a><span>LOCAL-FIRST / HUMAN-IN-COMMAND</span></footer>
 </main>
 
 <style>

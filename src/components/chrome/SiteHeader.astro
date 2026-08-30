@@ -3,16 +3,20 @@ import { getCollection } from 'astro:content';
 import SearchIndex from '../SearchIndex.astro';
 import { SITE } from '../../config/site';
 import { isPublished, sortColumns } from '../../lib/content';
+import { withBase } from '../../lib/site-path';
 
 const columns = sortColumns((await getCollection('columns')).filter(isPublished).filter((column) => column.data.nav));
 const pathname = Astro.url.pathname;
-const current = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
+const current = (href: string) => {
+  const resolved = withBase(href);
+  return href === '/' ? pathname === resolved : pathname.startsWith(resolved);
+};
 ---
 
 <header class="site-header" data-site-header data-pagefind-ignore>
   <div class="header-inner">
     <button class="site-brand" type="button" aria-haspopup="dialog" aria-controls="profile-dialog" aria-label={`${SITE.title} · 打开个人资料`} data-profile-open>
-      <span class="brand-mark" aria-hidden="true"><img src="/brand/logo.jpg" alt="" width="640" height="640" decoding="async" /></span>
+      <span class="brand-mark" aria-hidden="true"><img src={withBase('/brand/logo.jpg')} alt="" width="640" height="640" decoding="async" /></span>
       <span>{SITE.title}<small>ESSAYS · NOTES · EXPERIMENTS</small></span>
       <i class="brand-open" aria-hidden="true">＋</i>
     </button>
@@ -21,20 +25,20 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
     </button>
     <div class="navigation-shell" id="site-navigation" data-navigation-shell>
       <nav class="site-navigation" aria-label="主导航">
-        <a href="/" aria-current={current('/') ? 'page' : undefined}>首页</a>
-        <a href="/archive/" aria-current={current('/archive/') ? 'page' : undefined}>文章</a>
+        <a href={withBase('/')} aria-current={current('/') ? 'page' : undefined}>首页</a>
+        <a href={withBase('/archive/')} aria-current={current('/archive/') ? 'page' : undefined}>文章</a>
         <details class="column-menu">
           <summary data-current={current('/columns/') ? 'true' : undefined}>主题 <span aria-hidden="true">⌄</span></summary>
           <div class="column-menu__panel">
             {columns.map((column) => (
-              <a href={`/columns/${column.id}/`} aria-current={current(`/columns/${column.id}/`) ? 'page' : undefined}>
+              <a href={withBase(`/columns/${column.id}/`)} aria-current={current(`/columns/${column.id}/`) ? 'page' : undefined}>
                 <span>{column.data.navLabel ?? column.data.title}</span><i aria-hidden="true">↗</i>
               </a>
             ))}
           </div>
         </details>
-        <a href="/notes/" aria-current={current('/notes/') ? 'page' : undefined}>笔记</a>
-        <a href="/about/" aria-current={current('/about/') ? 'page' : undefined}>关于</a>
+        <a href={withBase('/notes/')} aria-current={current('/notes/') ? 'page' : undefined}>笔记</a>
+        <a href={withBase('/about/')} aria-current={current('/about/') ? 'page' : undefined}>关于</a>
       </nav>
       <div class="header-search-slot"><SearchIndex /></div>
       <button class="header-motion" type="button" data-motion-toggle aria-pressed="false"><i aria-hidden="true"></i><span>暂停背景动效</span></button>
@@ -52,7 +56,7 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
     <div class="profile-dialog__main">
       <button class="profile-dialog__close" type="button" aria-label="关闭个人资料" data-profile-close>×</button>
       <div class="profile-dialog__identity">
-        <img src="/brand/logo.jpg" alt="某人的小站头像" width="640" height="640" decoding="async" />
+        <img src={withBase('/brand/logo.jpg')} alt="某人的小站头像" width="640" height="640" decoding="async" />
         <div><p>AUTHOR / BUILDER</p><h2 id="profile-title">某人</h2><span>在文学工程、可视化交互、求解系统与个人知识工具之间持续做项目。</span></div>
       </div>
       <p class="profile-dialog__statement">这里不是一张固定履历卡，而是作者与项目之间的入口。公开文章保留判断和工程证据，独立项目则允许形成自己的视觉与叙事语言。</p>
@@ -62,7 +66,7 @@ const current = (href: string) => href === '/' ? pathname === '/' : pathname.sta
       </dl>
       <nav aria-label="个人链接">
         <a href="https://github.com/o-1717986918" rel="me noreferrer"><span>GitHub</span><b>o-1717986918</b><i aria-hidden="true">↗</i></a>
-        <a href="/about/"><span>站内介绍</span><b>关于这个网站</b><i aria-hidden="true">→</i></a>
+        <a href={withBase('/about/')}><span>站内介绍</span><b>关于这个网站</b><i aria-hidden="true">→</i></a>
       </nav>
       <p class="profile-dialog__extensible">更多身份与联络方式可以在这里继续扩展，而不挤占主导航。</p>
     </div>

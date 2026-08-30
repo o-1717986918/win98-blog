@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import PostList from '../../components/PostList.astro';
 import FullShell from '../../layouts/FullShell.astro';
 import { allTags, isPublished, sortPosts } from '../../lib/content';
+import { withBase } from '../../lib/site-path';
 
 export async function getStaticPaths() {
   const posts = sortPosts((await getCollection('posts')).filter(isPublished));
@@ -19,7 +20,7 @@ const { tag, posts } = Astro.props;
   <div class="page-wrap tag-page">
     <header class="page-intro">
       <div><p class="eyebrow">TAG</p><h1 class="display-title">#{tag}</h1></div>
-      <div class="page-intro__copy"><p>此标签下共有 {posts.length} 篇文章。</p><div class="page-intro__meta"><a class="plain-link" href="/tags/">返回全部标签</a></div></div>
+      <div class="page-intro__copy"><p>此标签下共有 {posts.length} 篇文章。</p><div class="page-intro__meta"><a class="plain-link" href={withBase('/tags/')}>返回全部标签</a></div></div>
     </header>
     <section class="section-block"><PostList posts={posts} /></section>
   </div>

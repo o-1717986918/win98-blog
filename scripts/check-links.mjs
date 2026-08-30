@@ -4,6 +4,12 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const dist = join(root, 'dist');
+const basePath = process.env.BASE_PATH ? `/${process.env.BASE_PATH.replace(/^\/+|\/+$/g, '')}` : '';
+const withoutBase = (pathname) => {
+  if (!basePath) return pathname;
+  if (pathname === basePath || pathname === `${basePath}/`) return '/';
+  return pathname.startsWith(`${basePath}/`) ? pathname.slice(basePath.length) : pathname;
+};
 const htmlFiles = [];
 async function walk(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -25,7 +31,7 @@ for (const file of htmlFiles) {
     try { url = new URL(raw, 'https://local.invalid'); } catch { failures.push(`${file}: malformed URL ${raw}`); continue; }
     if (url.origin !== 'https://local.invalid') continue;
     let pathname;
-    try { pathname = decodeURIComponent(url.pathname); } catch { failures.push(`${file}: invalid URL encoding ${raw}`); continue; }
+    try { pathname = withoutBase(decodeURIComponent(url.pathname)); } catch { failures.push(`${file}: invalid URL encoding ${raw}`); continue; }
     const target = pathname.endsWith('/') ? join(dist, pathname, 'index.html') : join(dist, pathname);
     const fallback = extname(target) ? target : `${target}.html`;
     try { await stat(target); }

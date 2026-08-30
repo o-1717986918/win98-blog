@@ -85,7 +85,8 @@ describe('blog-architecture contracts', () => {
     const manifest = await read('public/site.webmanifest');
     const tokens = await read('src/styles/tokens.css');
     const logo = await stat(join(root, 'public', 'brand', 'logo.jpg'));
-    for (const source of [header, intro, base, manifest]) expect(source).toContain('/brand/logo.jpg');
+    for (const source of [header, intro, base]) expect(source).toContain('/brand/logo.jpg');
+    expect(manifest).toContain('brand/logo.jpg');
     expect(logo.size).toBeGreaterThan(10_000);
     expect(tokens).toContain('--brand-primary-rgb: 53, 121, 168;');
     expect(tokens).toContain('--brand-secondary-rgb: 198, 106, 67;');

@@ -1,4 +1,6 @@
 ---
+import { withBase } from '../../lib/site-path';
+
 const defaultMap = [
   '################', '#---#------#---#', '#-$---####-.-*-#', '###-#----#-#---#',
   '#-*---##-$-#---#', '#-###--#---###-#', '#@--##-*-#---.-#', '###----#---###-#',
@@ -6,7 +8,7 @@ const defaultMap = [
 ].join('\n');
 ---
 
-<section class="solver-viz" id="live-solver" data-solver-viz aria-labelledby="solver-viz-title">
+<section class="solver-viz" id="live-solver" data-solver-viz data-worker-url={withBase('/solver/solver-worker.js')} aria-labelledby="solver-viz-title">
   <div class="solver-viz__head"><div><p>LIVE CORE / C99 → WEBASSEMBLY</p><h2 id="solver-viz-title">把 C 内核的完整路径真正执行一遍</h2></div><span class="solver-status" data-status data-state="loading">LOADING WASM</span></div>
   <div class="solver-mode" role="group" aria-label="选择回放阶段">
     <button type="button" data-trace="recognition" aria-pressed="true">01 · 识别路径</button><button type="button" data-trace="planning" aria-pressed="false" disabled>02 · 完整规划</button>
@@ -45,6 +47,7 @@ const defaultMap = [
   type Point={x:number;y:number};type ReplayEvent={type:'input'|'walk'|'push-box'|'push-bomb'|'explode'|'error';label:string;point?:Point|undefined;cleared?:string[]|undefined};type ReplayState={width:number;height:number;actor:Point;walls:Set<string>;exits:Set<string>;boxes:Point[];bombs:Point[];event:ReplayEvent;move:string};type Trace={label:string;path:string;states:ReplayState[];error?:string|undefined};
   const root=document.querySelector<HTMLElement>('[data-solver-viz]');
   if(root){
+    class Worker extends globalThis.Worker { constructor(url:string|URL,options?:WorkerOptions){super(url==='/solver/solver-worker.js'?root!.dataset.workerUrl!:url,options)} }
     function q<T extends Element>(value:string){return root!.querySelector<T>(value)!}const mapInput=q<HTMLTextAreaElement>('[data-map]'),board=q<HTMLElement>('[data-board]'),status=q<HTMLElement>('[data-status]'),message=q<HTMLElement>('[data-message]'),range=q<HTMLInputElement>('[data-range]'),speed=q<HTMLSelectElement>('[data-speed]'),play=q<HTMLButtonElement>('[data-action="play"]'),stepButton=q<HTMLButtonElement>('[data-action="step"]'),stopButton=q<HTMLButtonElement>('[data-action="stop"]'),endMapButton=q<HTMLButtonElement>('[data-action="end-map"]'),finalMapButton=q<HTMLButtonElement>('[data-action="final-map"]'),recPathOut=q<HTMLElement>('[data-rec-path]'),planPathOut=q<HTMLElement>('[data-plan-path]'),recMetric=q<HTMLElement>('[data-rec-metric]'),planMetric=q<HTMLElement>('[data-plan-metric]'),timeMetric=q<HTMLElement>('[data-time]'),entityMetric=q<HTMLElement>('[data-entities]'),stepOut=q<HTMLElement>('[data-step]'),turnOut=q<HTMLElement>('[data-turns]'),positionOut=q<HTMLElement>('[data-position]'),phaseOut=q<HTMLElement>('[data-phase]'),eventOut=q<HTMLElement>('[data-event]'),traceSummary=q<HTMLElement>('[data-trace-summary]'),pathTrack=q<HTMLElement>('[data-path-track]');const traceButtons=[...root.querySelectorAll<HTMLButtonElement>('[data-trace]')];
     const defaultMap=mapInput.value.trim(),cellKey=(point:Point)=>`${point.x},${point.y}`,same=(a:Point,b:Point)=>a.x===b.x&&a.y===b.y,parseRows=(source:string)=>source.trim().split(/\r?\n/).map(row=>row.trim()).filter(Boolean);let worker:Worker,timeout=0,timer=0,requestId=0,current=0,mode:'recognition'|'planning'='recognition';let traces:Record<'recognition'|'planning',Trace|undefined>={recognition:undefined,planning:undefined};
     const clone=(state:ReplayState):ReplayState=>({...state,actor:{...state.actor},walls:new Set(state.walls),exits:new Set(state.exits),boxes:state.boxes.map(item=>({...item})),bombs:state.bombs.map(item=>({...item})),event:{...state.event,point:state.event.point?{...state.event.point}:undefined,cleared:state.event.cleared?[...state.event.cleared]:undefined}});

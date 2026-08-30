@@ -1,4 +1,20 @@
-# Cloudflare Pages 部署手册
+# 站点部署手册
+
+## 0. 当前线上：GitHub Pages
+
+当前首发地址是 `https://o-1717986918.github.io/win98-blog/`。`.github/workflows/github-pages.yml` 在 `main` 每次推送后构建并发布；站点以 `/win98-blog` 为 `BASE_PATH`，因此导航、图片、Pagefind、RSS、站点地图、Web Worker 与 Wasm 都必须经过统一子路径处理。
+
+本机复现 GitHub Pages 构建：
+
+```powershell
+$env:SITE_URL='https://o-1717986918.github.io'
+$env:BASE_PATH='/win98-blog'
+pnpm build
+Remove-Item Env:SITE_URL
+Remove-Item Env:BASE_PATH
+```
+
+GitHub Pages 是当前可立即访问的公开首发渠道；下述 Cloudflare Pages 方案继续保留，作为绑定自定义域名后的生产迁移路径。迁移时把 `SITE_URL` 换成最终域名、清空 `BASE_PATH`，再完整执行生产验收。
 
 ## 1. 已选方案
 

@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import ContentCover from './ContentCover.astro';
 import { formatDate, isPublished, type PostEntry } from '../lib/content';
 import { accentStyle, postAccent } from '../lib/visual';
+import { withBase } from '../lib/site-path';
 
 interface Props {
   posts: PostEntry[];
@@ -16,7 +17,7 @@ const columnMap = new Map(columns.map((column) => [column.id, column]));
 
 <div class:list={['post-list', { 'post-list--compact': compact }]}>
   {posts.length === 0 ? <p class="empty-state">这个主题还没有文章。</p> : posts.map((post) => (
-    <a class="post-row" href={`/posts/${post.id}/`} style={accentStyle(postAccent(post, columnMap))} data-post-row data-tags={post.data.tags.map((tag) => tag.toLowerCase()).join('|')} data-search={`${post.data.title} ${post.data.description} ${post.data.tags.join(' ')} ${post.data.columns.map((reference) => columnMap.get(reference.id)?.data.title ?? '').join(' ')}`.toLowerCase()}>
+    <a class="post-row" href={withBase(`/posts/${post.id}/`)} style={accentStyle(postAccent(post, columnMap))} data-post-row data-tags={post.data.tags.map((tag) => tag.toLowerCase()).join('|')} data-search={`${post.data.title} ${post.data.description} ${post.data.tags.join(' ')} ${post.data.columns.map((reference) => columnMap.get(reference.id)?.data.title ?? '').join(' ')}`.toLowerCase()}>
       <ContentCover className="post-cover" title={post.data.title} seed={post.id} kind="post" accent={postAccent(post, columnMap)} cover={post.data.cover} variant="list" />
       <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
       <div class="post-copy">

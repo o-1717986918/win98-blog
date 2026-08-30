@@ -1,11 +1,12 @@
 ---
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
+import { withBase } from '../../lib/site-path';
 interface Props { title:string; deck:string; image:ImageMetadata; }
 const { title, deck, image } = Astro.props;
 ---
 <main class="solver-story" data-pagefind-body>
-  <nav><a href="/columns/tools/">TOOLS · 工具</a><div><a href="#live-solver">求解器</a><a href="#architecture">架构</a><a href="#review">审查</a></div><a href="/">返回小站 ↗</a></nav>
+  <nav><a href={withBase('/columns/tools/')}>TOOLS · 工具</a><div><a href="#live-solver">求解器</a><a href="#architecture">架构</a><a href="#review">审查</a></div><a href={withBase('/')}>返回小站 ↗</a></nav>
   <header><div><p>C99 / BOUNDED SEARCH / ROBOT PLANNING</p><h1>{title}</h1><p>{deck}</p><dl><div><dt>地图上限</dt><dd>16 × 12</dd></div><div><dt>对象上限</dt><dd>6 / 6 / 6</dd></div><div><dt>目标函数</dt><dd>完成 → 转向 → 步数</dd></div></dl></div><figure><Image src={image} alt="推箱炸障求解器内置地图与真实识别路径" widths={[640,960,1600]} sizes="(max-width:800px) 100vw, 50vw" loading="eager" /></figure></header>
   <article><slot /></article>
   <footer><a href="https://github.com/o-1717986918/sokoban-recognition-bomb-solver" rel="noreferrer">SOURCE / GITHUB ↗</a><span>VERIFIED WITH REPOSITORY GCC TOOLCHAIN</span></footer>

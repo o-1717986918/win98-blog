@@ -2,6 +2,8 @@
 
 一个静态优先、允许文章与主题逐级获得网页级自由的个人博客。仓库从 `C:\Users\26532\.zcode\workspace\default` 的原项目接手而来；外部源目录保持不动，原型和架构文档以固定 SHA-256 保留为接手证据。
 
+线上站点：[o-1717986918.github.io/win98-blog](https://o-1717986918.github.io/win98-blog/)
+
 ## 已交付能力
 
 - Astro 7 + TypeScript + MDX Content Collections + 原生 CSS，输出纯静态站点；
@@ -37,7 +39,7 @@ pnpm content:new column my-column "主题标题"
 pnpm content:audit
 ```
 
-编辑、发布与资源共置见 `docs/operations/CONTENT_WORKFLOW.md`；可执行的 Cloudflare Pages 发布路径见 `docs/operations/DEPLOYMENT.md`，逐项上线验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。
+编辑、发布与资源共置见 `docs/operations/CONTENT_WORKFLOW.md`；GitHub Pages 首发与 Cloudflare Pages 后续迁移路径见 `docs/operations/DEPLOYMENT.md`，逐项上线验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。
 
 ## 目录
 

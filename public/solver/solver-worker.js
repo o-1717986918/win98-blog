@@ -14,7 +14,7 @@ const loadSolver = async () => {
         },
       },
     };
-    const response = await fetch('/solver/solver-engine.wasm');
+    const response = await fetch(new URL('./solver-engine.wasm', import.meta.url));
     if (!response.ok) throw new Error(`Wasm download failed (${response.status})`);
     const bytes = await response.arrayBuffer();
     const result = await WebAssembly.instantiate(bytes, imports);

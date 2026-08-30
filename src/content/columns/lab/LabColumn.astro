@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import { belongsToColumn, isPublished, sortPosts } from '../../../lib/content';
+import { withBase } from '../../../lib/site-path';
 const posts = sortPosts((await getCollection('posts')).filter(isPublished).filter((post) => belongsToColumn(post, 'lab')));
 ---
 
@@ -8,7 +9,7 @@ const posts = sortPosts((await getCollection('posts')).filter(isPublished).filte
   <header><p>INDEPENDENT THEME / CHROME NONE</p><h1>实验</h1><span>主题本身就是一个可以完全定制的网页。</span></header>
   <section>
     {posts.map((post, index) => (
-      <a href={`/posts/${post.id}/`}><small>{String(index + 1).padStart(2, '0')} / {post.data.chrome.toUpperCase()}</small><strong>{post.data.title}</strong><span>{post.data.description}</span><i>打开 →</i></a>
+      <a href={withBase(`/posts/${post.id}/`)}><small>{String(index + 1).padStart(2, '0')} / {post.data.chrome.toUpperCase()}</small><strong>{post.data.title}</strong><span>{post.data.description}</span><i>打开 →</i></a>
     ))}
   </section>
 </main>

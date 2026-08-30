@@ -7,6 +7,7 @@ import ArcVellumOrreryDemo from '../../../components/arcvellum/ArcVellumOrreryDe
 import hero from './cover.png';
 import reader from './reader.png';
 import runtime from './runtime.png';
+import { withBase } from '../../../lib/site-path';
 
 const posts = sortPosts((await getCollection('posts')).filter(isPublished).filter((post) => belongsToColumn(post, 'arcvellum')));
 const available = new Map(posts.map((post) => [post.id, post]));
@@ -14,9 +15,9 @@ const available = new Map(posts.map((post) => [post.id, post]));
 
 <main class="arc-site" data-pagefind-body>
   <nav class="arc-nav" aria-label="ArcVellum 主题导航">
-    <a class="arc-brand" href="/columns/arcvellum/"><i aria-hidden="true">AV</i><span>ARC VELLUM</span></a>
+    <a class="arc-brand" href={withBase('/columns/arcvellum/')}><i aria-hidden="true">AV</i><span>ARC VELLUM</span></a>
     <div><a href="#evidence">BETA 状态</a><a href="https://github.com/o-1717986918/arcvellum" rel="noreferrer">源码</a><a href="https://github.com/o-1717986918/arcvellum/releases" rel="noreferrer">发行版</a></div>
-    <a class="arc-exit" href="/">返回小站 ↗</a>
+    <a class="arc-exit" href={withBase('/')}>返回小站 ↗</a>
   </nav>
 
   <header class="arc-hero" data-orbit-hero>
@@ -26,7 +27,7 @@ const available = new Map(posts.map((post) => [post.id, post]));
       <p class="arc-deck">ArcVellum 把小说、剧本与伪记录作品从一段不断变长的聊天，变成有 Canon、任务、审查证据与正式正文的长期项目。</p>
       <div class="arc-actions">
         <a href="https://github.com/o-1717986918/arcvellum/releases" rel="noreferrer">查看 Windows 发行版 <span>↗</span></a>
-        <a href="/posts/arcvellum-release/">从产品导览开始</a>
+        <a href={withBase('/posts/arcvellum-release/')}>从产品导览开始</a>
       </div>
       <dl>
         <div><dt>当前发布线</dt><dd>v0.99.x Beta</dd></div>
@@ -77,11 +78,11 @@ const available = new Map(posts.map((post) => [post.id, post]));
   </section>
 
   <section class="arc-docs" id="documents">
-    <aside class="arc-docs__sidebar"><p>DEVELOPMENT LEDGER / 02</p><h2>文章放到侧边，让发布页继续讲产品。</h2><span>文档按产品、文学内核、Agent 工作流、空间前端与交付证据分层；这里展示已完成文章，完整模块选题与来源映射见编辑清单。</span><a href="/posts/arcvellum-module-atlas/">打开模块文章地图 ↗</a></aside>
+    <aside class="arc-docs__sidebar"><p>DEVELOPMENT LEDGER / 02</p><h2>文章放到侧边，让发布页继续讲产品。</h2><span>文档按产品、文学内核、Agent 工作流、空间前端与交付证据分层；这里展示已完成文章，完整模块选题与来源映射见编辑清单。</span><a href={withBase('/posts/arcvellum-module-atlas/')}>打开模块文章地图 ↗</a></aside>
     <div class="arc-doc-list" aria-label="ArcVellum 开发手记目录">
       {docs.map((doc) => {
         const post = available.get(doc.id);
-        return <a href={post ? `/posts/${doc.id}/` : '#'} aria-disabled={!post}><span>{doc.no}</span><small>{doc.label}</small><strong>{doc.title}</strong><p>{doc.note}</p><i>打开文档 ↗</i></a>;
+        return <a href={post ? withBase(`/posts/${doc.id}/`) : '#'} aria-disabled={!post}><span>{doc.no}</span><small>{doc.label}</small><strong>{doc.title}</strong><p>{doc.note}</p><i>打开文档 ↗</i></a>;
       })}
     </div>
   </section>

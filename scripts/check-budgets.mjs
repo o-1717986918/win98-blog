@@ -5,6 +5,10 @@ import { gzipSync } from 'node:zlib';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const dist = join(root, 'dist');
+const basePath = process.env.BASE_PATH ? `/${process.env.BASE_PATH.replace(/^\/+|\/+$/g, '')}` : '';
+const withoutBase = (pathname) => basePath && pathname.startsWith(`${basePath}/`)
+  ? pathname.slice(basePath.length)
+  : pathname;
 const files = [];
 async function walk(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -36,7 +40,7 @@ const routeCss = await Promise.all(html.map(async (file) => {
   const references = [...new Set([...source.matchAll(/href="([^"]+\.css)"/gu)].map((match) => match[1]))];
   return {
     path: file.path,
-    size: references.reduce((sum, reference) => sum + (cssByPublicPath.get(reference) ?? 0), 0),
+    size: references.reduce((sum, reference) => sum + (cssByPublicPath.get(withoutBase(reference)) ?? 0), 0),
   };
 }));
 const heaviestRoute = routeCss.sort((a, b) => b.size - a.size)[0] ?? { path: '', size: 0 };

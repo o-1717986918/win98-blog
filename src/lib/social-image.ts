@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import { resolveTheme, type ThemeId } from '../config/site';
 import { normalizeAccent, type AccentId } from './visual';
+import { withBase } from './site-path';
 
 const PALETTES: Record<ThemeId, { background: string; surface: string; text: string; muted: string; accents: Record<AccentId, string> }> = {
   mist: { background: '#e7eceb', surface: '#f7f8f4', text: '#17262e', muted: '#4c6065', accents: { aqua: '#3579a8', coral: '#c66a43', violet: '#6f6a9b', gold: '#a28449' } },
@@ -59,4 +60,4 @@ export async function renderSocialCard({ title, description, kind, theme, accent
 }
 
 export const socialImagePath = (collection: 'posts' | 'columns', id: string) =>
-  `/og/${collection}/${id.split('/').map(encodeURIComponent).join('/')}.png`;
+  withBase(`/og/${collection}/${id.split('/').map(encodeURIComponent).join('/')}.png`);

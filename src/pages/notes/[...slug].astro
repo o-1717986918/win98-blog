@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import FullShell from '../../layouts/FullShell.astro';
 import ReaderControls from '../../components/chrome/ReaderControls.astro';
 import '../../styles/prose.css';
+import { withBase } from '../../lib/site-path';
 
 export async function getStaticPaths() {
   const notes = (await getCollection('notes')).filter((note) => note.data.publish && !note.data.draft);
@@ -17,8 +18,8 @@ const incoming = allNotes.filter((entry) => (entry.body ?? '').includes(`[[${not
 <FullShell title={note.data.title} description={note.data.description || `学习笔记：${note.data.title}`} pageKind="page">
   <main class="page-wrap note-page">
     <header><p>LEARNING NOTE / LOCAL-SYNCED</p><h1>{note.data.title}</h1><span>{note.data.description}</span><dl><div><dt>更新</dt><dd>{(note.data.updated ?? note.data.created).toLocaleDateString('zh-CN')}</dd></div><div><dt>标签</dt><dd>{note.data.tags.join(' · ') || '未标注'}</dd></div><div><dt>来源</dt><dd>{note.data.source ?? '站内创建'}</dd></div></dl></header>
-    <div class="note-page__grid"><article class="prose" data-pagefind-body data-reading-surface><Content /></article><aside><p>NOTE MAP</p>{headings.filter((heading) => heading.depth === 2).map((heading) => <a href={`#${heading.slug}`}>{heading.text}</a>)}<div><span>反向链接</span>{incoming.length ? incoming.map((entry) => <a href={`/notes/${entry.id}/`}>{entry.data.title} ↗</a>) : <small>尚无公开笔记引用此页。</small>}</div></aside></div>
-    <a class="note-page__back" href="/notes/">← 返回学习笔记</a>
+    <div class="note-page__grid"><article class="prose" data-pagefind-body data-reading-surface><Content /></article><aside><p>NOTE MAP</p>{headings.filter((heading) => heading.depth === 2).map((heading) => <a href={`#${heading.slug}`}>{heading.text}</a>)}<div><span>反向链接</span>{incoming.length ? incoming.map((entry) => <a href={withBase(`/notes/${entry.id}/`)}>{entry.data.title} ↗</a>) : <small>尚无公开笔记引用此页。</small>}</div></aside></div>
+    <a class="note-page__back" href={withBase('/notes/')}>← 返回学习笔记</a>
   </main>
   <ReaderControls />
 </FullShell>

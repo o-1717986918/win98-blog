@@ -1,9 +1,10 @@
 ---
 import FullShell from '../layouts/FullShell.astro';
+import { withBase } from '../lib/site-path';
 ---
 
 <FullShell title="页面不存在" description="没有找到请求的页面。">
-  <div class="page-wrap not-found"><p class="eyebrow">404</p><h1>这里没有内容。</h1><a class="plain-link" href="/">返回首页 →</a></div>
+  <div class="page-wrap not-found"><p class="eyebrow">404</p><h1>这里没有内容。</h1><a class="plain-link" href={withBase('/')}>返回首页 →</a></div>
 </FullShell>
 
 <style>.not-found { padding: clamp(7rem, 18vh, 12rem) 0; }.not-found h1 { margin-bottom: 2rem; font-size: clamp(2.5rem, 8vw, 6rem); letter-spacing: -.055em; }</style>

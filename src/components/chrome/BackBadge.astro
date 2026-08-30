@@ -1,9 +1,10 @@
 ---
+import { withBase } from '../../lib/site-path';
 interface Props { href?: string; label?: string; }
 const { href = '/', label = '返回上页' } = Astro.props;
 ---
 
-<a class="back-badge" href={href} aria-label={label} data-history-back>← <span>{label}</span></a>
+<a class="back-badge" href={withBase(href)} aria-label={label} data-history-back>← <span>{label}</span></a>
 
 <style>
   .back-badge {

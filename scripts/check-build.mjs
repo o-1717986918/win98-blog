@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const siteUrl = (process.env.SITE_URL || 'https://example.com').replace(/\/+$/, '');
+const basePath = process.env.BASE_PATH ? `/${process.env.BASE_PATH.replace(/^\/+|\/+$/g, '')}` : '';
+const publicUrl = `${siteUrl}${basePath}`;
 const read = (path) => readFile(resolve(root, path), 'utf8');
 const failures = [];
 const requireText = (source, text, label) => { if (!source.includes(text)) failures.push(`${label}: missing ${text}`); };
@@ -43,7 +45,7 @@ requireText(full, 'data-reading-progress', 'full post reading progress');
 requireText(full, 'class="motion-toggle"', 'full post motion control');
 requireText(full, 'data-pagefind-body', 'full post search boundary');
 requireText(full, 'data-content-cover', 'full post cover');
-requireText(full, `property="og:image" content="${siteUrl}/_astro/cover.`, 'full post real-cover social image');
+requireText(full, `property="og:image" content="${publicUrl}/_astro/cover.`, 'full post real-cover social image');
 requireText(componentPost, 'data-code-playground', 'MDX component library');
 requireText(componentPost, 'data-chart', 'accessible MDX chart');
 for (const [label, source] of [

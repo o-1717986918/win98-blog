@@ -1,4 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
+import { withBase } from './site-path';
 
 export type PostEntry = CollectionEntry<'posts'>;
 export type ColumnEntry = CollectionEntry<'columns'>;
@@ -34,7 +35,7 @@ export const allTags = (posts: PostEntry[]) => {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'zh-CN'));
 };
 
-export const tagPath = (tag: string) => `/tags/${encodeURIComponent(tag)}/`;
+export const tagPath = (tag: string) => withBase(`/tags/${encodeURIComponent(tag)}/`);
 
 export const relatedPosts = (target: PostEntry, posts: PostEntry[], limit = 3) => {
   const targetColumns = new Set(target.data.columns.map((column) => column.id));

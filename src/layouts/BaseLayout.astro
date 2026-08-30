@@ -1,6 +1,7 @@
 ---
 import { resolveTheme, SITE, type ThemeId } from '../config/site';
 import SeoHead from '../components/SeoHead.astro';
+import { withBase } from '../lib/site-path';
 
 interface Props {
   title: string;
@@ -39,9 +40,9 @@ const resolvedTheme = resolveTheme(theme);
     <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content={resolvedTheme === 'mist' ? '#e7eceb' : '#091115'} />
     <link rel="canonical" href={canonical} />
-    <link rel="alternate" type="application/rss+xml" title={`${SITE.title} RSS`} href="/rss.xml" />
-    <link rel="icon" href="/brand/logo.jpg" type="image/jpeg" sizes="640x640" />
-    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="alternate" type="application/rss+xml" title={`${SITE.title} RSS`} href={withBase('/rss.xml')} />
+    <link rel="icon" href={withBase('/brand/logo.jpg')} type="image/jpeg" sizes="640x640" />
+    <link rel="manifest" href={withBase('/site.webmanifest')} />
     <SeoHead {title} {description} {canonical} {pageKind} {image} {published} {updated} {tags} {noindex} />
     <title>{documentTitle}</title>
     <slot name="head" />

@@ -1,8 +1,11 @@
 import { getCollection, getEntry, getEntries, render } from 'astro:content';
 import { belongsToColumn, isPublished, relatedPosts, sortPosts } from './content';
+import { basePath } from './site-path';
 
 function routeId(pathname: string, collection: 'posts' | 'columns') {
   const segments = decodeURIComponent(pathname).split('/').filter(Boolean);
+  const baseSegments = basePath.split('/').filter(Boolean);
+  if (baseSegments.every((segment, index) => segments[index] === segment)) segments.splice(0, baseSegments.length);
   if (segments.shift() !== collection || segments.length === 0) {
     throw new Error(`Invalid ${collection} route: ${pathname}`);
   }

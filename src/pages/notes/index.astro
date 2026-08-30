@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import StandaloneLayout from '../../layouts/StandaloneLayout.astro';
 import '../../styles/tokens.css';
 import '../../styles/shell.css';
+import { withBase } from '../../lib/site-path';
 
 const notes = (await getCollection('notes'))
   .filter((note) => note.data.publish && !note.data.draft)
@@ -31,9 +32,9 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
 <StandaloneLayout title="学习笔记" description="本地知识库经过显式公开后形成的只读知识空间。" theme="mist">
   <main class="garden" data-note-workbench data-pagefind-body>
     <header class="garden-bar">
-      <a class="garden-home" href="/" aria-label="返回博客首页"><b>某</b><span>某人的小站</span></a>
+      <a class="garden-home" href={withBase('/')} aria-label="返回博客首页"><b>某</b><span>某人的小站</span></a>
       <p>PRIVATE WORKSPACE / PUBLIC PROJECTION</p>
-      <nav aria-label="学习笔记导航"><a href="/">博客首页</a><span><i></i> LOCAL-FIRST</span></nav>
+      <nav aria-label="学习笔记导航"><a href={withBase('/')}>博客首页</a><span><i></i> LOCAL-FIRST</span></nav>
     </header>
 
     <section class="garden-hero">
@@ -66,7 +67,7 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
             const incoming = incomingFor(note);
             const outgoing = outgoingFor(note);
             return <li data-note-entry data-note-title={note.data.title.toLowerCase()} data-note-description={note.data.description.toLowerCase()} data-note-tags={note.data.tags.join('|').toLowerCase()}>
-              <a href={`/notes/${note.id}/`} data-note-preview
+              <a href={withBase(`/notes/${note.id}/`)} data-note-preview
                 data-preview-index={String(index + 1).padStart(2, '0')}
                 data-preview-title={note.data.title}
                 data-preview-description={note.data.description}
@@ -101,7 +102,7 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
           <section>
             <h3>公开笔记如何进入这里</h3>
             <p>正文仍在 Markdown 文件中完成。同步器转换基础 Wiki 链接与附件，并且只让带有 <code>publish: true</code> 的条目进入静态站点。这个页面负责阅读与发现，不远程修改你的本地知识库。</p>
-            <a href={latest ? `/notes/${latest.id}/` : '/notes/'} data-preview-open>打开完整笔记 <span>↗</span></a>
+            <a href={withBase(latest ? `/notes/${latest.id}/` : '/notes/')} data-preview-open>打开完整笔记 <span>↗</span></a>
           </section>
           <footer><span>UPDATED</span><time data-preview-date>{latest ? formatDate(latest.data.updated ?? latest.data.created) : '—'}</time></footer>
         </article>
@@ -114,7 +115,7 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
               return source && target && <line x1={source.x} y1={source.y} x2={target.x} y2={target.y} />;
             })}
           </svg>
-          {graphNodes.map(({ note, x, y }, index) => <a href={`/notes/${note.id}/`} style={`--node-x:${x}%;--node-y:${y}%;`} data-note-entry data-note-title={note.data.title.toLowerCase()} data-note-description={note.data.description.toLowerCase()} data-note-tags={note.data.tags.join('|').toLowerCase()}><i></i><strong>{note.data.title}</strong><small>{String(index + 1).padStart(2, '0')}</small></a>)}
+          {graphNodes.map(({ note, x, y }, index) => <a href={withBase(`/notes/${note.id}/`)} style={`--node-x:${x}%;--node-y:${y}%;`} data-note-entry data-note-title={note.data.title.toLowerCase()} data-note-description={note.data.description.toLowerCase()} data-note-tags={note.data.tags.join('|').toLowerCase()}><i></i><strong>{note.data.title}</strong><small>{String(index + 1).padStart(2, '0')}</small></a>)}
           <p>{relations.length ? '线条仅表示公开笔记之间的真实内部链接。' : '当前公开条目尚未形成内部链接；新增 Wiki 链接后，关系线会自然出现。'}</p>
         </div>
       </section>
@@ -131,7 +132,7 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
         </section>
         <section class="garden-backlinks">
           <header><p>LINKED MENTIONS</p><span data-preview-incoming>{latestIncoming.length}</span></header>
-          <div data-backlink-copy>{latestIncoming.length ? latestIncoming.map((entry) => <a href={`/notes/${entry.id}/`}>{entry.data.title} ↗</a>) : <small>尚无公开笔记引用当前条目。</small>}</div>
+          <div data-backlink-copy>{latestIncoming.length ? latestIncoming.map((entry) => <a href={withBase(`/notes/${entry.id}/`)}>{entry.data.title} ↗</a>) : <small>尚无公开笔记引用当前条目。</small>}</div>
         </section>
         <section class="garden-outgoing">
           <header><p>OUTGOING LINKS</p><span data-preview-outgoing>{latestOutgoing.length}</span></header>

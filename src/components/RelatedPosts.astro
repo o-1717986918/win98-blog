@@ -2,6 +2,7 @@
 import { formatDate, tagPath, type ColumnEntry, type PostEntry } from '../lib/content';
 import ContentCover from './ContentCover.astro';
 import { accentStyle, postAccent } from '../lib/visual';
+import { withBase } from '../lib/site-path';
 interface Props { posts: PostEntry[]; columnLookup: Map<string, ColumnEntry>; }
 const { posts, columnLookup } = Astro.props;
 ---
@@ -14,7 +15,7 @@ const { posts, columnLookup } = Astro.props;
         <article style={accentStyle(postAccent(post, columnLookup))}>
           <ContentCover className="related__cover" title={post.data.title} seed={post.id} kind="post" accent={postAccent(post, columnLookup)} cover={post.data.cover} variant="related" />
           <div class="related__meta"><time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time><span>{post.data.tags.slice(0, 2).map((tag) => <a href={tagPath(tag)}>#{tag}</a>)}</span></div>
-          <h3><a href={`/posts/${post.id}/`}>{post.data.title}</a></h3>
+          <h3><a href={withBase(`/posts/${post.id}/`)}>{post.data.title}</a></h3>
           <span class="related__arrow" aria-hidden="true">↗</span>
         </article>
       ))}
