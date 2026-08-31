@@ -1,7 +1,13 @@
 ---
 const provider = import.meta.env.PUBLIC_ANALYTICS_PROVIDER ?? 'none';
 const cloudflareToken = provider === 'cloudflare' ? import.meta.env.PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN : '';
-const umamiScript = provider === 'umami' ? import.meta.env.PUBLIC_UMAMI_SCRIPT_URL : '';
+const umamiScript = (() => {
+  if (provider !== 'umami') return '';
+  try {
+    const parsed = new URL(import.meta.env.PUBLIC_UMAMI_SCRIPT_URL ?? '');
+    return parsed.protocol === 'https:' ? parsed.href : '';
+  } catch { return ''; }
+})();
 const umamiWebsite = provider === 'umami' ? import.meta.env.PUBLIC_UMAMI_WEBSITE_ID : '';
 ---
 

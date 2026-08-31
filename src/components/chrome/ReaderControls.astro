@@ -36,14 +36,16 @@
 </style>
 
 <script>
+  import { storageGet, storageRemove, storageSet } from '../../lib/browser-storage';
+
   const scaleKey = 'someone-site:reader-scale';
   const leadingKey = 'someone-site:reader-leading';
   const focusKey = 'someone-site:immersive';
   const positionKey = `someone-site:reading-position:${location.pathname}`;
   const store = {
-    get(key: string) { try { return localStorage.getItem(key); } catch { return null; } },
-    set(key: string, value: string) { try { localStorage.setItem(key, value); } catch { /* storage can be unavailable */ } },
-    remove(key: string) { try { localStorage.removeItem(key); } catch { /* storage can be unavailable */ } },
+    get(key: string) { return storageGet('localStorage', key); },
+    set(key: string, value: string) { storageSet('localStorage', key, value); },
+    remove(key: string) { storageRemove('localStorage', key); },
   };
   const clamp = (value: number) => Math.min(1.2, Math.max(.9, value));
   const leadingModes = ['compact', 'normal', 'relaxed'] as const;

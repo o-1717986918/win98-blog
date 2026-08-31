@@ -1,8 +1,8 @@
 # 个人博客架构方案：结论汇总
 
-> **状态**：架构设计定稿，待实施
-> **日期**：2026-08-27（第四轮更新）
-> **说明**：本文档汇总四轮调研与设计评审（技术选型 → 模块化架构 → 独立网页模式评审 → 参考项目批判性吸收）的全部结论，作为后续实施的唯一依据。
+> **状态**：历史设计基线；主干已实施并继续演进
+> **日期**：2026-08-31（实现校准）
+> **说明**：本文档保存初始调研和设计原则，不再是运行事实的唯一依据。当前版本、目录、部署和产品结构以可执行 Schema、生产源码、自动化测试、`docs/handover/CURRENT_STATE.md` 与后续 ADR 为准。
 
 ---
 
@@ -40,21 +40,21 @@
 
 **否决：Hexo / Hugo**——其"主题"模式与本方案的模块化需求本质冲突。
 
-### 2.2 最终技术栈（第四轮细化）
+### 2.2 当前技术栈（实现校准）
 
 | 层 | 选型 | 理由 |
 |----|------|------|
-| 框架 | **Astro（最新大版本 v6）** | Content Layer API 支持任意内容源与万级条目；零 JS 默认 + Islands |
+| 框架 | **Astro 7** | Content Layer、静态输出、按需客户端脚本与构建期路由注入 |
 | 语言 | **TypeScript 全覆盖** | content.config.ts（zod schema）、layouts、dispatcher 全部 TS（借鉴 literary-studio） |
 | 内容 | MDX + Content Collections | 组件化正文 + 编译期 schema 校验 |
 | 样式 | **原生 CSS + Design Tokens（CSS 变量）+ `@layer` + Astro scoped styles** | 与主题系统天然契合（主题=变量集）；`none` 档零全局 CSS 的隔离目标依赖 `@layer`；不引入 Tailwind——工具类会与"主题即数据"模式和手写定制文章冲突（见 2.3） |
 | 代码高亮 | **Expressive Code**（基于 Shiki） | 2026 年 Astro 博客事实标准：双主题、行号、标记、复制按钮、文件框 |
-| OG 分享图 | **Satori 管线**（astro-og-canvas 或 x-satori） | 构建时按文章 frontmatter 自动生成分享卡，可跟随每篇文章的 `theme` 配色 |
+| OG 分享图 | **SVG 模板 + Sharp PNG 管线** | 构建时按内容 frontmatter 生成 1200×630 分享卡，并复用主题与 accent 数据 |
 | 图片 | Astro 内置 `<Image />` + Sharp | 构建时压缩、WebP/AVIF、防布局偏移 |
-| 页面过渡 | **Client Router**（View Transitions，v5 起转正） | 跨页淡入淡出；`none` 档文章可按篇退出 |
-| 测试 | **Vitest**（架构守护测试 + dispatcher 单测） | "架构约束=可执行断言"（借鉴 literary-studio 的 featureBoundary.spec.ts） |
-| 托管 | Cloudflare Pages | Git push 即发布；国内访问相对友好 |
-| 评论 | Giscus（国际）/ Waline、Artalk（国内优先） | Waline/Artalk 渲染用户 HTML 时必须过 DOMPurify 白名单（借鉴 SafeMarkdown） |
+| 页面过渡 | **原生跨文档 View Transitions CSS** | full/minimal 通过 CSS 渐进增强；`none` 不加载相应样式 |
+| 测试 | **Vitest + Playwright + 产物审计** | 分别验证 Schema/依赖边界、真实浏览器连接与最终 HTML/资产隔离 |
+| 托管 | **GitHub Pages（当前）/ Cloudflare Pages（迁移路径）** | 当前以项目子路径发布；绑定域名后可迁移 Direct Upload |
+| 评论 | Giscus / 隔离 iframe 适配器（默认关闭） | 未配置时零第三方请求；外部地址必须为 HTTPS |
 | 搜索 | Pagefind | 构建时静态索引，零后端 |
 | 统计 | Umami | 隐私友好，可自托管 |
 
@@ -75,11 +75,11 @@
 
 | 平台 | 特点 | 结论 |
 |------|------|------|
-| GitHub Pages | 完全免费，入门标配 | 可用，但国内访问一般 |
+| **GitHub Pages** | 完全免费，项目子路径部署 | ✅ 当前线上 |
 | Vercel / Netlify | 预览部署、域名体验最佳 | 默认域名国内时好时坏 |
-| **Cloudflare Pages** | 免费额度大、全球节点多、**国内访问相对友好** | ✅ 首选 |
+| **Cloudflare Pages** | Direct Upload、自定义域名与响应头支持 | 后续迁移路径 |
 
-部署模式：**Git push 即发布**，仓库中存全部内容与代码，CI 自动构建分发。
+部署模式：**Git push → `verify:all` → 静态产物发布**。GitHub Pages 不应用仓库中的 `_headers`；该文件只为支持该机制的后续主机保留，不能作为当前线上安全头的证据。
 
 ---
 
@@ -193,28 +193,25 @@ const { Content } = await render(post)
 
 ---
 
-## 5. 目录结构（定稿）
+## 5. 目录结构（当前实现）
 
 ```
 src/
 ├── layouts/
 │   ├── BaseLayout.astro        # 唯一契约：html/head 骨架 + 插槽，无任何视觉 chrome
-│   ├── PostLayout.astro        # chrome: full 的拼装方案
-│   ├── BareLayout.astro        # chrome: minimal
+│   ├── FullShell.astro         # 站点侧栏、环境场、页脚与可选服务
+│   ├── PostLayout.astro        # chrome: full 的文章装配
+│   ├── MinimalPostLayout.astro # chrome: minimal 的文章装配
+│   ├── ColumnLayout.astro      # chrome: full 的主题装配
+│   ├── MinimalColumnLayout.astro
 │   └── StandaloneLayout.astro  # chrome: none
-├── chrome/                     # 外壳零件（可增删、跨档复用）
-│   ├── SiteHeader.astro
-│   ├── SiteFooter.astro
-│   ├── Toc.astro
-│   ├── BackBadge.astro         # 导航桥
-│   └── ImmersiveToggle.astro   # 读者侧运行时沉浸开关（借鉴 arcvellum）
-├── themes/                     # 主题=纯数据的 CSS 变量集（借鉴 arcvellum themes.js）
-│   ├── default.css             # 基础 design tokens（含日夜两套）
-│   └── obsidian.css            # 示例：一篇文章一套艺术方向
+├── routes/                     # 六个按 collection × chrome 隔离的构建入口
+├── components/chrome/          # 侧栏、页脚、阅读控件、返回桥等外壳零件
+├── styles/                     # mist/abyss token、full/minimal 与正文样式
 ├── components/                 # 内容级组件（Callout、图表、代码演示…）
 │   ├── Callout.astro
-│   ├── Chart.astro
-│   └── CodePlayground.tsx      # 交互岛屿
+│   ├── DataChart.astro
+│   └── CodePlayground.astro
 ├── content/posts/              # 每篇文章 = 自包含文件夹
 │   ├── hello-world/
 │   │   ├── index.mdx
@@ -223,8 +220,7 @@ src/
 │   └── canvas-experiment/
 │       ├── index.mdx
 │       └── particles.js        # 本文专属脚本
-└── tests/
-    └── architecture.spec.ts    # 架构守护测试（借鉴 literary-studio，见第 10 章）
+└── tests/                      # Schema、业务规则与依赖图边界测试
 ```
 
 ---
@@ -237,11 +233,10 @@ src/
 ---
 title: 粒子宇宙实验
 chrome: none                        # full | minimal | none（默认 full）
-theme: obsidian                     # 可选：指定主题（一组 CSS 变量），不写则用默认
+theme: abyss                        # mist | abyss
 back: true                          # none 档下的导航桥开关
 wide: true                          # 版式开关（full/minimal 档可用）
 hideToc: true                       # 关闭目录
-customScript: ./particles.js        # 注入本文专属 JS
 # layout 字段不直接使用——由 dispatcher 统一调度
 ---
 import Hero from './Hero.astro'     # 正文可 import 私有组件
@@ -254,11 +249,11 @@ import Hero from './Hero.astro'     # 正文可 import 私有组件
 ```ts
 // content.config.ts 中对应的 schema 片段
 chrome: z.enum(['full', 'minimal', 'none']).default('full'),
-theme: z.string().optional(),       # 对应 src/themes/ 下的一个 token 集
+theme: z.enum(['mist', 'abyss']).default('abyss'),
 back: z.boolean().default(true),
 ```
 
-**主题即数据**（借鉴 arcvellum themes.js）：一个主题文件只包含一组 CSS 变量声明，由布局挂载到文章页根元素上——文章换整套配色不用写一行 CSS，OG 分享图也可以读取同一主题配色生成。
+**主题即数据**：`mist/abyss` 由严格枚举和 CSS 变量声明驱动；内容的 `accent` 另行表达语义色。布局与 OG 分享图读取同一组受控值，旧主题别名不再进入运行时 Schema。
 
 **使用准则**：默认什么都不写（`full` 档开箱即用）；只有特殊文章才逐级升级。升级顺序：先试 `minimal`，确实需要零外壳时才用 `none`。
 
@@ -289,10 +284,10 @@ back: z.boolean().default(true),
 
 | 阶段 | 内容 | 产出 |
 |------|------|------|
-| **Phase 1** 骨架 | Astro 初始化 + BaseLayout + 三档布局 + chrome 部件 + dispatcher + design tokens（含日夜主题） | 可本地运行的空博客 |
-| **Phase 2** 内容 | Content Collections + schema + 两篇示例文章（一篇 `full`、一篇 `none` 档 canvas 演示）+ Expressive Code + **架构守护测试** | 验证三档差异，架构规则有测试兜底 |
-| **Phase 3** 生态 | Giscus 评论 + Pagefind 搜索 + Umami 统计 + Satori OG 分享图 | 功能完整 |
-| **Phase 4** 上线 | Cloudflare Pages 部署 + 自定义域名 + sitemap/RSS + Client Router 页面过渡 | 公网可访问 |
+| **Phase 1** 骨架 | BaseLayout、三档布局、构建期 dispatcher、design tokens | 已完成 |
+| **Phase 2** 内容 | Content Collections、MDX、内容审计、封面与依赖边界测试 | 已完成 |
+| **Phase 3** 生态 | Pagefind、公开笔记、RSS/SEO、可选评论/统计、Sharp OG 图 | 已完成；外部服务默认关闭 |
+| **Phase 4** 上线 | GitHub Pages 子路径发布、Playwright 发布门禁、Cloudflare 迁移手册 | 当前已上线；自定义域名迁移待站主外部状态 |
 
 ---
 
@@ -304,8 +299,8 @@ back: z.boolean().default(true),
 
 | # | 模式 | 来源 | 落点 |
 |---|------|------|------|
-| 1 | **主题=一个数据对象驱动多层渲染**（CSS 变量 + 场景调色板 + 天空色调一次下发） | arcvellum `themes.js` | 第 6 章 `theme:` 字段 + `src/themes/` |
-| 2 | **架构守护测试**（测试扫描源码强制架构规则：组件不直接 import HTTP 层、每个 feature 必有语义化 client） | literary-studio `featureBoundary.spec.ts` | 第 5 章 `tests/architecture.spec.ts`：断言 `none` 档零全局 CSS、chrome 部件互不 import、文章文件夹必有 index.mdx |
+| 1 | **主题=受控数据驱动多层渲染**（CSS 变量 + accent + 分享图调色板） | arcvellum `themes.js` | 第 6 章 `theme:` 字段 + `src/styles/tokens.css` + `src/lib/social-image.ts` |
+| 2 | **架构守护测试**（以依赖边界而非源码写法为合同） | literary-studio `featureBoundary.spec.ts` | `src/tests/architecture.test.ts` 解析传递依赖；`check-build` 再验证最终 HTML 与资产隔离 |
 | 3 | **运行时沉浸模式**（body class 关掉全部仪器 UI，localStorage 记忆，Esc 唤回） | arcvellum `Shell.toggleImmersive()` | 第 4.4 章 `ImmersiveToggle.astro`：与构建时 chrome 分级互补 |
 | 4 | **偏好规范化三件套**（normalize 成枚举→持久化→挂 data-attr，CSS 写 `[data-x]` 选择器） | literary-studio `orreryPreferences.ts` + arcvellum reader 偏好 | 读者侧字号/行距/日夜/阅读进度恢复 |
 | 5 | **动态内容净化纪律**（DOMPurify 白名单 + 链接协议校验 + `rel="noopener"`） | literary-studio `SafeMarkdown.vue` | 仅适用于评论等用户内容；构建期 MDX 由可信作者编写，不做多余净化 |
@@ -340,7 +335,7 @@ back: z.boolean().default(true),
 - [Astro 5.0 发布公告：Content Layer API 与 Server Islands](https://astro.build/blog/astro-5/) · [升级至 v6 指南](https://docs.astro.build/en/guides/upgrade-to/v6/)
 - [Astro 官方文档：语法高亮（Shiki）](https://docs.astro.build/en/guides/syntax-highlighting/)
 - [Expressive Code 官网](https://expressive-code.com/) · [astro-expressive-code（NPM）](https://www.npmjs.com/package/astro-expressive-code)
-- [Satori OG 图生成实践（中文）](https://calpa.me/blog/satori-open-graph-image-generation/) · [astro-og-canvas（GitHub topics）](https://github.com/topics/satori?l=typescript&o=desc&s=forks)
+- [Sharp 官方文档](https://sharp.pixelplumbing.com/) · [Astro 官方文档：图片](https://docs.astro.build/en/guides/images/)
 
 **延伸方向（暂不实施，留档）**
 - 数字花园（Obsidian + Quartz 4，双链知识图谱形态）：[Quartz 官网](https://quartz.jzhao.xyz/) · [数字花园简史](https://blog.iaieye.com/posts/obsidian-evolved/appleton-digital-garden/)

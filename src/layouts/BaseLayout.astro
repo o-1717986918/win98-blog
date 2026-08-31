@@ -51,6 +51,7 @@ const webmentionEndpoint = (() => {
     <link rel="alternate" type="application/rss+xml" title={`${SITE.title} RSS`} href={withBase('/rss.xml')} />
     {webmentionEndpoint && <link rel="webmention" href={webmentionEndpoint} />}
     <link rel="icon" href={withBase('/brand/logo.jpg')} type="image/jpeg" sizes="640x640" />
+    <link rel="apple-touch-icon" href={withBase('/brand/logo.jpg')} />
     <link rel="manifest" href={withBase('/site.webmanifest')} />
     <SeoHead {title} {description} {canonical} {pageKind} {image} {published} {updated} {tags} {noindex} {schemaType} />
     <title>{documentTitle}</title>

@@ -11,6 +11,7 @@ const withoutBase = (pathname) => {
   return pathname.startsWith(`${basePath}/`) ? pathname.slice(basePath.length) : pathname;
 };
 const htmlFiles = [];
+const htmlCache = new Map();
 async function walk(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);
@@ -28,7 +29,7 @@ for (const file of htmlFiles) {
   const documentUrl = `https://local.invalid${basePath}/${outputRoute}`;
   for (const match of staticHtml.matchAll(/\b(?:href|src)=["']([^"']+)["']/gi)) {
     const raw = match[1];
-    if (!raw || raw.startsWith('#') || raw.startsWith('data:') || raw.startsWith('mailto:') || raw.startsWith('tel:')) continue;
+    if (!raw || raw.startsWith('data:') || raw.startsWith('mailto:') || raw.startsWith('tel:')) continue;
     let url;
     try { url = new URL(raw, documentUrl); } catch { failures.push(`${file}: malformed URL ${raw}`); continue; }
     if (url.origin !== 'https://local.invalid') continue;
@@ -36,11 +37,30 @@ for (const file of htmlFiles) {
     try { pathname = withoutBase(decodeURIComponent(url.pathname)); } catch { failures.push(`${file}: invalid URL encoding ${raw}`); continue; }
     const target = pathname.endsWith('/') ? join(dist, pathname, 'index.html') : join(dist, pathname);
     const fallback = extname(target) ? target : `${target}.html`;
-    try { await stat(target); }
+    let resolvedTarget;
+    try {
+      await stat(target);
+      resolvedTarget = target;
+    }
     catch {
-      try { await stat(fallback); }
+      try {
+        await stat(fallback);
+        resolvedTarget = fallback;
+      }
       catch { failures.push(`${file}: broken internal reference ${raw}`); }
     }
+    if (!resolvedTarget || !url.hash || extname(resolvedTarget) !== '.html') continue;
+    let fragment;
+    try { fragment = decodeURIComponent(url.hash.slice(1)); }
+    catch { failures.push(`${file}: invalid fragment encoding ${raw}`); continue; }
+    if (!fragment) continue;
+    let targetHtml = htmlCache.get(resolvedTarget);
+    if (!targetHtml) {
+      targetHtml = await readFile(resolvedTarget, 'utf8');
+      htmlCache.set(resolvedTarget, targetHtml);
+    }
+    const ids = new Set(Array.from(targetHtml.matchAll(/\bid=(["'])(.*?)\1/gi), (match) => match[2]));
+    if (!ids.has(fragment)) failures.push(`${file}: missing fragment target ${raw}`);
   }
 }
 

@@ -3,6 +3,7 @@ import type { ColumnEntry, PostEntry } from '../lib/content';
 import { formatDate } from '../lib/content';
 import { withBase } from '../lib/site-path';
 import { accentStyle, postAccent } from '../lib/visual';
+import { siteDateKey } from '../lib/date';
 
 interface Props {
   posts: PostEntry[];
@@ -16,7 +17,7 @@ const columnMap = new Map(columns.map((column) => [column.id, column]));
 <ol class="home-post-stream" data-home-post-stream data-initial-limit="6">
   {posts.map((post, index) => {
     const column = post.data.columns[0] ? columnMap.get(post.data.columns[0].id) : undefined;
-    const dateKey = post.data.date.toISOString().slice(0, 10);
+    const dateKey = siteDateKey(post.data.date);
     return (
       <li style={accentStyle(postAccent(post, columnMap))} data-stream-item data-post-date={dateKey}>
         <span class="home-post-stream__index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>

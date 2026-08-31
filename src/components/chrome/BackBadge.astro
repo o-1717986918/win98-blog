@@ -6,7 +6,7 @@ const { href = '/', label = '返回上页' } = Astro.props;
 
 <a class="back-badge" href={withBase(href)} aria-label={label} data-history-back>← <span>{label}</span></a>
 
-<style>
+<style is:inline>
   .back-badge {
     position: fixed;
     bottom: 1rem;

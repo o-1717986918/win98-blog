@@ -6,7 +6,6 @@ updated: 2026-08-29
 tags: [知识库, Blog Studio]
 aliases: [笔记系统说明]
 publish: true
-source: manual/welcome.md
 maturity: evergreen
 relations: [evidence-ledgers, static-first-publishing]
 ---

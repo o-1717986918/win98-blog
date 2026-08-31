@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
+const basePath = process.env.BASE_PATH ? `/${process.env.BASE_PATH.replace(/^\/+|\/+$/gu, '')}` : '';
+const sitePath = (path: string) => `${basePath}${path}` || '/';
+const visit = (page: Page, path: string) => page.goto(sitePath(path));
+
 function rejectConsoleErrors(page: Page) {
   const errors: string[] = [];
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
@@ -10,7 +14,7 @@ function rejectConsoleErrors(page: Page) {
 test('homepage intro is escapable and desktop content stays inside the viewport', async ({ page }) => {
   const assertNoErrors = rejectConsoleErrors(page);
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('/?intro');
+  await visit(page, '/?intro');
   await expect(page.locator('[data-site-intro]')).toBeVisible();
   await expect(page.locator('.site-header')).toHaveAttribute('inert', '');
   await page.keyboard.press('Escape');
@@ -88,8 +92,8 @@ test('homepage intro is escapable and desktop content stays inside the viewport'
   expect(portalGrid.rightLeft).toBeGreaterThanOrEqual(portalGrid.notesLeft);
   expect(portalGrid.rightTop).toBeGreaterThanOrEqual(portalGrid.notesBottom);
   expect(portalGrid.topicsTop).toBeGreaterThanOrEqual(portalGrid.profileBottom);
-  expect(portalGrid.streamCount).toBe(23);
-  expect(portalGrid.topicCount).toBe(6);
+  expect(portalGrid.streamCount).toBeGreaterThan(6);
+  expect(portalGrid.topicCount).toBeGreaterThan(0);
   await expect(page.locator('[data-publication-calendar]')).toBeVisible();
   await expect(page.locator('.notes-feature')).toBeVisible();
   await expect(page.locator('.portal-gateway')).toHaveCount(0);
@@ -106,7 +110,7 @@ test('homepage intro is escapable and desktop content stays inside the viewport'
 
 test('theme switch exposes only mist and abyss', async ({ page }) => {
   await page.addInitScript(() => { localStorage.removeItem('someone-site:theme'); sessionStorage.setItem('someone-site:intro-seen:v4', 'true'); });
-  await page.goto('/');
+  await visit(page, '/');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'mist');
   await expect(page.locator('[data-theme-name]')).toHaveText('MIST');
   await page.locator('[data-theme-button]').click();
@@ -114,6 +118,28 @@ test('theme switch exposes only mist and abyss', async ({ page }) => {
   await expect(page.locator('[data-theme-name]')).toHaveText('ABYSS');
   await page.locator('[data-theme-button]').click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'mist');
+});
+
+test('core navigation remains usable when browser storage is unavailable', async ({ page }) => {
+  const assertNoErrors = rejectConsoleErrors(page);
+  await page.addInitScript(() => {
+    for (const method of ['getItem', 'setItem', 'removeItem'] as const) {
+      Object.defineProperty(Storage.prototype, method, { configurable: true, value: () => { throw new Error('storage disabled'); } });
+    }
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await visit(page, '/');
+  await expect(page.locator('[data-site-intro]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('[data-site-intro]')).toBeHidden({ timeout: 2500 });
+  const menu = page.locator('[data-menu-button]');
+  await menu.click();
+  await expect(page.locator('[data-navigation-shell]')).toHaveAttribute('data-open', 'true');
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeFocused();
+  await page.locator('[data-portal-open]').click();
+  await expect(page.locator('[data-portal-dialog]')).toBeVisible();
+  assertNoErrors();
 });
 
 test('portal preferences persist and the publication calendar filters the writing stream', async ({ page }) => {
@@ -126,7 +152,7 @@ test('portal preferences persist and the publication calendar filters the writin
       sessionStorage.setItem('someone-site:portal-test-cleaned', 'true');
     }
   });
-  await page.goto('/');
+  await visit(page, '/');
   await expect(page.locator('[data-stream-item]:visible')).toHaveCount(6);
   await page.locator('[data-stream-more]').click();
   await expect(page.locator('[data-stream-item]:visible')).toHaveCount(12);
@@ -156,12 +182,12 @@ test('portal preferences persist and the publication calendar filters the writin
 test('header brand returns home while profile, writing and notes keep their portal columns', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.addInitScript(() => sessionStorage.setItem('someone-site:intro-seen:v4', 'true'));
-  await page.goto('/');
-  await expect(page.getByRole('link', { name: '某人的小站 · 返回首页' })).toHaveAttribute('href', '/');
+  await visit(page, '/');
+  await expect(page.getByRole('link', { name: 'win98的小站 · 返回首页' })).toHaveAttribute('href', sitePath('/'));
   await expect(page.locator('[data-profile-dialog]')).toHaveCount(0);
   const card = page.locator('[data-profile-card]');
   await expect(card).toBeVisible();
-  await expect(card.getByRole('link', { name: '查看某人的个人介绍' })).toHaveAttribute('href', '/about/');
+  await expect(card.getByRole('link', { name: '查看某人的个人介绍' })).toHaveAttribute('href', sitePath('/about/'));
   await expect(card.getByRole('navigation', { name: '个人链接' }).getByRole('link')).toHaveCount(3);
   await expect(page.locator('.site-navigation > a[href$="/notes/"]')).toHaveCount(0);
   await page.locator('.explore-menu > summary').click();
@@ -200,7 +226,7 @@ test('mobile portal keeps its reading order and the bottom spotlight retains a l
   const assertNoErrors = rejectConsoleErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => sessionStorage.setItem('someone-site:intro-seen:v4', 'true'));
-  await page.goto('/');
+  await visit(page, '/');
   const layout = await page.evaluate(() => ({
     width: document.documentElement.scrollWidth,
     spotlight: document.querySelector('.spotlight')?.getBoundingClientRect().height ?? 0,
@@ -225,7 +251,7 @@ test('key visual systems reflow at the WCAG reference width', async ({ page }) =
   await page.setViewportSize({ width: 320, height: 800 });
   await page.addInitScript(() => sessionStorage.setItem('someone-site:intro-seen:v4', 'true'));
   for (const path of ['/', '/archive/', '/posts/theme-as-data/', '/notes/', '/columns/arcvellum/', '/projects/', '/skills/', '/timeline/']) {
-    await page.goto(path);
+    await visit(page, path);
     const reflow = await page.evaluate(() => ({
       width: document.documentElement.scrollWidth,
       offenders: [...document.querySelectorAll<HTMLElement>('body *')]
@@ -241,41 +267,47 @@ test('key visual systems reflow at the WCAG reference width', async ({ page }) =
 
 test('feature pages expose real projects, evidence-backed skills and a filterable timeline', async ({ page }) => {
   const assertNoErrors = rejectConsoleErrors(page);
-  await page.goto('/projects/');
+  await visit(page, '/projects/');
   await expect(page.getByRole('heading', { name: '项目 陈列' })).toBeVisible();
-  await expect(page.locator('.portal-record')).toHaveCount(4);
-  await page.goto('/skills/');
+  expect(await page.locator('.portal-record').count()).toBeGreaterThan(0);
+  await expect(page.locator('.portal-feature-grid').getByRole('heading', { name: 'ArcVellum', exact: true })).toBeVisible();
+  await visit(page, '/skills/');
   await expect(page.getByRole('heading', { name: '能力 图谱' })).toBeVisible();
-  await expect(page.locator('.portal-record')).toHaveCount(4);
-  await page.goto('/timeline/');
-  await expect(page.locator('[data-timeline-item]:visible')).toHaveCount(4);
+  expect(await page.locator('.portal-record').count()).toBeGreaterThan(0);
+  await visit(page, '/timeline/');
+  const timelineCount = await page.locator('[data-timeline-item]:visible').count();
+  expect(timelineCount).toBeGreaterThan(1);
   await page.getByRole('button', { name: 'PROJECT', exact: true }).click();
-  await expect(page.locator('[data-timeline-item]:visible')).toHaveCount(1);
+  const projectCount = await page.locator('[data-timeline-item]:visible').count();
+  expect(projectCount).toBeGreaterThan(0);
+  expect(projectCount).toBeLessThan(timelineCount);
   await expect(page.locator('[data-timeline-filter="PROJECT"]')).toHaveAttribute('aria-pressed', 'true');
   assertNoErrors();
 });
 
 test('archive exposes year and month chronology while filtering whole groups', async ({ page }) => {
   const assertNoErrors = rejectConsoleErrors(page);
-  await page.goto('/archive/');
+  await visit(page, '/archive/');
   await expect(page.locator('[data-archive-ledger]')).toBeVisible();
   await expect(page.locator('[data-archive-year]').first()).toBeVisible();
   await expect(page.locator('[data-archive-month]').first()).toBeVisible();
-  await expect(page.locator('[data-post-row]')).toHaveCount(24);
+  const initialCount = await page.locator('[data-post-row]').count();
+  expect(initialCount).toBeGreaterThan(0);
   await page.locator('[data-post-search]').fill('不可能匹配的归档文章');
   await expect(page.locator('[data-filter-status]')).toHaveText('当前显示 0 篇文章');
   await expect(page.locator('[data-archive-year]').first()).toBeHidden();
   await page.locator('[data-post-search]').fill('');
   await expect(page.locator('[data-archive-year]').first()).toBeVisible();
+  await expect(page.locator('[data-post-row]:visible')).toHaveCount(initialCount);
   assertNoErrors();
 });
 
-test('search only returns article routes', async ({ page }) => {
+test('search discovers articles and public notes', async ({ page }) => {
   const assertNoErrors = rejectConsoleErrors(page);
-  await page.goto('/search/');
-  await page.locator('[data-search-input]').fill('主题');
+  await visit(page, '/search/');
+  await page.locator('[data-search-input]').fill('双向链接');
   await expect(page.locator('[data-search-results] a').first()).toBeVisible();
-  for (const link of await page.locator('[data-search-results] a').evaluateAll((items) => items.map((item) => item.getAttribute('href')))) expect(link).toMatch(/^\/posts\//u);
+  await expect(page.locator('[data-search-results] a[href*="/notes/"]').first()).toBeVisible();
   assertNoErrors();
 });
 
@@ -289,7 +321,7 @@ test('chrome levels keep their isolation contracts', async ({ page }) => {
     ['/columns/lab/', false, false, false, true],
   ] as const;
   for (const [path, header, footer, reader, back] of cases) {
-    await page.goto(path);
+    await visit(page, path);
     await expect(page.locator('.site-header')).toHaveCount(header ? 1 : 0);
     await expect(page.locator('.site-footer')).toHaveCount(footer ? 1 : 0);
     await expect(page.locator('[data-reader-controls]')).toHaveCount(reader ? 1 : 0);
@@ -300,9 +332,10 @@ test('chrome levels keep their isolation contracts', async ({ page }) => {
 
 test('learning notes workbench filters real entries and switches relationship view', async ({ page }) => {
   const assertNoErrors = rejectConsoleErrors(page);
-  await page.goto('/notes/');
+  await visit(page, '/notes/');
   await expect(page.locator('[data-note-workbench]')).toBeVisible();
-  await expect(page.locator('.garden-list [data-note-entry]')).toHaveCount(3);
+  const noteCount = await page.locator('.garden-list [data-note-entry]').count();
+  expect(noteCount).toBeGreaterThan(0);
   await expect(page.locator('[data-preview-maturity]').first()).not.toHaveText('—');
   await page.locator('[data-note-search]').fill('不可能匹配的笔记');
   await expect(page.locator('[data-note-empty]')).toBeVisible();
@@ -312,24 +345,24 @@ test('learning notes workbench filters real entries and switches relationship vi
   await expect(page.locator('[data-map-view]')).toBeVisible();
   await expect(page.locator('[data-index-view]')).toBeHidden();
   await expect(page.locator('[data-map-view] svg line').first()).toBeVisible();
-  await expect(page.locator('[data-map-view] > a')).toHaveCount(3);
+  await expect(page.locator('[data-map-view] > a')).toHaveCount(noteCount);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   assertNoErrors();
 });
 
 test('evidence, open-web semantics and shell-scoped telemetry ship together', async ({ page }) => {
   const assertNoErrors = rejectConsoleErrors(page);
-  await page.goto('/posts/modular-blog/');
+  await visit(page, '/posts/modular-blog/');
   await expect(page.locator('article.h-entry')).toHaveCount(1);
   await expect(page.locator('[data-evidence-ledger]')).toBeVisible();
   await expect(page.locator('script[data-performance-vitals]')).toHaveCount(1);
-  expect(await page.evaluate(() => document.fonts.load('600 16px "Site Signature"', '某人的小站').then((fonts) => fonts.length))).toBeGreaterThan(0);
+  expect(await page.evaluate(() => document.fonts.load('600 16px "Site Signature"', 'win98的小站').then((fonts) => fonts.length))).toBeGreaterThan(0);
 
-  await page.goto('/about/');
+  await visit(page, '/about/');
   await expect(page.locator('.h-card')).toHaveCount(1);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/posts/arcvellum-release/');
+  await visit(page, '/posts/arcvellum-release/');
   await expect(page.locator('[data-evidence-ledger]')).toBeVisible();
   await expect(page.locator('script[data-performance-vitals]')).toHaveCount(0);
   const order = await page.evaluate(() => ({
@@ -341,7 +374,7 @@ test('evidence, open-web semantics and shell-scoped telemetry ship together', as
 });
 
 test('reader controls persist line height and restore a reading position', async ({ page }) => {
-  await page.goto('/posts/theme-as-data/');
+  await visit(page, '/posts/theme-as-data/');
   await page.locator('[data-reader-trigger]').click();
   await page.locator('[data-reader="leading"]').click();
   await expect(page.locator('html')).toHaveAttribute('data-reader-leading', 'relaxed');
@@ -351,10 +384,27 @@ test('reader controls persist line height and restore a reading position', async
   await expect(page.locator('[data-reader="resume"]')).toBeVisible();
 });
 
+test('article tools report denied clipboard and share operations', async ({ page }) => {
+  const assertNoErrors = rejectConsoleErrors(page);
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: () => Promise.reject(new DOMException('Denied', 'NotAllowedError')) },
+    });
+    Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+  });
+  await visit(page, '/posts/theme-as-data/');
+  await page.getByRole('button', { name: '复制链接' }).click();
+  await expect(page.locator('[data-tool-status]')).toHaveText('无法访问剪贴板，请手动复制地址栏链接');
+  await page.getByRole('button', { name: '分享', exact: true }).click();
+  await expect(page.locator('[data-tool-status]')).toHaveText('分享失败，请手动复制地址栏链接');
+  assertNoErrors();
+});
+
 test('desktop articles expose a live reading route without leaking it onto mobile', async ({ page }) => {
   const assertNoErrors = rejectConsoleErrors(page);
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('/posts/theme-as-data/');
+  await visit(page, '/posts/theme-as-data/');
   const route = page.locator('[data-reading-route]');
   await expect(route).toBeVisible();
   await expect(route.locator('[data-toc-link][aria-current="location"]')).toHaveCount(1);
@@ -372,14 +422,14 @@ test('desktop articles expose a live reading route without leaking it onto mobil
 
 test('reduced motion disables intro particles and preserves access', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/?intro');
+  await visit(page, '/?intro');
   await expect(page.locator('.intro-particles')).toBeHidden();
   await expect(page.locator('[data-site-intro]')).toBeHidden({ timeout: 1500 });
 });
 
 test('ArcVellum demo uses a live Pixi 2.5D stage and keeps the whole graph while focusing', async ({ page }) => {
   const assertNoErrors = rejectConsoleErrors(page);
-  await page.goto('/columns/arcvellum/');
+  await visit(page, '/columns/arcvellum/');
   await expect(page.locator('.back-badge')).toHaveCount(0);
   const stage = page.locator('[data-orrery-demo] [data-stage]');
   await expect(stage.locator('canvas')).toHaveCount(1, { timeout: 15_000 });

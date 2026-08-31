@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const siteUrl = (process.env.SITE_URL || 'https://example.com').replace(/\/+$/, '');
+const siteUrl = (process.env.SITE_URL || 'http://localhost:4321').replace(/\/+$/, '');
 const basePath = process.env.BASE_PATH ? `/${process.env.BASE_PATH.replace(/^\/+|\/+$/g, '')}` : '';
 const publicUrl = `${siteUrl}${basePath}`;
 const read = (path) => readFile(resolve(root, path), 'utf8');
@@ -38,7 +38,7 @@ const robots = await read('dist/robots.txt');
 const llms = await read('dist/llms.txt');
 const searchScript = await read('dist/scripts/search.js');
 
-requireText(home, '<title>某人的小站</title>', 'home');
+requireText(home, '<title>win98的小站</title>', 'home');
 requireText(home, 'data-site-intro', 'home session intro');
 requireText(about, 'ProfilePage', 'about structured data');
 requireText(about, 'h-card', 'about IndieWeb identity');
@@ -134,12 +134,13 @@ requireText(sitemap, '/columns/lab/', 'sitemap');
 requireText(sitemap, '/search/', 'sitemap');
 requireText(sitemap, '/notes/welcome/', 'sitemap notes');
 requireText(search, 'data-search-index', 'search');
-requireText(searchScript, "filters: { type: '文章' }", 'search article filter');
+forbidText(searchScript, "filters: { type: '文章' }", 'search scope');
+requireText(searchScript, 'safeExcerpt', 'search excerpt sanitizer');
 requireText(nonePost, 'data-pagefind-body', 'none post search boundary');
 requireText(tags, '/tags/', 'tags');
 requireText(privacy, '当前状态：未启用', 'privacy defaults');
 requireText(robots, '/sitemap-index.xml', 'robots');
-requireText(llms, '# 某人的小站', 'llms');
+requireText(llms, '# win98的小站', 'llms');
 for (const [label, source] of [['home', home], ['full post', full], ['minimal post', minimal]]) {
   forbidText(source, 'giscus.app/client.js', `${label} default comments`);
   forbidText(source, 'cloudflareinsights.com/beacon.min.js', `${label} default analytics`);
@@ -149,7 +150,7 @@ for (const [label, source] of [['home', home], ['RSS', rss], ['sitemap', sitemap
   forbidText(source, '文枢手记', label);
 }
 
-for (const path of ['dist/pagefind/pagefind.js', 'dist/favicon.svg', 'dist/site.webmanifest', 'dist/og-default.svg', 'dist/_headers']) {
+for (const path of ['dist/pagefind/pagefind.js', 'dist/brand/logo.jpg', 'dist/site.webmanifest', 'dist/og-default.svg', 'dist/_headers']) {
   try { await access(resolve(root, path)); }
   catch { failures.push(`${path}: missing build artifact`); }
 }

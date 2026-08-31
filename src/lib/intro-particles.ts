@@ -40,7 +40,7 @@ const rgb = (color: IntroRgb, alpha: number) => `rgba(${color[0]},${color[1]},${
 export function mountIntroParticles(
   canvas: HTMLCanvasElement,
   palette: IntroPalette,
-  label = '某人的小站',
+  label = SITE.title,
 ): IntroParticleController | undefined {
   const context = canvas.getContext('2d', { alpha: true });
   if (!context) return;
@@ -271,3 +271,4 @@ export function mountIntroParticles(
   frame = requestAnimationFrame(render);
   return { scatter, destroy };
 }
+import { SITE } from '../config/site';

@@ -9,16 +9,18 @@
 ```powershell
 $env:SITE_URL='https://o-1717986918.github.io'
 $env:BASE_PATH='/win98-blog'
-pnpm build
+pnpm verify:all
 Remove-Item Env:SITE_URL
 Remove-Item Env:BASE_PATH
 ```
 
 GitHub Pages 是当前可立即访问的公开首发渠道；下述 Cloudflare Pages 方案继续保留，作为绑定自定义域名后的生产迁移路径。迁移时把 `SITE_URL` 换成最终域名、清空 `BASE_PATH`，再完整执行生产验收。
 
-## 1. 已选方案
+`public/_headers` 会随产物发布，但 GitHub Pages 不解释该文件；当前安全响应头必须在真实承载层另行核验，不能把仓库文件存在当作线上已生效。
 
-生产主机采用 **Cloudflare Pages Direct Upload + GitHub Actions**。仓库自己完成测试、静态构建、Pagefind 索引和产物审计，再把已经验证的 `dist` 上传到 Pages。这样线上构建与本地/CI 使用同一条 `pnpm deploy:prepare` 契约。
+## 1. 自定义域名后的迁移方案
+
+计划中的自定义域名主机采用 **Cloudflare Pages Direct Upload + GitHub Actions**。仓库自己完成测试、静态构建、Pagefind 索引、浏览器回归和产物审计，再把已经验证的 `dist` 上传到 Pages。这样迁移后的线上构建与本地/CI 使用同一条 `pnpm deploy:prepare` 契约。
 
 暂不启用 Cloudflare 的 Git 仓库集成。Direct Upload 项目后续不能原地切换成 Git integration；若未来要切换，需要新建 Pages 项目并迁移域名。这个选择记录在 `docs/decisions/0012-reader-facing-copy-and-pages-deployment.md`。
 
@@ -58,7 +60,7 @@ Copy-Item .env.example .env
 pnpm deploy:prepare
 ```
 
-`deploy:prepare` 会依次执行 Vitest、完整静态构建、Pagefind、链接/体积/封面审计、canonical 检查，并验证 Cloudflare 项目、账号和 token 是否齐备。它不上传任何文件。
+`deploy:prepare` 会依次执行 Vitest、完整求解器冒烟、静态构建、Pagefind、链接/锚点/体积/封面审计、Playwright 浏览器回归、canonical 检查，并验证 Cloudflare 项目、账号和 token 是否齐备。它不上传任何文件。
 
 推荐在 GitHub Actions 手动运行 `deploy-cloudflare-pages`，先选 `preview`。工作流会创建 `manual-<run number>` 预览分支并把部署 URL 写入 Job Summary。通过 `docs/operations/PRODUCTION_CHECKLIST.md` 后，再从 `main` 手动选择 `production`；非 production branch 会被工作流拒绝。
 
@@ -75,9 +77,9 @@ Remove-Item Env:CONFIRM_PRODUCTION
 
 ### 3.1 本次内容重构后的发布顺序
 
-1. 在无外部凭据的机器上先运行 `pnpm verify`，确认内容引用、ArcVellum 十二篇手记、工具主题、Pagefind 与全部静态路由可构建。
+1. 在无外部凭据的机器上先运行 `pnpm verify:all`，确认内容引用、ArcVellum 十四篇手记、工具主题、Pagefind、全部静态路由与浏览器连接行为通过。
 2. 确认 `pnpm solver:smoke` 返回内置地图的 33 步识别路径。冒烟脚本还会根据 `tools/solver-wasm/solver-engine.provenance.json` 校验制品 SHA-256、源码提交与 33/191 步行为契约。`public/solver/solver-engine.wasm` 是已构建产物；只有当求解器源仓库变更时，才使用 `tools/solver-wasm/build.ps1` 重建，并同步更新溯源清单。清单中的 `compilerVersion` 只有在真实重建时才可填写，不得猜测。
-3. 启动本地预览，在 390×844 与桌面视口检查首页主题抽屉、三篇近文限制、全站返回桥、ArcVellum 侧栏目录与工具主题。
+3. 启动本地预览，在 390×844 与桌面视口检查首页三栏阅读顺序、侧栏分层展开、底部重点文章、全站返回桥、ArcVellum 目录与工具主题。
 4. 在求解器文章先执行“只跑识别”，再执行一次内置地图“识别 + 完整规划”。确认 Worker 期间页面仍可滚动，结果显示 191 步规划路径，“停止”能中断运行。
 5. 手动部署 preview，在 preview 域名再执行第 3–4 步，特别检查 `.wasm` 返回 200 且 Worker 可同源加载。该模块不依赖 `SharedArrayBuffer`，因此不需要为它额外启用 COOP/COEP。
 6. 通过 `PRODUCTION_CHECKLIST.md` 后再人工批准 production。首发后保留前一个 deployment，并立即做一次回滚演练。

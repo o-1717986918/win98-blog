@@ -1,12 +1,15 @@
 ---
 import { SITE } from '../../config/site';
 import { withBase } from '../../lib/site-path';
+import { siteDateParts } from '../../lib/date';
+import { publicationTimestamp } from '../../lib/publication-clock.mjs';
+const currentYear = siteDateParts(new Date(publicationTimestamp)).year;
 ---
 
 <footer class="site-footer" data-pagefind-ignore>
-  <span>© {new Date().getFullYear()} <a href={withBase('/about/')} rel="author">{SITE.title}</a></span>
+  <span>© {currentYear} <a href={withBase('/about/')} rel="author">{SITE.title}</a></span>
   <span>文章 / 随笔 / 试验</span>
-  <nav aria-label="页脚导航"><a href="https://github.com/o-1717986918" rel="me noreferrer">GitHub ↗</a><a href="#site-search">搜索</a><a href={withBase('/archive/')}>文章</a><a href={withBase('/rss.xml')}>RSS</a><a href={withBase('/privacy/')}>隐私</a></nav>
+  <nav aria-label="页脚导航"><a href={SITE.github} rel="me noreferrer">GitHub ↗</a><a href="#site-search">搜索</a><a href={withBase('/archive/')}>文章</a><a href={withBase('/rss.xml')}>RSS</a><a href={withBase('/privacy/')}>隐私</a></nav>
 </footer>
 
 <style>

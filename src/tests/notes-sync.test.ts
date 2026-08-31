@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
@@ -59,6 +59,7 @@ publish: false
     expect(publicNote).toContain('[Second public](../second-public/)');
     expect(publicNote).toContain('maturity: seedling');
     expect(publicNote).toContain('relations:\n  - second-public');
+    expect(publicNote).not.toContain('source:');
     expect(publicNote).not.toContain('/notes/private-draft/');
     expect(publicNote).toContain('Private draft');
     expect(publicNote).toMatch(/\.\/assets\/diagram-[a-f0-9]{8}\.svg/u);
@@ -66,5 +67,20 @@ publish: false
     expect(manifest.entries.filter((entry) => entry.publish)).toHaveLength(2);
     expect(manifest.entries.find((entry) => entry.slug === 'public-note')?.attachments).toBe(1);
     expect(JSON.stringify(manifest)).not.toContain(workspace);
+
+    await rm(resolve(source, 'Second public.md'));
+    await writeFile(resolve(source, 'Replacement.md'), `---
+title: Replacement
+created: 2026-08-30
+publish: true
+---
+`, 'utf8');
+    await execute(process.execPath, [
+      resolve(process.cwd(), 'tools/blog-studio/sync-notes.mjs'),
+      '--source', source,
+      '--output', output,
+    ]);
+    await expect(access(resolve(output, 'second-public', 'index.md'))).rejects.toThrow();
+    await expect(access(resolve(output, 'replacement', 'index.md'))).resolves.toBeUndefined();
   });
 });

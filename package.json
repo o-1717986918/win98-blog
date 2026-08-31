@@ -2,7 +2,7 @@
   "name": "someone-site",
   "version": "0.0.0",
   "private": true,
-  "description": "某人的小站：可自由组合文章与主题的个人博客",
+  "description": "win98的小站：可自由组合文章与主题的个人博客",
   "type": "module",
   "packageManager": "pnpm@11.19.0",
   "engines": {

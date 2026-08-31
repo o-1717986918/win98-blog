@@ -9,7 +9,7 @@ const siteUrl = process.env.SITE_URL ?? '';
 try {
   const parsed = new URL(siteUrl);
   if (parsed.protocol !== 'https:') failures.push('SITE_URL must use https');
-  if (parsed.hostname === 'example.com') failures.push('SITE_URL still points to example.com');
+  if (parsed.hostname === 'example.com' || parsed.hostname === 'localhost') failures.push('SITE_URL must point to the production host');
   if (parsed.pathname !== '/') failures.push('SITE_URL must be an origin without a path');
 } catch { failures.push('SITE_URL must be a valid absolute production URL'); }
 
@@ -24,7 +24,7 @@ const analytics = process.env.PUBLIC_ANALYTICS_PROVIDER?.trim() || 'none';
 if (analytics === 'cloudflare') required('cloudflare', ['PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN']);
 if (analytics === 'umami') required('umami', ['PUBLIC_UMAMI_SCRIPT_URL', 'PUBLIC_UMAMI_WEBSITE_ID']);
 if (!['none', 'cloudflare', 'umami'].includes(analytics)) failures.push(`unknown analytics provider: ${analytics}`);
-for (const name of ['PUBLIC_WEBMENTION_ENDPOINT', 'PUBLIC_PERFORMANCE_ENDPOINT']) {
+for (const name of ['PUBLIC_WEBMENTION_ENDPOINT', 'PUBLIC_PERFORMANCE_ENDPOINT', 'PUBLIC_UMAMI_SCRIPT_URL']) {
   const value = process.env[name]?.trim();
   if (!value) continue;
   try { if (new URL(value).protocol !== 'https:') failures.push(`${name} must use https`); }
@@ -42,7 +42,7 @@ if (!pnpmCli) {
   console.error('Deployment checks must be started with pnpm deploy:check.');
   process.exit(2);
 }
-const build = spawnSync(process.execPath, [pnpmCli, 'verify'], { cwd: root, env: process.env, stdio: 'inherit' });
+const build = spawnSync(process.execPath, [pnpmCli, 'verify:all'], { cwd: root, env: process.env, stdio: 'inherit' });
 if (build.error) throw build.error;
 if (build.status !== 0) process.exit(build.status ?? 1);
 

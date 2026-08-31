@@ -1,6 +1,6 @@
-# 某人的小站
+# win98的小站
 
-一个静态优先、允许文章与主题逐级获得网页级自由的个人博客。仓库从 `C:\Users\26532\.zcode\workspace\default` 的原项目接手而来；外部源目录保持不动，原型和架构文档以固定 SHA-256 保留为接手证据。
+一个静态优先、允许文章与主题逐级获得网页级自由的个人博客。仓库从 `C:\Users\26532\.zcode\workspace\default` 的原项目接手而来；外部源目录保持不动，原型和初始架构文档作为历史设计基线保留，当前事实以可执行 Schema、源码、测试和已接受 ADR 为准。
 
 线上站点：[o-1717986918.github.io/win98-blog](https://o-1717986918.github.io/win98-blog/)
 
@@ -66,7 +66,7 @@ prototype/                  # 冻结的原版单文件原型
 ## 权威顺序
 
 1. 用户当前明确要求；
-2. `docs/source/blog-architecture.md` 的确定性结论；
-3. 已接受 ADR、`AGENTS.md` 与 `docs/handover/PRINCIPLES.md`；
-4. `prototype/index.html` 的博客构造与设计哲学；
-5. 视觉实验只提供过程证据，不定义生产主线。
+2. 可执行 Schema、生产源码、构建产物与自动化测试；
+3. 已接受 ADR、`AGENTS.md`、`docs/handover/CURRENT_STATE.md` 与 `docs/handover/PRINCIPLES.md`；
+4. `docs/source/blog-architecture.md` 与 `prototype/index.html` 提供历史原则和接手证据；
+5. 视觉实验只提供过程证据，不定义生产主线。历史材料与当前实现冲突时，不覆盖较新的 ADR 和可执行契约。

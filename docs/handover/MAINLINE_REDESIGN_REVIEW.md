@@ -6,7 +6,7 @@
 
 ## 结论
 
-通过架构、类型与构建审查。正式项目已经不再是单个 HTML：Astro Content Collections 管理文章和栏目，真实路由由构建期分派器注入，首页、归档、关于、RSS、sitemap 与 404 独立生成。公开身份统一为“某人的小站”。
+通过架构、类型与构建审查。正式项目已经不再是单个 HTML：Astro Content Collections 管理文章和栏目，真实路由由构建期分派器注入，首页、归档、关于、RSS、sitemap 与 404 独立生成。公开身份统一为“win98的小站”。
 
 ## `blog-architecture` 落实证据
 

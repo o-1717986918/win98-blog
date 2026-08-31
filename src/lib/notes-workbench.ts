@@ -67,7 +67,6 @@ export function initNotesWorkbench() {
         '[data-preview-file]': link.dataset.previewFile,
         '[data-preview-tags]': link.dataset.previewTags,
         '[data-context-tags]': link.dataset.previewTags,
-        '[data-preview-source]': link.dataset.previewSource,
         '[data-preview-aliases]': link.dataset.previewAliases,
         '[data-preview-maturity]': link.dataset.previewMaturity,
         '[data-preview-incoming]': link.dataset.previewIncoming,

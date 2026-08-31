@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { resolveTheme, type ThemeId } from '../config/site';
+import { resolveTheme, SITE, type ThemeId } from '../config/site';
 import { normalizeAccent, type AccentId } from './visual';
 import { withBase } from './site-path';
 
@@ -32,7 +32,7 @@ interface SocialCardOptions {
   title: string;
   description: string;
   kind: 'post' | 'column';
-  theme: ThemeId | string;
+  theme: ThemeId;
   accent?: AccentId | string | null;
 }
 
@@ -50,7 +50,7 @@ export async function renderSocialCard({ title, description, kind, theme, accent
       <path d="M920 0H1200V630H730Z" fill="${palette.accents[secondary]}" opacity=".24"/>
       <rect x="48" y="48" width="1104" height="534" rx="4" fill="${palette.surface}" stroke="${palette.accents[accent]}" stroke-opacity=".6"/>
       <rect x="48" y="48" width="266" height="9" fill="${palette.accents[accent]}"/><rect x="314" y="48" width="98" height="9" fill="${palette.accents[secondary]}"/>
-      <text x="92" y="112" class="ui" font-size="17" letter-spacing="4" fill="${palette.accents[accent]}">${kind === 'post' ? 'ARTICLE / 某人的小站' : 'COLUMN / 某人的小站'}</text>
+      <text x="92" y="112" class="ui" font-size="17" letter-spacing="4" fill="${palette.accents[accent]}">${kind === 'post' ? `ARTICLE / ${escapeXml(SITE.title)}` : `COLUMN / ${escapeXml(SITE.title)}`}</text>
       ${titleSvg}
       <text x="92" y="520" class="ui" font-size="22" fill="${palette.muted}">${escapeXml(descriptionLine)}</text>
       <path d="M1022 490h72v72h-72zM1038 506h40v40h-40z" fill="none" stroke="${palette.accents[secondary]}" stroke-width="3"/>

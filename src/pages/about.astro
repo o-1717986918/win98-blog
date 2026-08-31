@@ -2,18 +2,19 @@
 import '../styles/prose.css';
 import FullShell from '../layouts/FullShell.astro';
 import { withBase } from '../lib/site-path';
+import { SITE } from '../config/site';
 ---
 
-<FullShell title="关于" description="关于某人的小站、写作范围与长期关心的问题。" schemaType="ProfilePage">
+<FullShell title="关于" description={`关于${SITE.title}、写作范围与长期关心的问题。`} schemaType="ProfilePage">
   <div class="page-wrap about-page h-card">
     <header class="page-intro">
       <div><p class="eyebrow">ABOUT</p><h1 class="display-title">关于<br />小站</h1></div>
       <div class="page-intro__copy"><p>这里收拢写作、观察和实验。页面会变化，留下来的始终是问题、判断与过程。</p></div>
     </header>
     <section class="about-identity" aria-label="站点作者身份">
-      <img class="u-photo" src={withBase('/brand/logo.jpg')} alt="某人的小站标识" width="112" height="112" />
-      <div><p>AUTHOR / SITE OWNER</p><h2 class="p-name">某人</h2><p class="p-note">记录 Web 架构、图形学、阅读与工程实践。</p></div>
-      <nav aria-label="作者链接"><a class="u-url u-uid" href={withBase('/about/')}>本站</a><a href="https://github.com/o-1717986918" rel="me noreferrer">GitHub ↗</a></nav>
+      <img class="u-photo" src={withBase('/brand/logo.jpg')} alt={`${SITE.title}标识`} width="112" height="112" />
+      <div><p>AUTHOR / SITE OWNER</p><h2 class="p-name">{SITE.author}</h2><p class="p-note">{SITE.description}</p></div>
+      <nav aria-label="作者链接"><a class="u-url u-uid" href={withBase('/about/')}>本站</a><a href={SITE.github} rel="me noreferrer">GitHub ↗</a></nav>
     </section>
     <div class="prose about-copy">
       <h2>写什么</h2>

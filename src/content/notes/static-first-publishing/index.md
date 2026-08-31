@@ -6,7 +6,6 @@ updated: 2026-08-30
 tags: [Astro, 架构, 发布]
 aliases: [Static First, 静态发布]
 publish: true
-source: manual/static-first-publishing.md
 maturity: evergreen
 relations: [welcome, evidence-ledgers]
 ---

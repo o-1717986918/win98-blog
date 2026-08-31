@@ -48,14 +48,21 @@
     const status = tools.querySelector<HTMLElement>('[data-tool-status]');
     const notify = (message: string) => { if (status) status.textContent = message; };
     tools.querySelector('[data-copy-link]')?.addEventListener('click', async () => {
-      await navigator.clipboard.writeText(location.href);
-      notify('链接已复制');
+      try {
+        await navigator.clipboard.writeText(location.href);
+        notify('链接已复制');
+      } catch { notify('无法访问剪贴板，请手动复制地址栏链接'); }
     });
     tools.querySelector('[data-share-page]')?.addEventListener('click', async () => {
-      if (navigator.share) await navigator.share({ title: document.title, url: location.href });
-      else {
-        await navigator.clipboard.writeText(location.href);
-        notify('浏览器不支持分享，链接已复制');
+      try {
+        if (navigator.share) await navigator.share({ title: document.title, url: location.href });
+        else {
+          await navigator.clipboard.writeText(location.href);
+          notify('浏览器不支持分享，链接已复制');
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') notify('已取消分享');
+        else notify('分享失败，请手动复制地址栏链接');
       }
     });
   });

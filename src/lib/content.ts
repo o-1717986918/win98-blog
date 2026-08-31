@@ -1,30 +1,26 @@
 import type { CollectionEntry } from 'astro:content';
 import { withBase } from './site-path';
+import { publicationTimestamp } from './publication-clock.mjs';
+import { formatSiteDate } from './date';
 
 export type PostEntry = CollectionEntry<'posts'>;
 export type ColumnEntry = CollectionEntry<'columns'>;
 
 const previewUnpublished = import.meta.env.DEV || import.meta.env.PREVIEW_DRAFTS === 'true';
 
-export const isPublishedForPreview = <T extends { data: { draft: boolean; date?: Date } }>(entry: T, preview: boolean) =>
-  preview || (!entry.data.draft && (!entry.data.date || entry.data.date.getTime() <= Date.now()));
+export const isPublishedForPreview = <T extends { data: { draft: boolean; date?: Date } }>(entry: T, preview: boolean, timestamp = publicationTimestamp) =>
+  preview || (!entry.data.draft && (!entry.data.date || entry.data.date.getTime() <= timestamp));
 
 export const isPublished = <T extends { data: { draft: boolean; date?: Date } }>(entry: T) =>
   isPublishedForPreview(entry, previewUnpublished);
 
 export const sortPosts = (posts: PostEntry[]) =>
-  [...posts].sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+  [...posts].sort((a, b) => b.data.date.getTime() - a.data.date.getTime() || a.id.localeCompare(b.id, 'en'));
 
 export const sortColumns = (columns: ColumnEntry[]) =>
   [...columns].sort((a, b) => a.data.order - b.data.order || a.data.title.localeCompare(b.data.title, 'zh-CN'));
 
-export const formatDate = (date: Date) =>
-  new Intl.DateTimeFormat('zh-CN', {
-    timeZone: 'Asia/Shanghai',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(date);
+export const formatDate = formatSiteDate;
 
 export const belongsToColumn = (post: PostEntry, columnId: string) =>
   post.data.columns.some((column) => column.id === columnId);
@@ -53,7 +49,7 @@ export const relatedPosts = (target: PostEntry, posts: PostEntry[], limit = 3) =
         + post.data.tags.filter((tag) => targetTags.has(tag)).length * 2,
     }))
     .filter(({ score }) => score > 0)
-    .sort((a, b) => b.score - a.score || b.post.data.date.getTime() - a.post.data.date.getTime())
+    .sort((a, b) => b.score - a.score || b.post.data.date.getTime() - a.post.data.date.getTime() || a.post.id.localeCompare(b.post.id, 'en'))
     .slice(0, limit)
     .map(({ post }) => post);
 };

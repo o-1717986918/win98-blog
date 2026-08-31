@@ -7,6 +7,7 @@ const workspaceRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const requestedRoot = process.argv[2] ?? 'prototype';
 const root = resolve(workspaceRoot, requestedRoot);
 const port = Number.parseInt(process.argv[3] ?? process.env.PORT ?? '8765', 10);
+const basePath = process.env.BASE_PATH ? `/${process.env.BASE_PATH.replace(/^\/+|\/+$/g, '')}` : '';
 
 if (root !== workspaceRoot && !root.startsWith(`${workspaceRoot}${sep}`)) {
   throw new Error(`Site directory must stay inside the workspace: ${requestedRoot}`);
@@ -34,7 +35,11 @@ const mime = {
 const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url ?? '/', `http://${request.headers.host ?? '127.0.0.1'}`);
-    const relativePath = decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html';
+    let pathname = decodeURIComponent(url.pathname);
+    if (basePath && (pathname === basePath || pathname.startsWith(`${basePath}/`))) {
+      pathname = pathname.slice(basePath.length) || '/';
+    }
+    const relativePath = pathname.replace(/^\/+/, '') || 'index.html';
     let filePath = resolve(root, relativePath);
     if (filePath !== root && !filePath.startsWith(`${root}${sep}`)) {
       response.writeHead(403).end('Forbidden');
@@ -59,5 +64,6 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(port, '127.0.0.1', () => {
-  console.log(`Serving ${requestedRoot} at http://127.0.0.1:${port}/`);
+  const baseUrl = `http://127.0.0.1:${port}${basePath || ''}/`;
+  console.log(`Serving ${requestedRoot} at ${baseUrl}`);
 });

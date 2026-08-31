@@ -32,8 +32,9 @@ jobs:
           cache: pnpm
       - uses: actions/configure-pages@v5
       - run: pnpm install --frozen-lockfile
-      - name: Build the project-path deployment
-        run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Verify and build the project-path deployment
+        run: pnpm verify:all
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist
@@ -49,4 +50,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-

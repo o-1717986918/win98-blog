@@ -1,14 +1,12 @@
 import { defineCollection, reference, type SchemaContext } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { chromeSchema as chrome, draftSchema as draft } from './lib/frontmatter.mjs';
 
 const contentId = ({ entry }: { entry: string }) =>
   entry.replaceAll('\\', '/').replace(/\/index\.(md|mdx)$/i, '');
 
-const chrome = z.enum(['full', 'minimal', 'none']).default('full');
-const theme = z.enum(['mist', 'abyss', 'graphite', 'paper', 'night', 'indigo'])
-  .default('abyss')
-  .transform((value) => value === 'mist' || value === 'paper' ? 'mist' as const : 'abyss' as const);
+const theme = z.enum(['mist', 'abyss']).default('abyss');
 const accent = z.enum(['aqua', 'coral', 'violet', 'gold']).default('aqua');
 const evidenceKind = z.enum(['benchmark', 'decision-record', 'diagram', 'interactive', 'source-snapshot', 'comparison']);
 const evidenceItem = z.object({
@@ -40,7 +38,7 @@ const columns = defineCollection({
     navLabel: z.string().min(1).optional(),
     order: z.number().int().default(0),
     showPosts: z.boolean().default(true),
-    draft: z.boolean().default(false),
+    draft,
   }),
 });
 
@@ -72,13 +70,20 @@ const posts = defineCollection({
     wide: z.boolean().default(false),
     hideToc: z.boolean().default(false),
     minutes: z.number().int().positive().optional(),
-    draft: z.boolean().default(false),
+    draft,
   }).superRefine((post, context) => {
     if (post.updated && post.updated < post.date) {
       context.addIssue({
         code: 'custom',
         path: ['updated'],
         message: 'updated 不能早于 date',
+      });
+    }
+    if (!post.draft && post.columns.length === 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['columns'],
+        message: '已发布文章至少需要一个主题引用',
       });
     }
   }),
@@ -98,10 +103,9 @@ const notes = defineCollection({
     tags: z.array(z.string().min(1)).default([]),
     aliases: z.array(z.string().min(1)).default([]),
     publish: z.boolean().default(false),
-    source: z.string().optional(),
     maturity: z.enum(['seedling', 'growing', 'evergreen']).default('seedling'),
     relations: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u)).default([]),
-    draft: z.boolean().default(false),
+    draft,
   }).superRefine((note, context) => {
     if (note.updated && note.updated < note.created) {
       context.addIssue({ code: 'custom', path: ['updated'], message: 'updated 不能早于 created' });

@@ -15,7 +15,7 @@ const posts = sortPosts((await getCollection('posts')).filter(isPublished));
 const columns = sortColumns((await getCollection('columns')).filter(isPublished));
 const notes = (await getCollection('notes'))
   .filter((note) => note.data.publish && !note.data.draft)
-  .sort((a, b) => (b.data.updated ?? b.data.created).getTime() - (a.data.updated ?? a.data.created).getTime());
+  .sort((a, b) => (b.data.updated ?? b.data.created).getTime() - (a.data.updated ?? a.data.created).getTime() || a.id.localeCompare(b.id, 'en'));
 const columnMap = new Map(columns.map((column) => [column.id, column]));
 const spotlight = posts.find((post) => post.data.featured) ?? posts[0];
 const streamPosts = posts.filter((post) => post.id !== spotlight?.id);
@@ -29,7 +29,7 @@ const latestNote = notes[0];
 <FullShell title={SITE.title} description={SITE.description}>
   <div class="page-wrap home-page">
     <header class="home-dashboard-head">
-      <h1>某人的小站</h1>
+      <h1>{SITE.title}</h1>
       <PortalControls />
     </header>
 

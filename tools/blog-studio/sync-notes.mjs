@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { copyFile, mkdir, readFile, readdir, realpath, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse, stringify } from 'yaml';
@@ -62,6 +62,28 @@ async function collectMarkdown(root) {
   return files.sort((a, b) => a.localeCompare(b));
 }
 
+async function previousManifest(outputRoot) {
+  try {
+    const manifest = JSON.parse(await readFile(resolve(outputRoot, '.sync-manifest.json'), 'utf8'));
+    if (!Array.isArray(manifest.entries)) throw new Error('entries 必须是数组');
+    return manifest.entries.map((entry) => {
+      const slug = String(entry?.slug ?? '');
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug)) throw new Error(`非法历史 slug：${slug}`);
+      return { slug };
+    });
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw new Error(`无法读取旧同步清单：${error.message}`, { cause: error });
+  }
+}
+
+function outputDirectory(outputRoot, slug) {
+  const root = resolve(outputRoot);
+  const target = resolve(root, slug);
+  if (target === root || !target.startsWith(`${root}${sep}`)) throw new Error(`拒绝访问输出目录之外的路径：${slug}`);
+  return target;
+}
+
 async function locateAttachment(noteFile, sourceRoot, reference) {
   const clean = decodeURIComponent(reference.split(/[?#]/u)[0] ?? '').replace(/^<|>$/gu, '');
   if (!clean || /^(?:https?:|data:|\/)/iu.test(clean)) return null;
@@ -83,6 +105,7 @@ async function main() {
   const outputRoot = options.output ? resolve(options.output) : defaultOutputRoot;
   if (!(await stat(sourceRoot)).isDirectory()) throw new Error(`笔记源不是目录：${sourceRoot}`);
   const files = await collectMarkdown(sourceRoot);
+  const previous = await previousManifest(outputRoot);
   const entries = [];
   const used = new Set();
 
@@ -103,7 +126,7 @@ async function main() {
   const manifest = [];
 
   for (const entry of entries) {
-    const targetDirectory = resolve(outputRoot, entry.slug);
+    const targetDirectory = outputDirectory(outputRoot, entry.slug);
     const attachments = new Map();
     const copiedAttachments = new Set();
     const relations = new Set();
@@ -154,7 +177,6 @@ async function main() {
       tags: Array.isArray(entry.parsed.data.tags) ? entry.parsed.data.tags.map(String) : [],
       aliases: Array.isArray(entry.parsed.data.aliases) ? entry.parsed.data.aliases.map(String) : [],
       publish: entry.publish,
-      source: entry.relativePath,
       maturity,
       relations: [...relations].sort(),
       draft: entry.parsed.data.draft === true,
@@ -169,6 +191,10 @@ async function main() {
 
   if (!options.dryRun) {
     await mkdir(outputRoot, { recursive: true });
+    const currentSlugs = new Set(manifest.map((entry) => entry.slug));
+    for (const entry of previous) {
+      if (!currentSlugs.has(entry.slug)) await rm(outputDirectory(outputRoot, entry.slug), { recursive: true, force: true });
+    }
     await writeFile(resolve(outputRoot, '.sync-manifest.json'), `${JSON.stringify({ generatedAt: new Date().toISOString(), entries: manifest }, null, 2)}\n`, 'utf8');
   }
   console.log(`${options.dryRun ? 'Dry run' : 'Sync'} complete: ${manifest.length} notes, ${manifest.filter((item) => item.publish).length} public.`);

@@ -1,6 +1,13 @@
 import { parse } from 'yaml';
+import { z } from 'astro/zod';
 
-const CHROME = new Set(['full', 'minimal', 'none']);
+export const CHROME_LEVELS = ['full', 'minimal', 'none'];
+export const chromeSchema = z.enum(CHROME_LEVELS).default('full');
+export const draftSchema = z.boolean().default(false);
+const routeSchemas = {
+  posts: z.object({ chrome: chromeSchema, draft: draftSchema, date: z.coerce.date() }),
+  columns: z.object({ chrome: chromeSchema, draft: draftSchema }),
+};
 
 export function parseFrontmatter(source, file = 'content entry') {
   const block = source.match(/^---\r?\n([\s\S]*?)\r?\n---/u)?.[1];
@@ -18,21 +25,18 @@ export function parseFrontmatter(source, file = 'content entry') {
   return data;
 }
 
-export function readRouteMetadata(source, file) {
+export function readRouteMetadata(source, file, collection) {
   const data = parseFrontmatter(source, file);
-  const chrome = data.chrome ?? 'full';
-  if (typeof chrome !== 'string' || !CHROME.has(chrome)) {
-    throw new Error(`Unsupported chrome value in ${file}`);
+  const schema = routeSchemas[collection];
+  if (!schema) throw new Error(`Unsupported content collection: ${collection}`);
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    const details = result.error.issues.map((issue) => `${issue.path.join('.') || 'frontmatter'}: ${issue.message}`).join('; ');
+    throw new Error(`Invalid route metadata in ${file}: ${details}`);
   }
-  if (data.draft !== undefined && typeof data.draft !== 'boolean') {
-    throw new Error(`draft must be boolean in ${file}`);
-  }
-  const rawDate = data.date;
-  const publishAt = rawDate === undefined || rawDate === null || rawDate === ''
-    ? undefined
-    : Date.parse(rawDate instanceof Date ? rawDate.toISOString() : String(rawDate));
-  if (publishAt !== undefined && Number.isNaN(publishAt)) {
-    throw new Error(`Invalid date in ${file}`);
-  }
-  return { chrome, draft: data.draft === true, publishAt };
+  return {
+    chrome: result.data.chrome,
+    draft: result.data.draft,
+    publishAt: 'date' in result.data ? result.data.date.getTime() : undefined,
+  };
 }

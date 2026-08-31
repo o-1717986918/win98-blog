@@ -1,23 +1,24 @@
 ---
 import { withBase } from '../lib/site-path';
+import { SITE } from '../config/site';
 ---
 
-<div class="site-intro" data-site-intro data-state="idle" data-pagefind-ignore role="dialog" aria-modal="true" aria-label="进入某人的小站">
+<div class="site-intro" data-site-intro data-state="idle" data-pagefind-ignore role="dialog" aria-modal="true" aria-label={`进入${SITE.title}`}>
   <canvas class="intro-particles" data-intro-particles aria-hidden="true"></canvas>
   <div class="intro-grain" aria-hidden="true"></div>
   <div class="intro-scan" aria-hidden="true"></div>
 
   <header class="intro-header">
-    <p><img src={withBase('/brand/logo.jpg')} alt="" width="640" height="640" decoding="async" /><span>SOMEONE'S SITE</span><i></i><span>SESSION / 001</span></p>
+    <p><img src={withBase('/brand/logo.jpg')} alt="" width="640" height="640" decoding="async" /><span>WIN98'S SITE</span><i></i><span>SESSION / 001</span></p>
     <button class="intro-skip" type="button" data-intro-skip>跳过动画 <kbd>ESC</kbd></button>
   </header>
 
   <div class="intro-copy">
     <p class="intro-index"><span>ESSAYS</span><span>OBSERVATIONS</span><span>WORKS</span></p>
     <div class="intro-title-stack">
-      <p class="intro-echo intro-echo--back" aria-hidden="true">某人的小站</p>
-      <h1 aria-label="某人的小站">某人的小站</h1>
-      <p class="intro-echo intro-echo--front" aria-hidden="true">某人的小站</p>
+      <p class="intro-echo intro-echo--back" aria-hidden="true">{SITE.title}</p>
+      <h1 aria-label={SITE.title}>{SITE.title}</h1>
+      <p class="intro-echo intro-echo--front" aria-hidden="true">{SITE.title}</p>
     </div>
     <div class="intro-status">
       <div>
@@ -228,13 +229,14 @@ import { withBase } from '../lib/site-path';
 
 <script>
   import type { IntroParticleController, IntroPalette, IntroRgb } from '../lib/intro-particles';
+  import { storageGet, storageSet } from '../lib/browser-storage';
 
   const introKey = 'someone-site:intro-seen:v4';
   const intro = document.querySelector<HTMLElement>('[data-site-intro]');
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (intro) {
     const forceReplay = new URLSearchParams(location.search).has('intro');
-    const alreadySeen = sessionStorage.getItem(introKey) === 'true';
+    const alreadySeen = storageGet('sessionStorage', introKey) === 'true';
     let leaveTimer = 0;
     let exitTimer = 0;
     let removeTimer = 0;
@@ -296,7 +298,7 @@ import { withBase } from '../lib/site-path';
     if (alreadySeen && !forceReplay) {
       intro.hidden = true;
     } else {
-      sessionStorage.setItem(introKey, 'true');
+      storageSet('sessionStorage', introKey, 'true');
       document.body.classList.add('intro-active');
       suspendPage();
       introObserver.observe(document.body, { childList: true });

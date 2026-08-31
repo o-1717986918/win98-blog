@@ -6,11 +6,15 @@ import { withBase } from '../lib/site-path';
 
 export async function GET(context: { site: URL | undefined }) {
   const posts = sortPosts((await getCollection('posts')).filter(isPublished));
+  const lastBuildDate = posts.reduce((latest, post) => {
+    const timestamp = (post.data.updated ?? post.data.date).getTime();
+    return Math.max(latest, timestamp);
+  }, 0);
   return rss({
     title: SITE.title,
     description: SITE.description,
-    site: new URL(withBase('/'), context.site ?? new URL('https://example.com')),
-    customData: `<language>${SITE.language}</language><lastBuildDate>${new Date().toUTCString()}</lastBuildDate>`,
+    site: new URL(withBase('/'), context.site ?? new URL('http://localhost:4321')),
+    customData: `<language>${SITE.language}</language>${lastBuildDate ? `<lastBuildDate>${new Date(lastBuildDate).toUTCString()}</lastBuildDate>` : ''}`,
     items: posts.map((post) => ({
       title: post.data.title,
       description: post.data.description,

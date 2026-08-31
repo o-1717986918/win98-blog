@@ -22,7 +22,7 @@ pnpm content:new column stable-kebab-slug "主题标题"
 | `columns` | 主题 ID 数组；至少保留一个真实主题引用 |
 | `cover` | 可选的 `{ src, alt }` 真实图片；缺省时使用稳定的程序化校样封面，相对路径由 Astro 图片管线处理 |
 | `chrome` | `full / minimal / none`，只表示装配的外壳资源 |
-| `theme` | `mist / abyss`；旧名称仅作为迁移兼容输入，不再形成额外视觉主题 |
+| `theme` | 严格限定为 `mist / abyss`；旧值必须在一次性导入或迁移阶段转换 |
 | `featured` | 精选标记，供策展排序扩展使用 |
 | `evidence` | 实测、决策、图解、交互、源码快照或对照证据；精选文章至少一条 |
 | `syndication` | 可选的外部同步发布 URL，渲染为 POSSE `u-syndication` 链接 |
@@ -45,7 +45,7 @@ pnpm content:new column stable-kebab-slug "主题标题"
 - `pnpm dev` 会显示草稿和未来日期内容，便于本地审阅；
 - 正常 `pnpm build` 排除草稿和构建时刻之后的内容；日期按 ISO 时间解析，精确排期建议写完整时区，例如 `2026-09-01T09:00:00+08:00`；
 - 需要生成包含未发布内容的私有预览时，设置 `PREVIEW_DRAFTS=true`，不得把该产物部署到公开生产环境；
-- 发布前依次执行 `pnpm content:audit`、`pnpm content:covers` 与 `pnpm verify`；首次本地运行端到端测试需执行 `pnpm exec playwright install chromium`，之后可用 `pnpm test:e2e`。
+- 发布前执行 `pnpm verify:all`，它统一覆盖单元测试、完整求解器冒烟、静态构建、Pagefind、内容/链接/体积审计与真实浏览器回归；首次本地运行端到端测试需执行 `pnpm exec playwright install chromium`。
 
 ## 4. 审查清单
 

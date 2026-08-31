@@ -4,9 +4,9 @@
 
 ## A. 账号与资产（站主）
 
-- [ ] Cloudflare Pages Direct Upload 项目已创建，项目名与 `CLOUDFLARE_PAGES_PROJECT` 一致。
-- [ ] API Token 仅有目标账号的 Cloudflare Pages Edit 权限，已保存到 GitHub Secret。
-- [ ] `preview` / `production` Environment 已建立，production 有审批保护。
+- [ ] 当前 GitHub Pages 仓库、发布源和 `github-pages` Environment 已启用；若迁移 Cloudflare，再完成以下两项 Cloudflare 准备。
+- [ ] （仅 Cloudflare）Direct Upload 项目已创建，项目名与 `CLOUDFLARE_PAGES_PROJECT` 一致，API Token 只有 Pages Edit 权限。
+- [ ] （仅 Cloudflare）`preview` / `production` Environment 已建立，production 有审批保护。
 - [ ] 域名、续费联系人、DNS 控制权与回滚责任人已记录在凭据管理器。
 - [ ] Logo、头像、文章/主题真实封面的版权与署名信息已确认；暂缺内容接受使用确定性默认封面。
 
@@ -14,8 +14,8 @@
 
 - [ ] `pnpm install --frozen-lockfile` 成功。
 - [ ] `pnpm deploy:prepare` 成功。
-- [ ] GitHub `verify` workflow 与 Playwright 全绿。
-- [ ] `dist` 内无 `example.com` canonical，RSS 与 sitemap 指向 `SITE_URL`。
+- [ ] GitHub CI 和目标发布 workflow 的 `verify:all` 全绿。
+- [ ] `dist` 内无 `example.com` 或 `localhost` canonical，RSS 与 sitemap 指向 `SITE_URL`。
 - [ ] 没有草稿、未来日期内容或失效的主题引用意外进入生产。
 
 ## C. Preview 验收（人工）
@@ -26,7 +26,7 @@
 - [ ] “继续阅读”只显示三篇，主题条目封面没有被挤压变形。
 - [ ] 从主题、搜索和文章间进入页面后，返回桥能回到原上下文；外部直达时回到首页。
 - [ ] mist 与 abyss 均有足够对比度，没有旧主题残留。
-- [ ] `/archive/`、`/tags/`、顶栏搜索与 404 均可用。
+- [ ] `/archive/`、`/tags/`、侧栏/移动端搜索与 404 均可用。
 - [ ] 各抽查一篇 full、minimal、none；none 没有站点 Header/Footer/全站脚本污染。
 - [ ] 正文目录、代码、图表、窄屏长词和真实封面裁切正常。
 - [ ] 求解器 `.wasm` 与 Worker 均返回 200；识别路径为 33 步；完整模式返回 191 步内置地图路径；运行中页面不卡顿，“停止”可终止 Worker。
@@ -37,6 +37,7 @@
 - [ ] HTTPS 证书有效，HTTP 正确跳转到 HTTPS，主机名策略唯一。
 - [ ] `/robots.txt`、`/sitemap-index.xml`、`/rss.xml`、`/llms.txt` 返回 200 和正确 MIME。
 - [ ] canonical、Open Graph、Twitter Card 与 JSON-LD 都使用最终生产域名。
+- [ ] 在实际主机响应中核验 CSP、nosniff、Referrer-Policy 等安全头；GitHub Pages 不会应用仓库 `_headers`。
 - [ ] 至少用一个真实分享抓取器验证首页、文章和主题 PNG 分享图。
 
 ## E. 可选服务与隐私

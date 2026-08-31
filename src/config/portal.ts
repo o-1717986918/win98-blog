@@ -1,17 +1,12 @@
-export const PORTAL_FEATURES = {
-  projects: true,
-  skills: true,
-  timeline: true,
-  diary: false,
-  albums: false,
-  friends: false,
-  anime: false,
-  devices: false,
-  aiTools: false,
-  music: false,
-  live2d: false,
-  wallpaper: false,
-} as const;
+import { SITE } from './site';
+
+export const PORTAL_NAVIGATION = [
+  { label: '学习笔记', href: '/notes/' },
+  { label: '项目', href: '/projects/' },
+  { label: '能力', href: '/skills/' },
+  { label: '时间线', href: '/timeline/' },
+  { label: '标签索引', href: '/tags/' },
+] as const;
 
 export const PORTAL_PROJECTS = [
   {
@@ -22,11 +17,11 @@ export const PORTAL_PROJECTS = [
     description: '面向小说、剧本与伪记录作品的本地创作系统，把长篇写作拆成可追溯、可检查的工程流程。',
     href: '/columns/arcvellum/',
     accent: 'violet',
-    facts: ['12 篇工程记录', '本地优先', 'Agent Runtime'],
+    facts: ['持续工程记录', '本地优先', 'Agent Runtime'],
   },
   {
     id: 'someone-site',
-    name: '某人的小站',
+    name: SITE.title,
     kind: '静态个人出版系统',
     status: 'Online / 维护中',
     description: '基于 Astro 的模块化博客：内容集合、三档页面外壳、证据账本、公开笔记与本地 Blog Studio。',

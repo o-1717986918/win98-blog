@@ -6,7 +6,6 @@ updated: 2026-08-30
 tags: [内容工程, 证据]
 aliases: [Evidence Ledger, 证据卡]
 publish: true
-source: manual/evidence-ledgers.md
 maturity: growing
 relations: [welcome, static-first-publishing]
 ---

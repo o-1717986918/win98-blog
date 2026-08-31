@@ -9,6 +9,7 @@ import TableOfContents from './chrome/TableOfContents.astro';
 import { formatDate, tagPath, type ColumnEntry, type PostEntry } from '../lib/content';
 import { accentStyle, postAccent } from '../lib/visual';
 import { withBase } from '../lib/site-path';
+import { SITE } from '../config/site';
 
 interface Props {
   post: PostEntry;
@@ -60,6 +61,6 @@ const style = accentStyle(accent);
   <Comments preference={post.data.comments} />
   {post.data.syndication.length > 0 && <p class="article-syndication">同步发布：{post.data.syndication.map((url) => <a class="u-syndication" href={url} rel="syndication noreferrer">{new URL(url).hostname} ↗</a>)}</p>}
   <a class="u-url article-author" href={withBase(`/posts/${post.id}/`)}>原文</a>
-  <a class="p-author h-card article-author" href={withBase('/about/')} rel="author"><span class="p-name">某人</span></a>
+  <a class="p-author h-card article-author" href={withBase('/about/')} rel="author"><span class="p-name">{SITE.author}</span></a>
   <p class="article-license">本文采用 {post.data.license} 许可；转载时请保留作者与原文链接。</p>
 </article>

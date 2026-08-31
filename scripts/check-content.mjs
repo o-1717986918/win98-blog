@@ -7,6 +7,7 @@ const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const contentRoot = resolve(root, 'src', 'content');
 const failures = [];
 const notes = [];
+const featuredPosts = [];
 
 async function findEntries(collection) {
   const base = resolve(contentRoot, collection);
@@ -36,20 +37,29 @@ const noteEntries = await findEntries('notes');
 const postIds = new Set(posts.files.map((file) => relative(posts.base, dirname(file)).replaceAll('\\', '/')));
 const columnIds = new Set(columns.files.map((file) => relative(columns.base, dirname(file)).replaceAll('\\', '/')));
 const noteIds = new Set(noteEntries.files.map((file) => relative(noteEntries.base, dirname(file)).replaceAll('\\', '/')));
+const publicNoteIds = new Set();
 const titles = new Map();
 const noteNames = new Map();
+const publicNoteNames = new Map();
 const routes = new Set(['/', '/archive/', '/about/', '/search/', '/tags/', '/notes/', '/privacy/', '/rss.xml']);
 for (const id of postIds) routes.add(`/posts/${id}/`);
 for (const id of columnIds) routes.add(`/columns/${id}/`);
-for (const id of noteIds) routes.add(`/notes/${id}/`);
 
 for (const file of noteEntries.files) {
   const id = relative(noteEntries.base, dirname(file)).replaceAll('\\', '/');
   const source = await readFile(file, 'utf8');
   const meta = metadata(source, file);
+  const isPublic = meta.value('publish') === true && meta.value('draft') !== true;
+  if (isPublic) {
+    publicNoteIds.add(id);
+    routes.add(`/notes/${id}/`);
+  }
   for (const name of [meta.value('title'), ...meta.list('aliases')]) {
     const normalized = String(name ?? '').trim().toLowerCase();
-    if (normalized) noteNames.set(normalized, id);
+    if (normalized) {
+      noteNames.set(normalized, id);
+      if (isPublic) publicNoteNames.set(normalized, id);
+    }
   }
 }
 
@@ -75,7 +85,10 @@ for (const { name: collection, files, base } of collections) {
       const bodyCharacters = meta.body.replace(/\s/gu, '').length;
       if (format === 'essay' && meta.value('draft') !== true && bodyCharacters < 1200) failures.push(`${label}: essay 正文不足 1200 个非空白字符；短内容请明确使用 field-note 或 experiment`);
       if (String(title ?? '').length > 32 && !meta.value('shortTitle')) failures.push(`${label}: 长标题需要 shortTitle（最多 32 字）`);
-      if (meta.value('featured') === true && (!Array.isArray(meta.value('evidence')) || meta.value('evidence').length === 0)) failures.push(`${label}: featured 文章至少需要一条 evidence`);
+      if (meta.value('featured') === true) {
+        featuredPosts.push(label);
+        if (!Array.isArray(meta.value('evidence')) || meta.value('evidence').length === 0) failures.push(`${label}: featured 文章至少需要一条 evidence`);
+      }
       const referencedColumns = meta.list('columns');
       if (referencedColumns.length === 0 && meta.value('draft') !== true) failures.push(`${label}: 已发布文章至少需要一个主题引用`);
       for (const column of referencedColumns) if (!columnIds.has(column)) failures.push(`${label}: 主题引用 ${column} 不存在`);
@@ -85,17 +98,20 @@ for (const { name: collection, files, base } of collections) {
       if (meta.value('draft') === true) notes.push(`${label}: 草稿`);
     }
     if (collection === 'notes') {
+      const isPublic = meta.value('publish') === true && meta.value('draft') !== true;
       const created = meta.value('created');
       if (!created || Number.isNaN(Date.parse(created))) failures.push(`${label}: created 无效`);
       if (!['seedling', 'growing', 'evergreen'].includes(String(meta.value('maturity') ?? ''))) failures.push(`${label}: maturity 必须是 seedling / growing / evergreen`);
       for (const target of meta.list('relations')) {
         if (!noteIds.has(target)) failures.push(`${label}: 显式关系 ${target} 不存在`);
+        else if (isPublic && !publicNoteIds.has(target)) failures.push(`${label}: 公开笔记不能引用未公开关系 ${target}`);
         if (target === id) failures.push(`${label}: 不允许关系指向自身`);
       }
       const linkableBody = meta.body.replace(/```[\s\S]*?```/gu, '').replace(/~~~[\s\S]*?~~~/gu, '').replace(/`[^`\r\n]*`/gu, '');
       for (const link of linkableBody.matchAll(/(?<!!)\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|[^\]]+)?\]\]/gu)) {
         const target = String(link[1]).trim().toLowerCase();
-        if (!noteNames.has(target)) failures.push(`${label}: Wiki 链接目标不存在 ${link[1]}`);
+        const visibleNames = isPublic ? publicNoteNames : noteNames;
+        if (!visibleNames.has(target)) failures.push(`${label}: Wiki 链接目标不存在或不可公开 ${link[1]}`);
       }
       if (meta.value('publish') !== true) notes.push(`${label}: 私有笔记，不进入公开路由`);
       if (meta.value('draft') === true) notes.push(`${label}: 草稿`);
@@ -117,6 +133,8 @@ for (const { name: collection, files, base } of collections) {
     }
   }
 }
+
+if (featuredPosts.length > 1) failures.push(`featured 文章只能有一篇，当前为：${featuredPosts.join(', ')}`);
 
 if (failures.length) {
   console.error('Content audit failed:');

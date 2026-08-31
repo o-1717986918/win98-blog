@@ -6,10 +6,11 @@ import '../../styles/shell.css';
 import '../../styles/prose.css';
 import { withBase } from '../../lib/site-path';
 import { buildNoteGraph, NOTE_MATURITY } from '../../lib/note-graph';
+import { formatSiteDate } from '../../lib/date';
 
 const notes = (await getCollection('notes'))
   .filter((note) => note.data.publish && !note.data.draft)
-  .sort((a, b) => (b.data.updated ?? b.data.created).getTime() - (a.data.updated ?? a.data.created).getTime());
+  .sort((a, b) => (b.data.updated ?? b.data.created).getTime() - (a.data.updated ?? a.data.created).getTime() || a.id.localeCompare(b.id, 'en'));
 const tags = [...new Set(notes.flatMap((note) => note.data.tags))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
 const latest = notes[0];
 const excerpt = (body: string) => body
@@ -23,8 +24,9 @@ const excerpt = (body: string) => body
   .trim()
   .slice(0, 320);
 const previewNotes = notes.map((note) => ({ note, excerpt: excerpt(note.body ?? note.data.description) }));
-const formatDate = (value: Date) => value.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+const formatDate = formatSiteDate;
 const graph = buildNoteGraph(notes);
+if (graph.unresolved.length) throw new Error(`公开笔记存在未解析关系：${graph.unresolved.map((item) => `${item.source} → ${item.target}`).join(', ')}`);
 const relations = graph.relations;
 const graphNodes = notes.map((note, index) => {
   const count = Math.max(notes.length, 1);
@@ -68,7 +70,6 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
                 data-preview-index={String(index + 1).padStart(2, '0')}
                 data-preview-file={`${note.id}.md`}
                 data-preview-tags={note.data.tags.map((tag) => `#${tag}`).join(' · ') || 'UNTAGGED'}
-                data-preview-source={note.data.source ?? '站内创建'}
                 data-preview-aliases={note.data.aliases.join(' · ') || '—'}
                 data-preview-maturity={NOTE_MATURITY[note.data.maturity].label}
                 data-preview-backlinks={JSON.stringify(incoming.map((entry) => ({ title: entry.data.title, href: withBase(`/notes/${entry.id}/`) })))}
@@ -124,7 +125,6 @@ const latestOutgoing = latest ? outgoingFor(latest) : [];
           <dl>
             <div><dt>aliases</dt><dd data-preview-aliases>{latest?.data.aliases.join(' · ') || '—'}</dd></div>
             <div><dt>tags</dt><dd data-context-tags>{latest?.data.tags.join(' · ') || '—'}</dd></div>
-            <div><dt>source</dt><dd data-preview-source>{latest?.data.source ?? '站内创建'}</dd></div>
             <div><dt>maturity</dt><dd data-preview-maturity>{latest ? NOTE_MATURITY[latest.data.maturity].label : '—'}</dd></div>
             <div><dt>publish</dt><dd>true</dd></div>
           </dl>

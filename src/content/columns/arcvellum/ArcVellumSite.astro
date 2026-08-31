@@ -11,7 +11,8 @@ import { withBase } from '../../../lib/site-path';
 
 const posts = sortPosts((await getCollection('posts')).filter(isPublished).filter((post) => belongsToColumn(post, 'arcvellum')));
 const available = new Map(posts.map((post) => [post.id, post]));
-const groupedDocs = arcDocGroups.map((group) => ({ group, docs: docs.filter((doc) => doc.group === group) }));
+const numberedDocs = docs.map((doc, index) => ({ ...doc, no: String(index + 1).padStart(2, '0') }));
+const groupedDocs = arcDocGroups.map((group) => ({ group, docs: numberedDocs.filter((doc) => doc.group === group) }));
 ---
 
 <main class="arc-site" data-pagefind-body>
@@ -87,7 +88,7 @@ const groupedDocs = arcDocGroups.map((group) => ({ group, docs: docs.filter((doc
           <div class="arc-doc-list">
             {groupDocs.map((doc) => {
               const post = available.get(doc.id);
-              return <a href={post ? withBase(`/posts/${doc.id}/`) : '#'} aria-disabled={!post}><span>{doc.no}</span><small>{doc.label}</small><strong>{doc.title}</strong><p>{doc.note}</p><i>{post ? '打开文档 ↗' : '编写中'}</i></a>;
+              return <a href={post ? withBase(`/posts/${doc.id}/`) : '#'} aria-disabled={!post}><span>{doc.no}</span><small>{doc.label}</small><strong>{post?.data.title ?? doc.id}</strong><p>{doc.note}</p><i>{post ? '打开文档 ↗' : '编写中'}</i></a>;
             })}
           </div>
         </section>

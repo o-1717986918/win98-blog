@@ -1,23 +1,31 @@
 ---
 import type { PostEntry } from '../lib/content';
 import { withBase } from '../lib/site-path';
+import { siteDateParts } from '../lib/date';
+import { publicationTimestamp } from '../lib/publication-clock.mjs';
 
 interface Props { posts: PostEntry[]; }
 
 const { posts } = Astro.props;
-const anchor = posts[0]?.data.date ?? new Date();
-const year = anchor.getFullYear();
-const month = anchor.getMonth();
-const monthPosts = posts.filter((post) => post.data.date.getFullYear() === year && post.data.date.getMonth() === month);
+const anchor = siteDateParts(posts[0]?.data.date ?? new Date(publicationTimestamp));
+const year = anchor.year;
+const month = anchor.month;
+const monthPosts = posts.filter((post) => {
+  const value = siteDateParts(post.data.date);
+  return value.year === year && value.month === month;
+});
 const counts = new Map<number, number>();
-monthPosts.forEach((post) => counts.set(post.data.date.getDate(), (counts.get(post.data.date.getDate()) ?? 0) + 1));
-const offset = (new Date(year, month, 1).getDay() + 6) % 7;
-const days = new Date(year, month + 1, 0).getDate();
+monthPosts.forEach((post) => {
+  const day = siteDateParts(post.data.date).day;
+  counts.set(day, (counts.get(day) ?? 0) + 1);
+});
+const offset = (new Date(Date.UTC(year, month - 1, 1)).getUTCDay() + 6) % 7;
+const days = new Date(Date.UTC(year, month, 0)).getUTCDate();
 const cells = [
   ...Array.from({ length: offset }, () => null),
   ...Array.from({ length: days }, (_, index) => ({ day: index + 1, count: counts.get(index + 1) ?? 0 })),
 ];
-const monthLabel = `${year}.${String(month + 1).padStart(2, '0')}`;
+const monthLabel = `${year}.${String(month).padStart(2, '0')}`;
 const busiest = Math.max(1, ...counts.values());
 ---
 
@@ -29,14 +37,14 @@ const busiest = Math.max(1, ...counts.values());
   <div class="publication-calendar__week" aria-hidden="true">
     {['一', '二', '三', '四', '五', '六', '日'].map((day) => <span>{day}</span>)}
   </div>
-  <ol aria-label={`${year}年${month + 1}月发表记录`}>
+  <ol aria-label={`${year}年${month}月发表记录`}>
     {cells.map((cell) => cell ? (
       <li class:list={{ active: cell.count > 0 }} style={`--activity:${cell.count / busiest}`}>
         {cell.count > 0 ? (
-          <button type="button" data-calendar-date={`${year}-${String(month + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`} aria-pressed="false" aria-label={`${month + 1}月${cell.day}日，筛选${cell.count}篇文章`}>
+          <button type="button" data-calendar-date={`${year}-${String(month).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`} aria-pressed="false" aria-label={`${month}月${cell.day}日，筛选${cell.count}篇文章`}>
             <span>{cell.day}</span><i>{cell.count}</i>
           </button>
-        ) : <span aria-label={`${month + 1}月${cell.day}日，没有发表文章`}>{cell.day}</span>}
+        ) : <span aria-label={`${month}月${cell.day}日，没有发表文章`}>{cell.day}</span>}
       </li>
     ) : <li class="empty" aria-hidden="true"></li>)}
   </ol>

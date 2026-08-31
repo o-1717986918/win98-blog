@@ -2,9 +2,12 @@ let pagefind;
 let requestId = 0;
 const siteRoot = new URL('../', import.meta.url);
 
-const escapeHtml = (value) => value.replace(/[&<>"']/g, (character) => ({
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 })[character] ?? character);
+const safeExcerpt = (value) => escapeHtml(value)
+  .replaceAll('&lt;mark&gt;', '<mark>')
+  .replaceAll('&lt;/mark&gt;', '</mark>');
 
 document.querySelectorAll('[data-search-index]').forEach((root) => {
   const input = root.querySelector('[data-search-input]');
@@ -29,14 +32,14 @@ document.querySelectorAll('[data-search-index]').forEach((root) => {
     status.textContent = '正在搜索…';
     try {
       const api = await load();
-      const response = await api.search(query, { filters: { type: '文章' } });
+      const response = await api.search(query);
       const results = await Promise.all(response.results.slice(0, 8).map((result) => result.data()));
       if (id !== requestId) return;
       list.innerHTML = results.map((result) => `
         <li class="search-result">
           <a href="${escapeHtml(result.url)}">
             <h2>${escapeHtml(result.meta.title ?? result.url)}<span aria-hidden="true">↗</span></h2>
-            <p>${result.excerpt || escapeHtml(result.meta.description ?? '')}</p>
+            <p>${result.excerpt ? safeExcerpt(result.excerpt) : escapeHtml(result.meta.description)}</p>
           </a>
         </li>`).join('');
       status.textContent = results.length ? `找到 ${results.length} 条结果。` : '没有找到匹配内容。';

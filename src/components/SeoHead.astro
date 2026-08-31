@@ -34,7 +34,7 @@ const siteUrl = new URL(withBase('/'), Astro.site).href;
 const websiteId = `${siteUrl}#website`;
 const pageId = `${canonical.href}#webpage`;
 const authorUrl = new URL(withBase('/about/'), Astro.site).href;
-const author = { '@type': 'Person', name: SITE.author, url: authorUrl, sameAs: ['https://github.com/o-1717986918'] };
+const author = { '@type': 'Person', name: SITE.author, url: authorUrl, sameAs: [SITE.github] };
 const website = {
   '@type': 'WebSite',
   '@id': websiteId,

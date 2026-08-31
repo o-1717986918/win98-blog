@@ -1,4 +1,5 @@
 import type { PostEntry } from './content';
+import { siteDateParts } from './date';
 
 export interface ArchiveMonthGroup {
   year: number;
@@ -12,21 +13,7 @@ export interface ArchiveYearGroup {
   months: ArchiveMonthGroup[];
 }
 
-const archiveDateFormatter = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'Asia/Shanghai',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
-
-export const archiveDateParts = (date: Date) => {
-  const values = new Map(archiveDateFormatter.formatToParts(date).map((part) => [part.type, part.value]));
-  return {
-    year: Number(values.get('year')),
-    month: Number(values.get('month')),
-    day: Number(values.get('day')),
-  };
-};
+export const archiveDateParts = siteDateParts;
 
 export const groupPostsByYearMonth = (posts: PostEntry[]): ArchiveYearGroup[] => {
   const years = new Map<number, Map<number, PostEntry[]>>();
@@ -47,7 +34,7 @@ export const groupPostsByYearMonth = (posts: PostEntry[]): ArchiveYearGroup[] =>
         .map(([month, entries]) => ({
           year,
           month,
-          posts: [...entries].sort((left, right) => right.data.date.getTime() - left.data.date.getTime()),
+          posts: [...entries].sort((left, right) => right.data.date.getTime() - left.data.date.getTime() || left.id.localeCompare(right.id, 'en')),
         }));
       return {
         year,
@@ -56,4 +43,3 @@ export const groupPostsByYearMonth = (posts: PostEntry[]): ArchiveYearGroup[] =>
       };
     });
 };
-

@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import SearchIndex from '../SearchIndex.astro';
-import { PORTAL_FEATURES } from '../../config/portal';
+import { PORTAL_NAVIGATION } from '../../config/portal';
 import { SITE } from '../../config/site';
 import { isPublished, sortColumns } from '../../lib/content';
 import { withBase } from '../../lib/site-path';
@@ -12,14 +12,7 @@ const current = (href: string) => {
   const resolved = withBase(href);
   return href === '/' ? pathname === resolved : pathname.startsWith(resolved);
 };
-const portalLinks = [
-  { label: '学习笔记', href: '/notes/', enabled: true },
-  { label: '项目', href: '/projects/', enabled: PORTAL_FEATURES.projects },
-  { label: '能力', href: '/skills/', enabled: PORTAL_FEATURES.skills },
-  { label: '时间线', href: '/timeline/', enabled: PORTAL_FEATURES.timeline },
-  { label: '标签索引', href: '/tags/', enabled: true },
-].filter((item) => item.enabled);
-const portalCurrent = portalLinks.some((item) => current(item.href));
+const portalCurrent = PORTAL_NAVIGATION.some((item) => current(item.href));
 ---
 
 <header class="site-header" data-site-header data-pagefind-ignore>
@@ -58,7 +51,7 @@ const portalCurrent = portalLinks.some((item) => current(item.href));
         <details class="column-menu explore-menu" open={portalCurrent} data-nav-layer>
           <summary data-current={portalCurrent ? 'true' : undefined}><span>探索</span><small>DISCOVER</small><i aria-hidden="true">⌄</i></summary>
           <div class="column-menu__panel">
-            {portalLinks.map((item, index) => (
+            {PORTAL_NAVIGATION.map((item, index) => (
               <a href={withBase(item.href)} aria-current={current(item.href) ? 'page' : undefined}>
                 <b>{String(index + 1).padStart(2, '0')}</b><span>{item.label}</span><i aria-hidden="true">→</i>
               </a>
@@ -176,12 +169,13 @@ const portalCurrent = portalLinks.some((item) => current(item.href));
 </style>
 
 <script>
+  import { storageGet, storageSet } from '../../lib/browser-storage';
+
   const themeIds = ['mist', 'abyss'] as const;
   type ThemeId = (typeof themeIds)[number];
   const root = document.documentElement;
-  const stored = localStorage.getItem('someone-site:theme');
-  const compatibleStored = stored === 'paper' ? 'mist' : stored === 'graphite' || stored === 'night' || stored === 'indigo' ? 'abyss' : stored;
-  if (compatibleStored && themeIds.includes(compatibleStored as ThemeId)) root.dataset.theme = compatibleStored;
+  const stored = storageGet('localStorage', 'someone-site:theme');
+  if (stored && themeIds.includes(stored as ThemeId)) root.dataset.theme = stored;
 
   const themeNames: Record<ThemeId, string> = { mist: 'MIST', abyss: 'ABYSS' };
   const syncThemeLabel = () => {
@@ -196,11 +190,13 @@ const portalCurrent = portalLinks.some((item) => current(item.href));
     const themeButton = header.querySelector<HTMLButtonElement>('[data-theme-button]');
     if (!button || !shell || !themeButton) return;
 
-    const close = () => {
+    const close = (restoreFocus = false) => {
+      const mobileOpen = matchMedia('(max-width: 1100px)').matches && shell.dataset.open === 'true';
       shell.dataset.open = 'false';
       button.setAttribute('aria-expanded', 'false');
       button.setAttribute('aria-label', '打开导航');
       header.querySelectorAll<HTMLDetailsElement>('details[open]').forEach((details) => { details.open = false; });
+      if (restoreFocus && mobileOpen) button.focus({ preventScroll: true });
     };
     const layers = [...header.querySelectorAll<HTMLDetailsElement>('[data-nav-layer]')];
     layers.forEach((layer) => layer.addEventListener('toggle', () => {
@@ -218,17 +214,17 @@ const portalCurrent = portalLinks.some((item) => current(item.href));
       const current = themeIds.indexOf((root.dataset.theme ?? 'mist') as ThemeId);
       const next = themeIds[(current + 1) % themeIds.length] ?? 'mist';
       root.dataset.theme = next;
-      localStorage.setItem('someone-site:theme', next);
+      storageSet('localStorage', 'someone-site:theme', next);
       syncThemeLabel();
       dispatchEvent(new CustomEvent('site:theme'));
       close();
     });
-    header.querySelector('[data-motion-toggle]')?.addEventListener('click', close);
-    header.querySelectorAll('a').forEach((control) => control.addEventListener('click', close));
+    header.querySelector('[data-motion-toggle]')?.addEventListener('click', () => close());
+    header.querySelectorAll('a').forEach((control) => control.addEventListener('click', () => close()));
     document.addEventListener('click', (event) => {
       if (!header.contains(event.target as Node) && matchMedia('(max-width: 1100px)').matches) close();
     });
-    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(true); });
   });
 
   document.addEventListener('keydown', (event) => {

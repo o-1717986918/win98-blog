@@ -19,7 +19,7 @@ date: 2026-09-01T09:00:00+08:00
       draft: true,
       columns: ['engineering', 'notes'],
     });
-    expect(readRouteMetadata(source, 'sample.mdx')).toEqual({
+    expect(readRouteMetadata(source, 'sample.mdx', 'posts')).toEqual({
       chrome: 'none',
       draft: true,
       publishAt: Date.parse('2026-09-01T09:00:00+08:00'),
@@ -27,16 +27,22 @@ date: 2026-09-01T09:00:00+08:00
   });
 
   it('keeps the full chrome default', () => {
-    expect(readRouteMetadata('---\ntitle: 默认\n---\n', 'sample.mdx')).toEqual({
+    expect(readRouteMetadata('---\ntitle: 默认\ndate: 2026-08-29\n---\n', 'sample.mdx', 'posts')).toEqual({
       chrome: 'full',
       draft: false,
-      publishAt: undefined,
+      publishAt: new Date('2026-08-29').getTime(),
     });
   });
 
   it('rejects invalid route metadata', () => {
-    expect(() => readRouteMetadata('---\nchrome: floating\n---\n', 'sample.mdx')).toThrow('Unsupported chrome');
-    expect(() => readRouteMetadata('---\ndraft: maybe\n---\n', 'sample.mdx')).toThrow('draft must be boolean');
-    expect(() => readRouteMetadata('---\ndate: not-a-date\n---\n', 'sample.mdx')).toThrow('Invalid date');
+    expect(() => readRouteMetadata('---\nchrome: floating\ndate: 2026-08-29\n---\n', 'sample.mdx', 'posts')).toThrow('Invalid route metadata');
+    expect(() => readRouteMetadata('---\ndraft: maybe\ndate: 2026-08-29\n---\n', 'sample.mdx', 'posts')).toThrow('Invalid route metadata');
+    expect(() => readRouteMetadata('---\ndate: not-a-date\n---\n', 'sample.mdx', 'posts')).toThrow('Invalid route metadata');
+  });
+
+  it('uses the same date coercion as the content schema', () => {
+    expect(readRouteMetadata('---\ndate: 1893456000000\n---\n', 'sample.mdx', 'posts').publishAt)
+      .toBe(new Date(1_893_456_000_000).getTime());
+    expect(readRouteMetadata('---\ndate: 2099-01-01\n---\n', 'sample.mdx', 'columns').publishAt).toBeUndefined();
   });
 });

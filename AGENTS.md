@@ -8,7 +8,7 @@
 
 ## 2. 身份与仓库边界
 
-- 公开站名固定为“某人的小站”。不恢复历史候选名，也不把视觉概念用作站名。
+- 公开站名固定为“win98的小站”。不恢复历史候选名，也不把视觉概念用作站名。
 - 不修改外部源目录 `C:\Users\26532\.zcode\workspace\default`。
 - `prototype/index.html` 与 `docs/source/blog-architecture.md` 是哈希冻结的接手基线。
 - `src/` 是唯一生产主线；`experiments/` 下的 Celestial Matrix 与单文件视觉候选只保留过程证据。

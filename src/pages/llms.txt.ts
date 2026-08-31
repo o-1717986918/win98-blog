@@ -4,7 +4,7 @@ import { isPublished, sortColumns, sortPosts } from '../lib/content';
 import { withBase } from '../lib/site-path';
 
 export async function GET({ site }: { site: URL | undefined }) {
-  const root = site ?? new URL('https://example.com');
+  const root = site ?? new URL('http://localhost:4321');
   const posts = sortPosts((await getCollection('posts')).filter(isPublished));
   const columns = sortColumns((await getCollection('columns')).filter(isPublished));
   const absolute = (path: string) => new URL(withBase(path), root).href;
@@ -16,7 +16,7 @@ export async function GET({ site }: { site: URL | undefined }) {
     '## 主要入口',
     `- [首页](${absolute('/')})`,
     `- [文章归档](${absolute('/archive/')})`,
-    `- [主题](${absolute('/#columns-heading')})`,
+    `- [主题](${absolute('/#portal-topics-title')})`,
     `- [RSS](${absolute('/rss.xml')})`,
     '',
     '## 主题',

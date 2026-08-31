@@ -56,6 +56,8 @@
 </style>
 
 <script>
+  import { storageGet, storageRemove, storageSet } from '../lib/browser-storage';
+
   type PortalDensity = 'standard' | 'compact';
   type PortalPreferences = { density: PortalDensity; widgets: Record<string, boolean> };
   const storageKey = 'someone-site:portal-preferences:v1';
@@ -73,7 +75,7 @@
 
     let preferences: PortalPreferences = structuredClone(defaults);
     try {
-      const stored = JSON.parse(localStorage.getItem(storageKey) ?? 'null') as Partial<PortalPreferences> | null;
+      const stored = JSON.parse(storageGet('localStorage', storageKey) ?? 'null') as Partial<PortalPreferences> | null;
       if (stored) preferences = {
         density: stored.density === 'compact' ? 'compact' : 'standard',
         widgets: {
@@ -82,7 +84,7 @@
           tags: stored.widgets?.tags !== false,
         },
       };
-    } catch { localStorage.removeItem(storageKey); }
+    } catch { storageRemove('localStorage', storageKey); }
 
     const apply = (announce = false) => {
       document.documentElement.dataset.portalDensity = preferences.density;
@@ -100,7 +102,7 @@
       if (announce) live.textContent = `门户设置已更新：${summary.textContent}`;
     };
 
-    const save = () => { localStorage.setItem(storageKey, JSON.stringify(preferences)); apply(true); };
+    const save = () => { storageSet('localStorage', storageKey, JSON.stringify(preferences)); apply(true); };
     controls.querySelector('[data-portal-open]')?.addEventListener('click', () => dialog.showModal());
     controls.querySelectorAll<HTMLInputElement>('[data-portal-toggle]').forEach((input) => input.addEventListener('change', () => {
       preferences.widgets[input.value] = input.checked;
@@ -113,7 +115,7 @@
     }));
     controls.querySelector('[data-portal-reset]')?.addEventListener('click', () => {
       preferences = structuredClone(defaults);
-      localStorage.removeItem(storageKey);
+      storageRemove('localStorage', storageKey);
       apply(true);
     });
     apply();

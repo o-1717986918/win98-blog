@@ -120,10 +120,11 @@
 
 <script>
   import type { FieldController, FieldPalette, Rgb } from '../lib/pixi-field';
+  import { storageGet, storageSet } from '../lib/browser-storage';
 
   const motionKey = 'someone-site:ambient-paused';
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  let manualPause = localStorage.getItem(motionKey) === 'true';
+  let manualPause = storageGet('localStorage', motionKey) === 'true';
   let hiddenPause = document.hidden;
   let introPause = Boolean(document.querySelector('[data-site-intro]:not([hidden])'));
   let controller: FieldController | undefined;
@@ -178,7 +179,7 @@
   document.querySelectorAll<HTMLButtonElement>('[data-motion-toggle]').forEach((button) => {
     button.addEventListener('click', () => {
       manualPause = button.getAttribute('aria-pressed') !== 'true';
-      localStorage.setItem(motionKey, String(manualPause));
+      storageSet('localStorage', motionKey, String(manualPause));
       syncButtons();
       syncController();
     });

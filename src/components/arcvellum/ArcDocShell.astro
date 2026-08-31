@@ -1,7 +1,9 @@
 ---
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
 import { arcDocGroups, arcDocs } from './docs';
+import { belongsToColumn, isPublished } from '../../lib/content';
 import { withBase } from '../../lib/site-path';
 
 interface Props {
@@ -15,6 +17,13 @@ interface Props {
   nextLabel?: string;
 }
 const { index, section, title, deck, image, imageAlt, nextHref, nextLabel } = Astro.props;
+const postById = new Map(
+  (await getCollection('posts'))
+    .filter(isPublished)
+    .filter((post) => belongsToColumn(post, 'arcvellum'))
+    .map((post) => [post.id, post]),
+);
+const numberedDocs = arcDocs.map((doc, position) => ({ ...doc, no: String(position + 1).padStart(2, '0') }));
 ---
 
 <main class="arc-doc" data-pagefind-body>
@@ -29,7 +38,7 @@ const { index, section, title, deck, image, imageAlt, nextHref, nextLabel } = As
     <figure><Image src={image} alt={imageAlt} widths={[640, 960, 1280]} sizes="(max-width: 800px) 100vw, 44vw" loading="eager" /><figcaption>仓库内真实产品界面 / RELEASE EVIDENCE</figcaption></figure>
   </header>
   <div class="arc-doc__body">
-    <aside class="arc-doc__sidebar"><div><span>DOCUMENT BASIS</span><p>本文依据当前源码、架构合同、真实项目运行与发布证据整理；已验证能力、当前边界和后续假设分开表述。</p></div><nav aria-label="ArcVellum 文章目录">{arcDocGroups.map((group) => <section><h2>{group}</h2>{arcDocs.filter((doc) => doc.group === group).map((doc) => <a class:list={{ active: doc.no === index }} href={withBase(`/posts/${doc.id}/`)} aria-current={doc.no === index ? 'page' : undefined}><i>{doc.no}</i><span>{doc.label}</span><b>{doc.title}</b></a>)}</section>)}</nav></aside>
+    <aside class="arc-doc__sidebar"><div><span>DOCUMENT BASIS</span><p>本文依据当前源码、架构合同、真实项目运行与发布证据整理；已验证能力、当前边界和后续假设分开表述。</p></div><nav aria-label="ArcVellum 文章目录">{arcDocGroups.map((group) => <section><h2>{group}</h2>{numberedDocs.filter((doc) => doc.group === group).map((doc) => <a class:list={{ active: doc.no === index }} href={withBase(`/posts/${doc.id}/`)} aria-current={doc.no === index ? 'page' : undefined}><i>{doc.no}</i><span>{doc.label}</span><b>{postById.get(doc.id)?.data.title ?? doc.id}</b></a>)}</section>)}</nav></aside>
     <article class="arc-prose"><slot /></article>
   </div>
   {nextHref && <a class="arc-doc__next" href={withBase(nextHref)}><span>NEXT DOCUMENT</span><strong>{nextLabel}</strong><i>↗</i></a>}
