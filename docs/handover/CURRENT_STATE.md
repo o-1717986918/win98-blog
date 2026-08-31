@@ -35,7 +35,7 @@
 | 现场性能 | full/minimal 原生采集 LCP、CLS 与交互延迟样本；默认只存当前会话，配置 HTTPS 端点后才上传 |
 | Blog Studio | 回环地址上的本地可视化维护台，可浏览、创建和编辑文章/主题/笔记，预览 Markdown，运行白名单质量命令与笔记同步 |
 | 架构守护 | Vitest、Playwright、类型/内容/封面审计、产物隔离、内部链接、体积预算与 CI |
-| 容器交付 | 多阶段 Docker、非 root Nginx、只读 Compose、健康检查、GHCR SHA/stable 标签、SBOM/构建证明与宝塔反代/回滚手册；正式首个镜像等待最终域名后手动发布 |
+| 容器交付 | `https://win98.site` 正式镜像已发布到 public GHCR；多阶段 Docker、非 root Nginx、只读 Compose、健康检查、SHA/stable 标签、SBOM、构建证明及宝塔反代/回滚手册均已验证 |
 
 ## 关键实现决定
 

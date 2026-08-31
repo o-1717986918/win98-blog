@@ -6,7 +6,7 @@
 
 - [ ] 当前 GitHub Pages 仓库、发布源和 `github-pages` Environment 已启用；迁移期间保留其回退能力。
 - [ ] （自托管）正式 HTTPS 域名已确定，GitHub `publish-ghcr` 从 `main` 执行成功，镜像 digest 与 `sha-<commit>` 已记录。
-- [ ] （自托管）GHCR 可见性已明确；private 包的服务器 PAT 仅有 `read:packages`，未写入仓库或 Compose。
+- [ ] （自托管）GHCR 包可见性已明确记录；当前 public 包可匿名拉取，服务器未保存不必要的 GitHub PAT。
 - [ ] （仅 Cloudflare）Direct Upload 项目已创建，项目名与 `CLOUDFLARE_PAGES_PROJECT` 一致，API Token 只有 Pages Edit 权限。
 - [ ] （仅 Cloudflare）`preview` / `production` Environment 已建立，production 有审批保护。
 - [ ] 域名、续费联系人、DNS 控制权与回滚责任人已记录在凭据管理器。

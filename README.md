@@ -52,7 +52,7 @@ pnpm content:audit
 pnpm container:verify
 ```
 
-正式镜像由 GitHub Actions 的 `publish-ghcr` 手动工作流发布到 `ghcr.io/o-1717986918/win98-blog`。工作流只接受 `main` 和真实 HTTPS `site_url`，产出不可变 `sha-<commit>` 及可选 `stable` 标签；服务器使用根目录 `compose.yaml` 拉取，不在生产机编译源码。
+正式镜像由 GitHub Actions 的 `publish-ghcr` 手动工作流发布到 public `ghcr.io/o-1717986918/win98-blog`。工作流只接受 `main` 和真实 HTTPS `site_url`，产出不可变 `sha-<commit>` 及可选 `stable` 标签；服务器可匿名使用根目录 `compose.yaml` 拉取，不在生产机编译源码。
 
 ## 目录
 

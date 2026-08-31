@@ -30,7 +30,7 @@ GitHub Pages 是当前可立即访问的公开首发渠道；自租服务器的�
 ghcr.io/o-1717986918/win98-blog
 ```
 
-`SITE_URL` 是静态产物的一部分，不是容器启动参数。正式域名变更时必须重新发布镜像，不能只改宝塔反向代理。工作流使用 `GITHUB_TOKEN` 写包，不需要创建 GitHub 发布 PAT；只有服务器拉取私有包时才需要只读 PAT。
+`SITE_URL` 是静态产物的一部分，不是容器启动参数。正式域名变更时必须重新发布镜像，不能只改宝塔反向代理。工作流使用 `GITHUB_TOKEN` 写包，不需要创建 GitHub 发布 PAT。当前 GHCR 包按站主决定保持 public，服务器可匿名拉取，也不需要只读 PAT。
 
 本机完整复现容器交付：
 
@@ -44,13 +44,11 @@ pnpm container:verify
 
 ### 1.2 第一次 GHCR 发布
 
-1. 先确定正式域名，例如 `https://blog.example.cn`，不要带路径或尾斜杠。
-2. 在 GitHub 仓库进入 **Actions → publish-ghcr → Run workflow**，分支选择 `main`，填写 `site_url`，首次保持 `publish_stable=true`。
+1. 正式域名固定为 `https://win98.site`，不带路径或尾斜杠。
+2. 在 GitHub 仓库进入 **Actions → publish-ghcr → Run workflow**，分支选择 `main`，填写 `https://win98.site`，保持 `publish_stable=true`。
 3. 等待 `Verify, publish and smoke-test` 全绿，在 Job Summary 保存镜像 digest 与 `sha-<commit>` 标签。
-4. 新建 GHCR 包默认是 private。两种拉取方式二选一：
-   - 保持 private：为服务器创建仅含 `read:packages` 的 classic PAT，用 `docker login ghcr.io` 保存；
-   - 需要匿名一键拉取：在包的 **Package settings → Change visibility → Public** 手工公开。公开后不能再改回 private。
-5. 不要把 PAT 写入仓库、Compose 或宝塔站点配置。若使用私有包，PAT 只保存在服务器 Docker credential store，并定期轮换。
+4. 当前包继承公开源仓库权限并保持 public，可匿名拉取；宝塔服务器无需 `docker login ghcr.io`。公开化不可逆，如果未来改为私有交付，需要删除并重建包或改用新的包名，不能假设原包可直接转回 private。
+5. 生产 Compose 固定使用已验收的 `sha-<commit>`，不要只依赖可变的 `stable`。
 
 ### 1.3 宝塔一键运行与反向代理
 
