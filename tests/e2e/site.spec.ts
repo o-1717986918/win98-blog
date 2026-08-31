@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const basePath = process.env.BASE_PATH ? `/${process.env.BASE_PATH.replace(/^\/+|\/+$/gu, '')}` : '';
+const normalizedBasePath = process.env.BASE_PATH?.replace(/^\/+|\/+$/gu, '') ?? '';
+const basePath = normalizedBasePath ? `/${normalizedBasePath}` : '';
 const sitePath = (path: string) => `${basePath}${path}` || '/';
 const visit = (page: Page, path: string) => page.goto(sitePath(path));
 
