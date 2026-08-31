@@ -2,6 +2,7 @@ import { access, readFile, readdir } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { parse } from 'yaml';
 import { PORTAL_NAVIGATION } from '../config/portal';
 import { SITE, THEMES } from '../config/site';
 import { parseFrontmatter } from '../lib/frontmatter.mjs';
@@ -114,6 +115,31 @@ describe('blog architecture boundaries', () => {
     expect(manifest.scripts['verify:all']).toContain('test:e2e');
     expect(manifest.scripts['deploy:check']).toContain('deploy-check.mjs');
     expect(Object.keys(manifest.dependencies)).not.toEqual(expect.arrayContaining(['react', 'vue', 'svelte']));
+  });
+
+  it('keeps the GHCR image and BaoTa runtime on the same hardened contract', async () => {
+    const manifest = JSON.parse(await read('package.json')) as { scripts: Record<string, string> };
+    const compose = parse(await read('compose.yaml')) as {
+      services: { web: { image: string; ports: string[]; read_only: boolean; cap_drop: string[] } };
+    };
+    const workflow = parse(await read('.github/workflows/publish-ghcr.yml')) as {
+      on: { workflow_dispatch: unknown };
+      jobs: { publish: { permissions: Record<string, string>; steps: Array<{ run?: string }> } };
+    };
+    const dockerfile = await read('Dockerfile');
+    const nginx = await read('docker/nginx.conf');
+
+    expect(manifest.scripts['container:verify']).toContain('check-container.mjs');
+    expect(dockerfile).toContain('nginxinc/nginx-unprivileged');
+    expect(dockerfile).toContain('HEALTHCHECK');
+    expect(nginx).toContain('try_files $uri $uri/ $uri/index.html =404');
+    expect(compose.services.web.image).toContain('ghcr.io/o-1717986918/win98-blog');
+    expect(compose.services.web.ports).toEqual(['127.0.0.1:${WIN98_PORT:-18098}:8080']);
+    expect(compose.services.web.read_only).toBe(true);
+    expect(compose.services.web.cap_drop).toContain('ALL');
+    expect(workflow.on.workflow_dispatch).toBeDefined();
+    expect(workflow.jobs.publish.permissions.packages).toBe('write');
+    expect(workflow.jobs.publish.steps.some((step) => step.run?.includes('pnpm deploy:check'))).toBe(true);
   });
 
   it('ships the real brand and route-isolated standalone examples', async () => {

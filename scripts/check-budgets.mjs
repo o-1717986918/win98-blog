@@ -5,7 +5,8 @@ import { gzipSync } from 'node:zlib';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const dist = join(root, 'dist');
-const basePath = process.env.BASE_PATH ? `/${process.env.BASE_PATH.replace(/^\/+|\/+$/g, '')}` : '';
+const normalizedBasePath = process.env.BASE_PATH?.replace(/^\/+|\/+$/g, '') ?? '';
+const basePath = normalizedBasePath ? `/${normalizedBasePath}` : '';
 const withoutBase = (pathname) => basePath && pathname.startsWith(`${basePath}/`)
   ? pathname.slice(basePath.length)
   : pathname;

@@ -4,7 +4,9 @@
 
 ## A. 账号与资产（站主）
 
-- [ ] 当前 GitHub Pages 仓库、发布源和 `github-pages` Environment 已启用；若迁移 Cloudflare，再完成以下两项 Cloudflare 准备。
+- [ ] 当前 GitHub Pages 仓库、发布源和 `github-pages` Environment 已启用；迁移期间保留其回退能力。
+- [ ] （自托管）正式 HTTPS 域名已确定，GitHub `publish-ghcr` 从 `main` 执行成功，镜像 digest 与 `sha-<commit>` 已记录。
+- [ ] （自托管）GHCR 可见性已明确；private 包的服务器 PAT 仅有 `read:packages`，未写入仓库或 Compose。
 - [ ] （仅 Cloudflare）Direct Upload 项目已创建，项目名与 `CLOUDFLARE_PAGES_PROJECT` 一致，API Token 只有 Pages Edit 权限。
 - [ ] （仅 Cloudflare）`preview` / `production` Environment 已建立，production 有审批保护。
 - [ ] 域名、续费联系人、DNS 控制权与回滚责任人已记录在凭据管理器。
@@ -15,6 +17,8 @@
 - [ ] `pnpm install --frozen-lockfile` 成功。
 - [ ] `pnpm deploy:prepare` 成功。
 - [ ] GitHub CI 和目标发布 workflow 的 `verify:all` 全绿。
+- [ ] `pnpm container:verify` 成功；镜像以只读文件系统、无 capabilities 启动并通过 Docker HEALTHCHECK。
+- [ ] GHCR 发布后的重新拉取冒烟通过，服务器使用记录过的 `sha-<commit>` 或 digest，不只依赖 `stable`。
 - [ ] `dist` 内无 `example.com` 或 `localhost` canonical，RSS 与 sitemap 指向 `SITE_URL`。
 - [ ] 没有草稿、未来日期内容或失效的主题引用意外进入生产。
 
@@ -31,9 +35,11 @@
 - [ ] 正文目录、代码、图表、窄屏长词和真实封面裁切正常。
 - [ ] 求解器 `.wasm` 与 Worker 均返回 200；识别路径为 33 步；完整模式返回 191 步内置地图路径；运行中页面不卡顿，“停止”可终止 Worker。
 
-## D. 域名与发现
+## D. 容器、域名与发现
 
-- [ ] 在 Pages Custom domains 先关联域名，再完成 DNS。
+- [ ] （自托管）容器端口只绑定 `127.0.0.1:18098`，防火墙未开放该端口；公网只经宝塔 HTTPS 反向代理进入。
+- [ ] （自托管）`docker compose ps` 显示 healthy，宝塔反代保留 Host 与 X-Forwarded-*，未知路由返回真实 404。
+- [ ] （仅 Cloudflare）在 Pages Custom domains 先关联域名，再完成 DNS。
 - [ ] HTTPS 证书有效，HTTP 正确跳转到 HTTPS，主机名策略唯一。
 - [ ] `/robots.txt`、`/sitemap-index.xml`、`/rss.xml`、`/llms.txt` 返回 200 和正确 MIME。
 - [ ] canonical、Open Graph、Twitter Card 与 JSON-LD 都使用最终生产域名。
@@ -54,5 +60,5 @@
 - [ ] 桌面与至少一台真实移动设备完成烟雾测试。
 - [ ] 记录初始 LCP、CLS 与交互延迟样本；接入真实用户聚合后检查移动/桌面各自的 75 分位目标。
 - [ ] 检查真实设备字体回退、低性能设备粒子开销与系统减弱动态。
-- [ ] 已确认上一个稳定 deployment，可在 Pages 控制台完成回滚。
+- [ ] 已确认上一个稳定 deployment 或 GHCR SHA 标签，可按当前承载方式完成确定性回滚。
 - [ ] 完成一次非事故回滚演练，并记录恢复时间。

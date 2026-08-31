@@ -26,6 +26,7 @@
     "deploy:prepare": "pnpm deploy:check && node --env-file-if-exists=.env scripts/check-cloudflare-config.mjs",
     "deploy:pages:preview": "pnpm deploy:prepare && node --env-file-if-exists=.env scripts/deploy-cloudflare-pages.mjs preview",
     "deploy:pages:production": "pnpm deploy:prepare && node --env-file-if-exists=.env scripts/deploy-cloudflare-pages.mjs production",
+    "container:verify": "node scripts/check-container.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "verify": "pnpm test && pnpm solver:full-smoke && pnpm build",

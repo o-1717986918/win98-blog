@@ -42,7 +42,17 @@ pnpm content:new column my-column "主题标题"
 pnpm content:audit
 ```
 
-`pnpm verify` 运行单元、求解器与完整静态构建门禁；`pnpm verify:all` 在此基础上再运行真实浏览器回归，适合发布前一次性验收。编辑、发布与资源共置见 `docs/operations/CONTENT_WORKFLOW.md`；GitHub Pages 首发与 Cloudflare Pages 后续迁移路径见 `docs/operations/DEPLOYMENT.md`，逐项上线验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。
+`pnpm verify` 运行单元、求解器与完整静态构建门禁；`pnpm verify:all` 在此基础上再运行真实浏览器回归，适合发布前一次性验收。编辑、发布与资源共置见 `docs/operations/CONTENT_WORKFLOW.md`；GitHub Pages 首发、GHCR + 宝塔 Docker 生产路径与 Cloudflare 备选方案见 `docs/operations/DEPLOYMENT.md`，逐项上线验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。
+
+## Docker 与 GHCR
+
+需要本机 Docker Desktop。以下命令会构建并用生产安全参数启动临时镜像，验证 canonical、健康检查、静态路由、Pagefind、Wasm、缓存与安全响应头：
+
+```powershell
+pnpm container:verify
+```
+
+正式镜像由 GitHub Actions 的 `publish-ghcr` 手动工作流发布到 `ghcr.io/o-1717986918/win98-blog`。工作流只接受 `main` 和真实 HTTPS `site_url`，产出不可变 `sha-<commit>` 及可选 `stable` 标签；服务器使用根目录 `compose.yaml` 拉取，不在生产机编译源码。
 
 ## 目录
 
@@ -59,6 +69,8 @@ docs/source/                # 原项目的确定性架构结论
 docs/handover/              # 接手现状、原则、研究与开发说明
 experiments/                # 不属于生产主轴的历史视觉实验
 prototype/                  # 冻结的原版单文件原型
+docker/                     # 非 root Nginx 与响应头/缓存契约
+compose.yaml                # 宝塔服务器的 GHCR 运行定义
 ```
 
 新增主题与关联文章见 `docs/handover/COLUMN_MODEL.md`。项目级约束见 `AGENTS.md`，日常运维见 `docs/operations/OPERATIONS.md`。

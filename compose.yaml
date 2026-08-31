@@ -1,0 +1,25 @@
+name: win98-blog
+
+services:
+  web:
+    image: "${WIN98_IMAGE:-ghcr.io/o-1717986918/win98-blog}:${WIN98_TAG:-stable}"
+    container_name: win98-blog
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WIN98_PORT:-18098}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 100
+    mem_limit: 256m
+    cpus: 0.50
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

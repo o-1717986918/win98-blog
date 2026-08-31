@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const dist = join(root, 'dist');
-const basePath = process.env.BASE_PATH ? `/${process.env.BASE_PATH.replace(/^\/+|\/+$/g, '')}` : '';
+const normalizedBasePath = process.env.BASE_PATH?.replace(/^\/+|\/+$/g, '') ?? '';
+const basePath = normalizedBasePath ? `/${normalizedBasePath}` : '';
 const withoutBase = (pathname) => {
   if (!basePath) return pathname;
   if (pathname === basePath || pathname === `${basePath}/`) return '/';

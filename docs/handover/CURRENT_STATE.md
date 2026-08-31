@@ -35,6 +35,7 @@
 | 现场性能 | full/minimal 原生采集 LCP、CLS 与交互延迟样本；默认只存当前会话，配置 HTTPS 端点后才上传 |
 | Blog Studio | 回环地址上的本地可视化维护台，可浏览、创建和编辑文章/主题/笔记，预览 Markdown，运行白名单质量命令与笔记同步 |
 | 架构守护 | Vitest、Playwright、类型/内容/封面审计、产物隔离、内部链接、体积预算与 CI |
+| 容器交付 | 多阶段 Docker、非 root Nginx、只读 Compose、健康检查、GHCR SHA/stable 标签、SBOM/构建证明与宝塔反代/回滚手册；正式首个镜像等待最终域名后手动发布 |
 
 ## 关键实现决定
 
@@ -47,7 +48,7 @@ Astro 对同一路由中静态导入的所有布局会聚合样式。为真正�
 - Webmention 接收与性能样本聚合同样需要站主提供 HTTPS 端点；未配置时不会产生对应网络请求；
 - ArcVellum Demo 使用模拟作品数据但运行真实技术路线；它是架构解释器，不是完整 ArcVellum 客户端，文章清单中的未来稿也未冒充已发布；
 - Blog Studio 是本机单用户工具，没有远程协作、账号系统或双向 Obsidian 合并；笔记同步以显式发布和本地源为准；
-- 公网域名、DNS 与托管账号属于站主外部状态；Direct Upload workflow、本机命令、域名顺序和回滚步骤见 `docs/operations/DEPLOYMENT.md`，发布验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。
+- 公网域名、DNS 与托管账号属于站主外部状态；GHCR workflow、宝塔 Compose、Direct Upload 备选、本机命令、域名顺序和回滚步骤见 `docs/operations/DEPLOYMENT.md`，发布验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。
 
 冻结源资产和哈希见 `MIGRATION_MANIFEST.md`。
 

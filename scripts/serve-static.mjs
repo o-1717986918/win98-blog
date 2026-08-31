@@ -7,7 +7,8 @@ const workspaceRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const requestedRoot = process.argv[2] ?? 'prototype';
 const root = resolve(workspaceRoot, requestedRoot);
 const port = Number.parseInt(process.argv[3] ?? process.env.PORT ?? '8765', 10);
-const basePath = process.env.BASE_PATH ? `/${process.env.BASE_PATH.replace(/^\/+|\/+$/g, '')}` : '';
+const normalizedBasePath = process.env.BASE_PATH?.replace(/^\/+|\/+$/g, '') ?? '';
+const basePath = normalizedBasePath ? `/${normalizedBasePath}` : '';
 
 if (root !== workspaceRoot && !root.startsWith(`${workspaceRoot}${sep}`)) {
   throw new Error(`Site directory must stay inside the workspace: ${requestedRoot}`);

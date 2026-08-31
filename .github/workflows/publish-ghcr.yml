@@ -1,0 +1,173 @@
+name: publish-ghcr
+
+on:
+  workflow_dispatch:
+    inputs:
+      site_url:
+        description: Production HTTPS origin without a trailing slash
+        required: true
+        type: string
+      publish_stable:
+        description: Also move the stable tag to this verified image
+        required: true
+        default: true
+        type: boolean
+
+concurrency:
+  group: publish-ghcr-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  SITE_URL: ${{ inputs.site_url }}
+  BASE_PATH: /
+  PREVIEW_DRAFTS: false
+  PUBLIC_COMMENTS_PROVIDER: ${{ vars.PUBLIC_COMMENTS_PROVIDER || 'none' }}
+  PUBLIC_GISCUS_REPO: ${{ vars.PUBLIC_GISCUS_REPO }}
+  PUBLIC_GISCUS_REPO_ID: ${{ vars.PUBLIC_GISCUS_REPO_ID }}
+  PUBLIC_GISCUS_CATEGORY: ${{ vars.PUBLIC_GISCUS_CATEGORY }}
+  PUBLIC_GISCUS_CATEGORY_ID: ${{ vars.PUBLIC_GISCUS_CATEGORY_ID }}
+  PUBLIC_WALINE_SERVER_URL: ${{ vars.PUBLIC_WALINE_SERVER_URL }}
+  PUBLIC_ANALYTICS_PROVIDER: ${{ vars.PUBLIC_ANALYTICS_PROVIDER || 'none' }}
+  PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN: ${{ vars.PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN }}
+  PUBLIC_UMAMI_SCRIPT_URL: ${{ vars.PUBLIC_UMAMI_SCRIPT_URL }}
+  PUBLIC_UMAMI_WEBSITE_ID: ${{ vars.PUBLIC_UMAMI_WEBSITE_ID }}
+  PUBLIC_WEBMENTION_ENDPOINT: ${{ vars.PUBLIC_WEBMENTION_ENDPOINT }}
+  PUBLIC_PERFORMANCE_ENDPOINT: ${{ vars.PUBLIC_PERFORMANCE_ENDPOINT }}
+
+jobs:
+  publish:
+    name: Verify, publish and smoke-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Require the main branch
+        run: test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run the production release gate
+        run: pnpm deploy:check
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate OCI metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=sha-${{ github.sha }}
+            type=raw,value=stable,enable=${{ inputs.publish_stable }}
+          labels: |
+            org.opencontainers.image.title=win98的小站
+            org.opencontainers.image.description=Astro static personal portal served by unprivileged NGINX
+
+      - name: Build and publish image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            SITE_URL=${{ env.SITE_URL }}
+            BASE_PATH=/
+            PREVIEW_DRAFTS=false
+            PUBLIC_COMMENTS_PROVIDER=${{ env.PUBLIC_COMMENTS_PROVIDER }}
+            PUBLIC_GISCUS_REPO=${{ env.PUBLIC_GISCUS_REPO }}
+            PUBLIC_GISCUS_REPO_ID=${{ env.PUBLIC_GISCUS_REPO_ID }}
+            PUBLIC_GISCUS_CATEGORY=${{ env.PUBLIC_GISCUS_CATEGORY }}
+            PUBLIC_GISCUS_CATEGORY_ID=${{ env.PUBLIC_GISCUS_CATEGORY_ID }}
+            PUBLIC_WALINE_SERVER_URL=${{ env.PUBLIC_WALINE_SERVER_URL }}
+            PUBLIC_ANALYTICS_PROVIDER=${{ env.PUBLIC_ANALYTICS_PROVIDER }}
+            PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN=${{ env.PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN }}
+            PUBLIC_UMAMI_SCRIPT_URL=${{ env.PUBLIC_UMAMI_SCRIPT_URL }}
+            PUBLIC_UMAMI_WEBSITE_ID=${{ env.PUBLIC_UMAMI_WEBSITE_ID }}
+            PUBLIC_WEBMENTION_ENDPOINT=${{ env.PUBLIC_WEBMENTION_ENDPOINT }}
+            PUBLIC_PERFORMANCE_ENDPOINT=${{ env.PUBLIC_PERFORMANCE_ENDPOINT }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+          sbom: true
+
+      - name: Attest build provenance
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Pull and smoke-test the published image
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+        run: |
+          set -euo pipefail
+          name="win98-blog-ghcr-${GITHUB_RUN_ID}"
+          trap 'docker rm --force "$name" >/dev/null 2>&1 || true' EXIT
+          docker pull "$IMAGE"
+          docker run --detach --rm \
+            --name "$name" \
+            --read-only \
+            --tmpfs /tmp \
+            --tmpfs /var/cache/nginx \
+            --security-opt no-new-privileges \
+            --cap-drop ALL \
+            --publish 127.0.0.1:18098:8080 \
+            "$IMAGE"
+          for attempt in $(seq 1 60); do
+            status="$(docker inspect --format '{{.State.Health.Status}}' "$name")"
+            [ "$status" = healthy ] && break
+            [ "$status" = unhealthy ] && exit 1
+            sleep 1
+          done
+          test "$(docker inspect --format '{{.State.Health.Status}}' "$name")" = healthy
+          curl --fail --silent --show-error http://127.0.0.1:18098/healthz | grep --fixed-strings ok
+          curl --fail --silent --show-error http://127.0.0.1:18098/ | grep --fixed-strings "href=\"${SITE_URL}/\""
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18098/archive/)" = 200
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18098/pagefind/pagefind.js)" = 200
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18098/does-not-exist/)" = 404
+
+      - name: Write release summary
+        run: |
+          {
+            echo "## GHCR release"
+            echo
+            echo "- Image: \`${REGISTRY}/${IMAGE_NAME}:sha-${GITHUB_SHA}\`"
+            echo "- Digest: \`${{ steps.push.outputs.digest }}\`"
+            echo "- SITE_URL: \`${SITE_URL}\`"
+            echo "- stable updated: \`${{ inputs.publish_stable }}\`"
+            echo "- BaoTa target: \`127.0.0.1:18098 -> container:8080\`"
+          } >> "$GITHUB_STEP_SUMMARY"

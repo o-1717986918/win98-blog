@@ -44,7 +44,7 @@ export async function renderSocialCard({ title, description, kind, theme, accent
   const descriptionLine = description.length > 56 ? `${description.slice(0, 55)}…` : description;
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-      <style>.ui{font-family:"Segoe UI","Microsoft YaHei",sans-serif}.title{font-family:"Segoe UI","Microsoft YaHei",sans-serif;font-size:66px;font-weight:650;letter-spacing:-2px;fill:${palette.text}}</style>
+      <style>.ui{font-family:"Noto Sans CJK SC","Segoe UI","Microsoft YaHei",sans-serif}.title{font-family:"Noto Sans CJK SC","Segoe UI","Microsoft YaHei",sans-serif;font-size:66px;font-weight:650;letter-spacing:-2px;fill:${palette.text}}</style>
       <rect width="1200" height="630" fill="${palette.background}"/>
       <path d="M0 0H520L388 630H0Z" fill="${palette.accents[accent]}" opacity=".2"/>
       <path d="M920 0H1200V630H730Z" fill="${palette.accents[secondary]}" opacity=".24"/>
