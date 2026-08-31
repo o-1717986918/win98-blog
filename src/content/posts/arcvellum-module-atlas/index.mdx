@@ -1,13 +1,23 @@
 ---
-title: 把一百多份开发记录整理成文章地图
-description: ArcVellum 的技术文章不能只按“前端、后端、Agent”粗分；这份地图从模块所有权、正式路线与真实开发债务出发，建立可持续扩展的五层文档体系。
-date: 2026-08-29T00:00:00+08:00
-minutes: 14
-tags: [ArcVellum, 架构, 文档工程]
+title: 一部作品在系统里由哪些事实构成
+shortTitle: 作品事实模型
+description: 逐层解释 ArcVellum 的 Canon、人物、场景、长篇账本、候选产物、正式正文和交付物怎样共同构成一部可维护作品。
+date: 2026-08-31
+minutes: 22
+tags: [ArcVellum, 数据模型, Canon]
 columns: [arcvellum]
 cover:
   src: ./cover.png
-  alt: ArcVellum 项目总控真实界面，展示项目状态、正文与工作流入口
+  alt: ArcVellum 真实作品档案 IDE，展示人物资产和结构化字段
+evidence:
+  - kind: source-snapshot
+    label: 人类可读项目
+    result: "Canon、人物、场景、规划与审查以版本化合同和可读文件共同保存。"
+    source: literary_engineering_studio_engine/literary
+  - kind: decision-record
+    label: 候选与事实分层
+    result: "候选、审查、晋升和应用拥有独立身份与写入权限。"
+    source: Engine tasking and literary modules
 chrome: none
 theme: abyss
 back: true
@@ -15,52 +25,133 @@ back: true
 import cover from './cover.png'
 import ArcDocShell from '../../../components/arcvellum/ArcDocShell.astro'
 
-<ArcDocShell index="09" section="MODULE ATLAS" title="把开发记录整理成文章地图" deck="仓库里有上百份阶段记录、架构评审和发布证据。真正困难的不是找到足够多的材料，而是阻止文章重新退化成文件清单。" image={cover} imageAlt="ArcVellum 项目总控真实界面" nextHref="/posts/arcvellum-narrative-projection/" nextLabel="星仪看到的不是数据库，而是一份只读宇宙">
+<ArcDocShell index="02" section="SYSTEM / PROJECT MODEL" title="作品事实模型" deck="长期创作首先需要一套清晰的事实分类。ArcVellum 通过正式资产、候选层、过程证据和读模型，阻止设想、草稿与作品事实互相污染。" image={cover} imageAlt="ArcVellum 真实作品档案 IDE" nextHref="/posts/arcvellum-beta-ledger/" nextLabel="阅读长篇规划求解器">
 
-ArcVellum 的文档数量很容易造成一种错觉：既然每一阶段都记录过，就已经拥有完整技术文档。实际并非如此。阶段记录回答“这次改了什么”，模块文档回答“这部分现在由谁负责”，博客文章还要回答另一个问题：一个真实的设计判断怎样在失败、迁移和验证中成立。
+一部长篇作品同时包含稳定规则和持续变化。某座城的地理结构可以长期不变，人物知道了一个秘密以后却必须更新；某个分支曾被认真推演，最终仍可能被放弃；某段正文已经通过审查，后续修订又会产生新的版本身份。
 
-## 为什么旧的八篇文章还不够
+ArcVellum 的项目格式围绕这些差异建立。每一类信息都有明确用途、所有者、生命周期和写回路径。项目文件保持人类可读，机器同时维护 Schema、指纹、事件和账本，使文件能够被编辑，也能够被验证。
 
-原来的产品、前端、内核、Runtime、交付、长篇调试、模块化和 Beta 账本，足以让第一次接触项目的人建立全景，却会把许多独立机制揉在一篇文章里。比如“内核负责权威”至少包含 Workflow State、Task Package、Context Trace、Prompt Registry、Review CI、Candidate Promotion 和 Canon 写回。任何一个模块都值得单独说明输入、输出、失败条件与证据。
+## 四个事实层级
 
-另一方面，按语言或目录分篇也不合适。`Python 后端` 会同时跨越文学真相、应用用例、HTTP 适配、持久化和 Runtime；`Vue 前端` 会把星仪、阅读器、设置与作品档案混成一个层。技术文章需要沿责任边界组织，而不是沿文件扩展名组织。
+| 层级 | 主要对象 | 作用 | 正式权力 |
+|---|---|---|---|
+| 正式资产 | Canon、人物、地点、组织、场景定义、文风版本 | 描述作品已经确认的世界 | 可被下游任务依赖 |
+| 候选资产 | 分支、正文候选、Canon patch、人物状态 patch | 保存探索与拟议变化 | 需要审查、批准或晋升 |
+| 过程证据 | Task、Submission、Completion、Review、Lint、Receipt | 证明某项操作怎样完成 | 支持 Gate 判定 |
+| 只读投影 | 星仪节点、健康度、阅读器目录、进度与提示卡 | 面向用户解释正式状态 | 无权反向改写项目 |
 
-## 五层文章谱系
+这个分层解决两个常见混乱。首先，模型在推演中说过的话不会自动写入世界观；其次，界面上显示的状态只是可读解释，最终权威仍来自正式项目与 Engine。
 
-我最终把文章分成五层。
+## Canon：世界能够成立的边界
 
-| 层 | 读者先问什么 | 典型模块 |
-|---|---|---|
-| 产品与使用 | 这套系统如何进入真实创作 | 项目建立、正式闭环、阅读器、交付、Beta 边界 |
-| 文学内核 | 什么可以成为作品事实 | Canon、Character、Scene、Style、Reader Contract、Word Budget |
-| Agent 与工作流 | 模型怎样被允许做下一步 | Tasking、Context、Prompt Registry、Review、Promotion、Runtime |
-| 空间前端 | 复杂项目如何被看见和操作 | Narrative Projection、Orrery、Layout、Relation、Window、Reader Link |
-| 工程与发布 | 模块怎样长期维护并交付 | Ports、Adapters、Persistence、API/SSE、Tauri、Updater、Architecture Audit |
+Canon 保存高稳定度事实与禁止变化。典型内容包括：
 
-层级不是导航装饰。它决定一篇文章应当引用哪些源材料，也决定哪些问题不能越界回答。写星仪布局时，可以讨论坐标、碰撞和语义缩放，不能把可见节点当作正式状态；写 Review CI 时，可以讨论晋升门禁，不能把前端的绿色状态徽标当作通过证据。
+- 世界规则、技术水平、制度与物理约束；
+- 时间线中的固定事件及其先后关系；
+- 地点、组织、身份和资源的既有关系；
+- 已确认的秘密、公开事实与可见范围；
+- 修改需要高风险审批的禁区。
 
-## 模块目录比全仓搜索更重要
+场景产生新事实时，系统先生成 Canon 候选 patch。语义审查检查它是否来自正文、是否与现有规则冲突、是否把推测误当事实；通过后再进入明确的 apply 操作。这个过程保留来源场景、内容摘要与版本身份。
 
-v0.99 的 `module-catalog.md` 给出一条很严格的开发入口：先确定唯一主模块，再读公开合同与测试，只有被阻断时才展开内部。全局依赖方向也被明确固定：Vue Feature 经过自己的 client / command bus 到 HTTP/SSE 适配，再到 Studio application use case；Studio 通过 Engine public API 使用文学真相；Engine 不能反向依赖 Studio、FastAPI、Vue 或 Provider SDK。
+## 人物：稳定结构与动态状态并存
 
-这条纪律同样适用于写文章。如果一篇文章不能说清主模块，它大概率只是在描述项目表面。如果它为了“讲完整”不断跳进相邻模块的实现，读者也会失去真正的边界。
+人物文件区分长期塑形因素和场景后状态。
 
-## 阶段记录怎样变成真实开发叙事
+### 稳定结构
 
-仓库的 94 份 Engine 阶段记录不是按序复制进博客。它们更适合作为时间证据：某个抽象是在什么症状之后出现，后来又为什么被降级或替换。
+- `belief`：人物当前相信的世界解释；
+- `desire`：人物持续追求的结果；
+- `intention`：近期准备采取的行动；
+- `fear`：主动回避的代价；
+- `secret`：掌握却未公开的信息；
+- `moral_line`：行动不可轻易越过的边界；
+- `background_story`：不会被正文直接说明，却通过选择、回避、误判和语气影响行为的经历。
 
-例如，项目早期尝试在本地重建 Creative Director、对话记忆、工具循环和 Provider 调度，后来明确把平台 Agent 视为项目总监，而仓库退回 Skill、合同、模板和确定性 CLI。这不是“删功能”，而是责任重新分配。写这段历史时，应同时展示被保留的 Context Pack、Style Compiler、Canon Lint 和场景闭环，以及被降级为可选集成的 Director Chat、LangGraph、Dify 和 FastAPI 交互路线。
+### 动态状态
 
-## 清单不是承诺已经完成
+位置、健康、资源、已知事实、未知事实、关系张力与人物弧会在场景以后变化。`state-evolve` 先准备 patch，Agent 审查因果和副作用，随后由受审计操作应用。人物档案因此可以维持连续性，又不会把每次临场情绪写成永久性人格。
 
-完整的编辑清单已经写入站点项目的 `docs/handover/ARCVELLUM_EDITORIAL_BACKLOG.md`。其中“待写”仍然是待写：它们不会因为标题已经列出就进入文章导航。每篇文章只有在具备真实正文、来源映射、版本数字、视觉证据与债务说明后，才会加入 ArcVellum 侧边目录。
+主要人物与次要人物分文件保存。任务编译器通常加载主要人物，并按当前场景参与者、关系和地点选择相关次要人物，减少无关上下文。
 
-这也避免另一种文档膨胀：把同一机制拆成许多薄文，标题看似全面，每篇却只重复“它很重要”。Context Trace 与 Prompt Registry 可以先合写，因为二者共同回答“Agent 根据什么执行”；当材料足以分别解释 Schema、CLI、失败修复和演化史时，再拆成独立文章。
+## 场景：规划义务的最小叙事单元
 
-## 下一批最值得写什么
+场景定义携带的不只是标题和梗概。正式场景通常包含：
 
-优先级最高的不是继续写宏大产品愿景，而是三组能帮助维护者判断的文章：Narrative Projection 如何在后端事实与前端空间之间建立只读合同；Context Trace 与 Prompt Registry 如何约束一次 Agent 工作；Workflow State 和 Review CI 为什么拒绝把“文件存在”当作完成。
+- 目标、冲突、参与者、地点与时间；
+- 场景功能，如推进主线、改变关系、制造误判或兑现承诺；
+- `word_count_target` 与允许偏差；
+- 节奏角色、速度、密度、叙述距离和对话/反思比例；
+- 从上一场接住的压力；
+- 留给下一场的问题、代价和钩子；
+- 读者在场景前后的认知与情绪变化；
+- 当前候选、审查、晋升和写回状态。
 
-它们分别代表 ArcVellum 最有辨识度的三个工程判断：视觉可以自由，但不能制造真相；Agent 可以创作，但必须留下来源；文件可以生成，但只有正式状态机能够签发完成。
+场景 YAML 描述义务，正文候选实现义务，Review 判断实现程度。三者拥有独立身份，使系统能够识别“文本写得顺畅但没有完成场景功能”这类文学失败。
+
+## 长篇账本：跨场景保存读者体验
+
+仅靠 Canon 很难维护长篇的阅读动力。ArcVellum 还维护一组面向叙事效果的账本：
+
+- **Reader Question Ledger**：读者当前会追问什么，何时应该回答；
+- **Promise / Payoff Ledger**：作品已经做出哪些承诺，计划兑现、反转或解释的时间；
+- **Continuity Ledger**：物件、伤势、知识、关系、地点和时间变化；
+- **Rhythm Plan**：章节及全书的张力、速度和叙事距离曲线；
+- **Word Budget**：目标字数、实际正文、剧情库存和欠账场景；
+- **Decision Ledger**：分支选择、人工批准、策略变更和写回决定。
+
+这些账本把“读者还在等什么”变成可查询状态。后续场景的 Context Packet 可以提取仍然活跃的问题和承诺，Review 也能检查它们是否拖延过久或过早消耗。
+
+## 文风：独立版本化的生成资产
+
+文风在项目中表现为可挂载版本。一个可靠版本包含来源声明、写作机制抽象、句法与节奏规律、视角和叙事距离、意象和词汇策略、对话方法、禁止模式、适用边界与反例。文风文件以中文字符数衡量详细度，推荐范围为 500 至 2500 字。
+
+挂载动作记录版本身份。正文任务在生成阶段读取文风，Review 再检查实际遵循情况。这样可以把文风从事后评分项提升为生成时的首要约束。
+
+## 正文的三个身份
+
+### 候选正文
+
+候选来自当前 TaskPackage 和编剧态。它可以被重写、修订或放弃，仍未进入读者看到的正式作品。
+
+### 已晋升正文
+
+晋升要求候选内容指纹、AgentReview、确定性 Style Lint、字数、Canon、连续性、读者体验和任务完成证据互相匹配。正式正文进入阅读器与章节汇编。
+
+### 交付正文
+
+交付管线重新汇编已晋升内容，过滤场景编号、工作流程、Canon 备注、世界状态变化、Review、提示词和草稿标记。Markdown 与 DOCX 使用同一份干净内容模型，再分别执行格式渲染。
+
+## 内容身份阻止版本漂移
+
+文件名无法证明内容没变。ArcVellum 对关键产物计算 SHA-256，并在 Review、Promotion、Approval 和 Apply receipt 中记录目标摘要。任何候选修改都会让旧审查失效。
+
+这条规则防止一种隐蔽错误：A 版本通过审查，B 版本沿用 A 的通过标记进入正式作品。系统在晋升前重新计算摘要，并要求 Review 指向精确候选。
+
+## 项目读模型怎样形成
+
+API 不把整个目录直接交给前端。Projection 层读取正式文件和账本，生成稳定的 DTO：章节、场景、人物、关系、任务、质量、进度、正文目录和交付状态。DTO 带版本号与稳定 ID，前端可以缓存、增量更新和恢复选择。
+
+写操作沿相反方向进入明确命令：用户在档案 IDE 中编辑，先形成草稿和差异，再执行检查、保存版本和失效传播；用户选择候选晋升，也要通过应用用例进入 Engine。只读投影与命令端口共同保持界面便利和项目权威。
+
+## 文件可读性与机器合同的平衡
+
+ArcVellum 使用 YAML、Markdown、JSON 与 JSONL 保存项目。人类可阅读的资产适合 YAML/Markdown，结构化审查和 Receipt 适合 JSON，追加事件适合 JSONL。Schema、原子写入和内容摘要补足普通文件系统的事务能力。
+
+这种格式方便作者备份、版本控制、迁移和手工校勘。代价是跨文件一致性需要专门 Gate，因此项目操作始终经过内核公开接口，避免随意重命名或局部编辑破坏引用。
+
+## 最小完整项目
+
+一个能够开始正式场景开发的项目至少需要：
+
+1. 项目身份、题材、创作方向和交付目标；
+2. Canon 基础与禁止变化；
+3. 主要人物及当前状态；
+4. 长篇结构、目标字数与场景库存；
+5. 已挂载或明确选择的默认文风；
+6. 场景定义与前后衔接义务；
+7. 工作流目录、任务事件和审批账本。
+
+系统允许逐步补齐资产。每条正式路线会明确指出缺少的事实和允许的下一步，不依赖模型凭经验猜测项目目录。
 
 </ArcDocShell>

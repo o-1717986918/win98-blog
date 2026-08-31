@@ -1,68 +1,178 @@
 ---
-title: 功能完成之后，代码为什么还要继续拆
-description: 从 16 个历史大文件和 110 个大函数债务出发，回看 ArcVellum 如何拆分 projection、API route、页面布局与 composition root，同时避免重构改变产品语义。
-date: 2026-08-28
-minutes: 14
-tags: [ArcVellum, 模块化, 技术债, 架构]
+title: 大型文学系统怎样保持模块边界清晰
+shortTitle: 模块化架构
+description: 解释 ArcVellum 如何用 Engine、Studio、Runtime、API、Client 与 Desktop 分层，以及端口、适配器、组合根和架构棘轮控制复杂度。
+date: 2026-08-31
+minutes: 28
+tags: [ArcVellum, 软件架构, Ports and Adapters]
 columns: [arcvellum]
 cover:
-  src: ./cover-concept.png
-  alt: ArcVellum v0.9 空间星仪概念稿，呈现不同界面层的组合关系
+  src: ./cover.png
+  alt: ArcVellum 设置与系统信息界面，展示产品运行层和连接能力
 chrome: none
-theme: mist
+theme: abyss
 back: true
 ---
-import cover from './cover-concept.png'
+import cover from './cover.png'
 import ArcDocShell from '../../../components/arcvellum/ArcDocShell.astro'
 
-<ArcDocShell index="07" section="MODULES / DEBT" title="功能完成之后，代码为什么还要继续拆" deck="v0.99 的主路线已经跑通，但仓库并没有因此停在“先别动”。真正危险的是功能正常时已经没有人说得清变更应该落在哪里。" image={cover} imageAlt="ArcVellum 模块化后的真实工作区" nextHref="/posts/arcvellum-beta-ledger/" nextLabel="Beta 不等于免责声明">
+<ArcDocShell index="13" section="ENGINEERING / MODULES" title="让每项需求收敛到一个可维护模块" deck="ArcVellum 将文学规则、应用编排、Agent Runtime、接口、前端和桌面壳分开。开发者先定位能力所有者，再通过公开端口改动，避免把大型仓库重新塞进每次开发上下文。" image={cover} imageAlt="ArcVellum 设置与系统信息界面" nextHref="/posts/arcvellum-verification/" nextLabel="怎样证明创作闭环真的成立">
 
-## 为什么在发布前后仍然大量出现“split”
+长篇文学平台同时包含文学模型、CLI 状态机、Agent Runtime、Web API、Vue 前端、2.5D 渲染、桌面安装和 DOCX 交付。若这些能力通过互相直接导入连接，一个小需求就会要求理解整个仓库。
 
-v0.99.1 附近的提交记录中，能看到 projection、narrative layout、API route、workspace composition root 等一系列拆分。这些并不是为了让目录看起来更专业。在一个同时包含 Python 内核、FastAPI、Vue Feature、Tauri 壳和 Worker 的仓库里，单个文件很容同时成为业务真相、HTTP adapter、组装点和界面投影。
+ArcVellum 采用面向接口的分层。模块化的目标是让需求定位到明确所有者，使代码、测试、文档与依赖围绕同一能力收敛。
 
-只要这种混合存在，修复一个界面事件就可能改变任务语义；拆分一个 router 就可能改变 revision 或默认参数。模块化的目标是让这些责任有可检查的所有者，不是把一个大文件平均切成十个小文件。
+## 六个主要层级
 
-## 先有模块目录，再允许人修代码
+| 层级 | 核心职责 | 不应拥有的内容 |
+|---|---|---|
+| Engine | 文学规则、路线、任务、Gate、项目格式 | FastAPI、Vue、Tauri、Provider SDK |
+| Studio Application | 用例编排、事务、投影、Runtime 调度 | 页面状态、具体 HTTP 细节 |
+| Runtime | Worker、沙箱、进程、Provider、恢复 | 作品事实资格、Canon Policy |
+| API | 请求解析、认证、SSE、DTO 适配 | 文学决策与直接文件写入 |
+| Client | 用户交互、读模型、空间表现 | CLI 规则和正式状态推导 |
+| Desktop | 安装、窗口、本地服务、更新、安全桥接 | 文学工作流实现 |
 
-仓库生成模块图和模块目录，给出每个模块的公开合同、主模块、adapter 与定向测试。新变更的推荐顺序是：先找到所有者，读公开合同，读一个真实 adapter 和一组定向测试，然后才在模块内实现。
+这些层级通过公开接口连接。Engine 可以独立测试，Studio 可以替换 Runtime，Client 可以重新布局，Desktop 可以更新打包链而不改变作品规则。
 
-只有当公开合同确实不足时，变更才分成“合同—adapter—调用方”三个可回滚批次。这样做也为 Agent 编程提供了更好边界：它不需要为了修一个 Feature 而读完整个仓库。
+## Engine 内部模块
 
-## projection 拆分不能改变星仪的世界
+文学工程内核进一步拆分为：
 
-叙事 projection 有 v2/v3/v4 等版本，前端、API 和测试对 revision、节点总数、稳定 ID 与默认参数有明确预期。重构可以把数据准备、布局、视觉属性和 API 适配分开，却不能让同一项目重新打开后所有节点换位，也不能让“主脉”模式悄然丢掉内容。
+- `foundation`：Schema、身份、路径、时间与基础值对象；
+- `tasking`：TaskPackage、任务注册、事件和 completion；
+- `routes`：七条正式路线与阶段定义；
+- `workflow`：派生状态、Gate 与状态推进；
+- `literary`：场景、人物、Canon、节奏、文风和审查规则；
+- `prompting`：Prompt Asset、Recipe 与编译；
+- `orchestration`：计划、任务图和受控编排；
+- `projections`：面向产品的只读读模型；
+- `projects`：项目初始化、迁移和资产目录；
+- `command_line`：CLI 参数与用例适配；
+- `public`：稳定对外入口。
 
-所以拆分与确定性测试必须同步进行。模块图是人理解所有权的证据，稳定投影测试则证明内部切割没有改变外部世界。
+外部代码只通过 `public` 或声明端口使用 Engine。这样可以继续拆分内部大文件，而不迫使 Studio 和测试批量修改导入。
 
-## 16 个大文件和 110 个大函数没有被“清零”
+## Studio 的组合根
 
-模块化审计仍记录 16 个历史大文件与 110 个大函数债务。有些是成熟内核中较难立即切开的政策逻辑，有些是已经有测试覆盖却缺少足够迁移收益的历史结构。审计没有通过调大阈值把它们消失。
+`application/container.py::build_application_container` 是依赖装配的唯一组合根。默认适配器在 `infrastructure/composition.py` 创建，业务用例依赖 Protocol 或 Port。
 
-棘轮只要求零新增违规、零循环依赖、零 Studio 对 Engine internal 的导入。这是一种可信的债务策略：不声称一夜还清，也不允许新功能继续借债。
+组合根负责选择：
 
-## 当前核心审查还指出了更深的合同缺口
+- 项目仓储；
+- Engine gateway；
+- Runtime supervisor；
+- Provider catalog；
+- event bus；
+- projection builder；
+- export service；
+- 本地持久化与时钟。
 
-`current-core-review` 将嵌入式内核判定为已经足以充当 policy kernel，同时列出不应被模块数量掩盖的问题：人类可读输出仍有未版本化的 JSON，任务命令仍有字符串而非 argv，schema 还缺执行策略，`expected_outputs` 混合确定性产物、Agent 产物和完成证据，required reading 路径也不够显式。
+业务模块不在函数内部随意实例化真实适配器。测试可以注入 fake，桌面版与 Web 开发版也能使用不同宿主实现。
 
-这些是下一轮模块化的真实起点。把文件拆小很容，把合同语义拆清才是架构工作。
+## Runtime 端口
 
-## 四层所有权比目录数量更重要
+Runtime 通过小接口暴露：
 
-目前最稳定的阅读方式不是背下所有包名，而是先辨认四层：foundation 只提供错误、时间、路径与序列化等低层能力；Engine 模块拥有工作流、Canon、审查、Prompt 与投影等业务合同；Studio/API 把用例投射成 HTTP、SSE 与桌面会话；Vue Feature 消费只读 projection，并通过 action port 请求既有用例。
+- stage/open/run/cancel task；
+- 查询 session 与 event；
+- 预检和事务写回；
+- Provider 与模型诊断；
+- 资源、租约和健康状态。
 
-依赖只能沿明确方向前进。前端不能根据某个节点颜色推断“可以晋升”，API 不能在路由函数里重写工作流，Runtime 也不能绕过 Prompt Registry 自行拼接正式提示。模块图的价值在于让这些越界能被静态检查和评审看见，而不是让架构图拥有更多盒子。
+Pi Worker、外部 CLI Agent 或未来本地模型 Worker 作为适配器实现这些端口。它们共享 TaskPackage 与结果合同，不要求应用层了解各自内部命令。
 
-## Context、Prompt、Workflow 与 Review 是四个不同模块
+## 前端 Feature 边界
 
-Context Broker 负责从项目状态筛选与排序证据，输出带来源和预算的上下文包；Prompt Registry 负责版本化模板、变量契约和解析结果；Workflow State Machine 负责阶段、许可与恢复；Review CI 负责把审查发现转成可阻断的结构化结果。它们在一次 Agent 任务中连续出现，却不能被合并成“调用模型”。
+Vue 客户端按产品能力组织 Feature，例如 project、orrery、reader、archive、style、advisor、runtime、decisions、delivery 和 settings。每个 Feature 拥有：
 
-例如上下文缺失应由 Broker 报告证据缺口，模板变量缺失属于 Registry 编译错误，任务租约失效属于 Workflow 状态问题，正文与 Canon 冲突才是 Review 结论。若四种失败最终都变成一段自由文本，自动恢复、统计和用户决策都会失去依据。
+- API client interface；
+- 状态 store 或 composable；
+- 视图组件；
+- 格式化与投影适配；
+- 单元测试和用户文案。
 
-## 安全拆分需要一条可回滚迁移协议
+跨 Feature 组合由 shell、router 和 registry 完成。星仪通过 action port 请求打开正文或决策，不直接导入另一个 Feature 的内部 store。
 
-实际拆分先固定公开合同与黄金测试，再提取纯函数或 adapter，最后移动 composition root 的组装。每一批都保持调用方可运行，避免“大重构分支”同时改变路径、默认值与业务语义。针对 projection，还要固定节点 ID、revision、默认参数、六种 grammar 的有限坐标与相同输入的确定性输出。
+## 需求定位流程
 
-这也解释了为什么审计允许历史债务存在，却禁止新增债务：一个 500 行、被大量测试覆盖的稳定政策模块，未必比五个边界错误的新文件更危险。棘轮先阻止情况恶化，再按变更频率与合同收益偿还；重构完成的判据是所有权更清晰、回归证据不变，不是行数曲线好看。
+面向接口开发遵循固定步骤：
+
+```text
+用户需求或故障
+  -> 确定事实所有者
+  -> 确定用例所有者
+  -> 找到公开端口和适配器
+  -> 写合同测试
+  -> 在单模块内实现
+  -> 运行局部测试
+  -> 运行架构与端到端棘轮
+```
+
+例子：
+
+| 需求 | 主要模块 |
+|---|---|
+| 修改正文晋升条件 | Engine workflow/literary |
+| Agent 读取文件越界 | Runtime sandbox/preflight |
+| 决策卡不消失 | Application choice use case + Client decisions |
+| 星仪节点过密 | Client orrery layout，Projection 只补语义数据 |
+| 模型选择不持久 | Provider settings repository |
+| DOCX 混入草稿标记 | Export manifest 与 renderer |
+
+先定位所有者能够避免“前端加一条判断暂时挡住”的跨层补丁。
+
+## 大文件拆分原则
+
+文件大小只是信号。可靠拆分依据变更原因：
+
+- CLI parser 与命令 handler 分开；
+- Route 定义、Gate 计算和恢复建议分开；
+- API endpoint、DTO 与 use case 分开；
+- 星仪布局、相机、渲染、窗口和交互分开；
+- Provider catalog、凭证和连接诊断分开；
+- Prompt Recipe、证据编译和渲染分开。
+
+拆分后保留兼容 facade 和公开导入，先迁移测试，再删除旧内部实现。单纯建立大量一行子类会增加导航成本，只有在替换策略、共享合同或独立测试确有价值时才引入抽象。
+
+## 架构棘轮
+
+自动审计持续检查：
+
+- forbidden dependencies；
+- 模块循环依赖；
+- 跨层私有导入；
+- composition root 之外的具体适配器构造；
+- 大文件和复杂函数趋势；
+- API 和 Prompt Schema 兼容性；
+- Engine 对 Studio、FastAPI、Vue 或 Provider 的反向依赖。
+
+当前模块目录记录仍有 16 个超大文件和 120 个复杂函数的工程债，同时保持 0 条禁止依赖和 0 个模块环。这个状态说明边界已经稳定，内部复杂度仍需要按热点逐步收敛。
+
+## 类、协议与函数的取舍
+
+值对象适合表示 task id、candidate identity、revision、word target 与路径集合；Protocol 适合隔离 Runtime、仓储、时钟和 Provider；纯函数适合 Lint、布局、Gate 计算和投影转换。
+
+继承只在存在稳定“是一种”关系和可替换行为时使用。许多执行策略更适合组合：`TaskStrategy` 可以由证据策略、推理档位和提交策略组合，而无需为每种文学任务建立一个深层子类。
+
+## 文档作为开发接口
+
+模块目录为每个模块记录职责、入口、公开端口、依赖、测试、常见故障和禁止修改范围。Agent 接到需求后先读取目标模块说明，不必把整个仓库塞入上下文。
+
+Change Packet 进一步提供：问题、事实所有者、受影响合同、允许文件、测试命令和回滚点。它让大型项目仍能进行局部开发，也减少 Coding Agent 因上下文不足而自行跨层搜索。
+
+## 模块化验收
+
+一次架构优化应证明：
+
+1. 公共行为和项目格式保持兼容；
+2. 禁止依赖和循环仍为零；
+3. 目标模块拥有清晰测试；
+4. 调用方通过接口，不依赖私有实现；
+5. 文件与类数量的增长有明确职责收益；
+6. 真实端到端闭环仍能完成；
+7. 开发者或 Agent 可以仅阅读模块说明完成局部修改。
+
+模块化不会让系统自然变简单。它让复杂性停留在正确位置，使每次开发都能在一个可理解范围内完成。
 
 </ArcDocShell>

@@ -1,13 +1,14 @@
 ---
-title: 一次昂贵任务怎样被反复救回来
-description: 从长时 Agent 任务的中断、错误输出与修复循环出发，追踪双工作区、租约心跳、输出白名单、预检和原子写回如何形成。
-date: 2026-08-28
-minutes: 14
-tags: [ArcVellum, Sandbox, Agent Runtime]
+title: Pi Worker 如何在受控边界内完成文学任务
+shortTitle: 内置 Agent Runtime
+description: 解释 ArcVellum 的 Pi Worker 如何接收任务合同、选择执行策略、在双工作区内使用受限工具，并把语义产物交回确定性宿主验收。
+date: 2026-08-31
+minutes: 30
+tags: [ArcVellum, Pi Worker, Agent Runtime]
 columns: [arcvellum]
 cover:
   src: ./cover.png
-  alt: ArcVellum Agent Runtime 执行中心真实界面
+  alt: ArcVellum Agent 运行中心，展示会话、任务、事件与资源信息
 chrome: none
 theme: abyss
 back: true
@@ -15,62 +16,147 @@ back: true
 import cover from './cover.png'
 import ArcDocShell from '../../../components/arcvellum/ArcDocShell.astro'
 
-<ArcDocShell index="04" section="RUNTIME / TRUST" title="一次昂贵任务怎样被救回" deck="长时任务真正昂贵的不是一次调用，而是失败后丢失上下文、证据和可接续状态。双工作区与 Runtime 生命周期是在这些失败中被逼出来的。" image={cover} imageAlt="ArcVellum Agent Runtime 执行中心真实界面" nextHref="/posts/arcvellum-engineering-delivery/" nextLabel="安装包不是最后一步">
+<ArcDocShell index="09" section="AGENT RUNTIME / PI WORKER" title="让模型成为受控的文学任务执行器" deck="Pi Worker 负责理解和生成，Studio 负责任务生命周期、沙箱、预检与恢复，Engine 负责正式 Gate。三层协作让模型能力可以替换，作品权力保持稳定。" image={cover} imageAlt="ArcVellum Agent 运行中心" nextHref="/posts/arcvellum-narrative-projection/" nextLabel="复杂作品怎样被投影成叙事宇宙">
 
-仓库在 8 月 21 日到 22 日的密集提交，几乎都围绕长时任务的审查、修复、恢复和所有权。这不是因为 Agent 总是“笨”，而是一个几十分钟甚至更久的任务，必然会遇到进程退出、输出不全、重启、修复轮次和人工暂停。运行时若只保存一段对话，就无法证明下一次继续的仍是同一任务。
+ArcVellum 的内置 Agent 需要完成结构化资产、角色推演、分支选择、正文、审查和状态补丁。直接把 Coding Agent 放进项目根目录能够获得很强的自由，也会带来长上下文、任意文件访问、Shell 依赖和难以复现的执行行为。
 
-## 一个工作区为什么不够
+Pi Worker 的定位是受控文学任务解释器。它接收已经编译的 TaskPackage，调用模型完成需要语义判断的部分，再把输出交回 Studio 和 Engine。它不拥有项目状态机，也不自行决定哪些候选已经成为正式作品。
 
-如果把完整项目复制给 Agent，预检会方便，但权限边界消失：模型可以读到无关章节、审查答案、未来剧情或凭证痕迹，也可能意外修改正式资产。反过来，如果只给 Agent 最小上下文，CLI 又可能缺少 Schema、历史证据和命令拥有的中间文件，无法做完整验证。
+## 三层职责
 
-ArcVellum 因此在每个 run 下创建两个工作区：
+| 层 | 职责 | 保持的权力 |
+|---|---|---|
+| Engine | 路线、任务合法性、Gate、晋升、Canon 与写回 | 正式作品资格 |
+| Studio | Runtime 生命周期、沙箱、工作区、预检、恢复、事件流 | 执行控制 |
+| Pi Worker | 理解文学任务、按需读取、生成语义载荷、报告阻断 | 创作与判断 |
 
-| 工作区 | 使用者 | 内容 | 权力 |
-|---|---|---|---|
-| `control-workspace/` | CLI 与确定性预检 | 完整 `source_paths`、命令输入、验证依赖与内核输出 | 可运行正式命令，不向 Agent 暴露 |
-| `workspace/` | Agent Runtime | `agent_source_paths`、精简参考、方向摘要与声明输出 | 只读写任务合同允许的集合 |
+这个边界使 Worker 可以升级、替换模型或增加工具，而不会重新实现 CLI 规则。
 
-同一任务由此拥有两种视野，而不是两份权威。正式项目仍在工作区之外，只有通过预检的声明输出才有机会写回。
+## 双工作区
 
-## 七步执行链
+每次运行拥有两个隔离视野。
 
-`stage_task` 先把完整输入放进控制工作区；纯确定性命令只在那里运行。随后 Runtime 对命令拥有的文件做快照，再用精心挑选的 Agent 集合物化 `workspace/`。Agent 执行后，基线哈希检查所有变化，任何不在 `expected_outputs` 中的写入都会被拒绝。
+### control-workspace
 
-允许的输出被同步回控制视野，在那里做规范化、Schema、溯源、Lint 和差异预检。最后，系统展示预览并建立备份，以原子方式把声明产物导入正式项目，再经状态机提交和完成。
+由 Studio 与 Engine 使用。它包含完整 `source_paths`、命令依赖、Schema、历史证据和预检需要的中间文件。模型看不到这部分完整内容。
 
-这条链路的重要性质是失败关闭：缺输出可以是 Agent 尚未完成的正常状态；验证源缺失则是任务合同缺陷；意外写入不能靠“这次看起来没问题”被忽略。
+### workspace
 
-## 不要用扩大权限修复合同错误
+由 Pi Worker 使用。它只包含 `agent_source_paths`、当前任务说明、允许按需读取的资料和声明输出位置。Worker 的文件写入被限制在 `expected_outputs`。
 
-双工作区文档给出了一条非常实用的调试规则：
+```text
+formal project
+  -> control workspace: complete validation view
+  -> agent workspace: curated literary view
+  -> Worker output
+  -> deterministic preflight in control workspace
+  -> transactional writeback
+```
 
-1. 文件只被正式命令或预检需要，就放入控制源；
-2. Agent 必须基于其内容推理，才同时加入 Agent 源；
-3. Agent 应该创建的文件，进入 `expected_outputs`；
-4. 不要因为一次缺文件就暴露整个目录。
+双工作区解决了权限与验证的矛盾：模型不必看见整个项目，CLI 仍能获得完成命令所需的全部正式证据。
 
-这套规则把“缺什么就多给一点权限”的临时修复，改成对合同责任的定位。权限范围因此能随任务需求增长，而不是随故障次数膨胀。
+## 七个受限工具
 
-## Runner、模型连接与文学内核彼此独立
+Pi Worker 的常规工具面保持很小：
 
-Studio 默认使用内置 Pi Worker / OpenCode Runner，也保留 host-agent、Claude Code 等适配路径。Runner 身份与模型连接是不同合同：前端可以把凭证一次性转交给专用认证端点并选择模型，但凭证与供应商协议不会进入文学内核、项目文件、任务包、普通配置或事件日志。
+| 工具 | 用途 |
+|---|---|
+| `read_task_context` | 读取当前任务的核心合同与内联证据 |
+| `read_authorized_source` | 精确读取白名单中的必要资料 |
+| `write_expected_output` | 写入任务声明的输出 |
+| `validate_output` | 在提交前执行本地形状检查 |
+| `complete_task` | 声明本次语义工作完成 |
+| `request_repair` | 请求有限修复并附带原因 |
+| `report_blocker` | 报告缺失证据、权限或不可满足条件 |
 
-这使内核只关心“任务产物是否符合合同”，而不关心某个模型服务如何认证。模型切换影响未来空闲 Worker，不粗暴中断正在执行的任务。
+修复模式可以增加 `read_repair_target`。工具数量保持克制，因为每个工具都会增加选择成本、提示词长度与测试面。文学概念适合进入任务语义，确定性动作适合进入少量稳定工具。
 
-## 运行生命周期不是一段 SSE
+## 两类执行策略
 
-前端看到的是流式事件，但正式运行由 `ApplicationLifecycleManager` 管理：SQLite WAL 保存作业与事件，任务使用租约、心跳、幂等键和逐项目路线锁；事件先持久化，再投影到 SSE，因此重连可以用 cursor 回放，而不是假设浏览器一直在线。
+### direct-submit
 
-桌面壳在随机 localhost 端口启动冻结的应用服务 sidecar，以每次启动令牌换取 HttpOnly 本地会话。父进程监视器负责在桌面进程被强制结束时清理 Python 子进程，Tauri 还限制单实例并恢复窗口状态。这些细节决定“桌面应用”是否真的像应用，而不是一个偶尔遗留后台进程的网页包装。
+任务核心证据已经内联，输出格式明确，模型可以直接生成语义载荷。例如简单人物资产、短结构摘要和明确字段补全。减少不必要的工具往返能够显著降低时延。
 
-## 恢复机制的边界
+### evidence-then-submit
 
-v0.99.0 把 Prompt 超限、修订超时、模型无活动、预检失败和工作流缺证据映射为稳定错误代码、中文影响说明与恢复动作；历史任务也有明确 `superseded` 终态，避免旧 sidecar 制造虚假待办。
+任务需要比较原始文本、核对多个来源或解释候选差异。Worker 先读取准确证据，再生成输出。例如正文审查、文风抽象和复杂 Canon 冲突判断。
 
-但恢复不等于无限重试。用户暂停、Provider 配额、确定性 Gate 失败、连续修订失败、无进展和恢复耗尽都应终止自动推进。一个可信 Runtime 的特征不是“永不停止”，而是停止时能说明停在哪里、保留什么、下一步由谁决定。
+执行策略由任务编译器根据 task type、证据策略和风险决定。模型可以请求缺失证据，但不能把任何任务都扩张成遍历整个项目。
 
-## 可以继续收紧的地方
+## LiteraryTaskSpec
 
-任务 Schema 未来应把执行策略、人工门、Agent 角色和能力声明变成一等字段；命令应从受限字符串迁到结构化 argv；项目资源与包资源也应在 required reading 中显式区分。它们都会让 Runtime 的授权更容易静态审计，并减少适配器对隐含语义的推测。
+Pi 专业化的高收益方向是把通用 TaskPackage 投影成紧凑的 `LiteraryTaskSpec`。它描述：
+
+- 文学任务类型和本次目标；
+- 输入证据的核心、摘要与按需层；
+- 产物类型、语义字段和禁止改变的事实；
+- 主创、审查、规划等角色 Profile；
+- 推理档位与输出预算；
+- `direct-submit` 或 `evidence-then-submit`；
+- 完成、修复与阻断条件。
+
+Studio 编译这个 Spec，Pi 只解释并执行。Schema、文件来源、writer session、哈希与 completion marker 等可确定元数据由宿主补齐，模型集中返回文学语义。
+
+## 提示词生命周期
+
+Pi Worker 的稳定规则适合持久化，例如工具语义、权限边界、阻断报告和输出纪律。每次请求只发送当前任务差异：文学目标、核心证据、当前约束和输出合同。
+
+正文、审查和结构化任务使用不同 Recipe。推理强度也应分层：
+
+| 任务 | 建议推理档位 |
+|---|---|
+| 字段整理、索引、格式化 | 低 |
+| 角色推演、分支比较 | 中 |
+| 正文生成、文风抽象 | 中至高 |
+| 复杂审查、全局冲突 | 高，带严格预算 |
+
+统一使用最高推理强度会拉长时延；统一压低推理会损害文学判断。任务类型应决定预算。
+
+## 无进展检测与有限修复
+
+Agent 运行中最昂贵的失败是反复读取、反复解释，却没有产出。Studio 记录工具事件、输出变化和 Provider 活动。长时间没有可见活动、重复读取同一资料或连续收到相同预检错误时，运行进入无进展状态。
+
+系统随后选择：
+
+1. 给出更精确的缺失产物和失败位置；
+2. 进入有限 repair turn；
+3. 回收当前进程并保留运行证据；
+4. 将任务标为可恢复阻断；
+5. 在预算允许时换模型或执行策略。
+
+修复轮次受到上限约束，避免模型在无法解决的合同错误上持续消耗。
+
+## 并发与会话复用
+
+只读分析、不同场景的资料摘要和互不写入的审查可以并行。正式正文保持主创 Agent 单一责任；共享 Canon、人物状态或章节账本的写入必须经过读写集冲突检查。
+
+Worker 会话可以复用稳定规则、模型连接和缓存摘要，却不能把上一任务的候选事实带入下一任务。项目 revision 与 TaskPackage 仍决定当前证据。
+
+结束、取消或失去租约的 Worker 应被回收。Agent 进程面板展示 session id、task id、模型、状态、事件、Token、时延和最近活动，帮助用户辨认真实运行、等待 Provider 与空转。
+
+## 成本收益基线
+
+Prompt v3 已将一个正文合并提示从 189,908 字符降至 29,218 字符。现有 A/B 样本显示：
+
+| 任务 | 总 Token 变化 | 成本变化 | 时长变化 |
+|---|---:|---:|---:|
+| 结构化任务 | -31% | -28% | -17% |
+| 审查任务 | -16% | -4% | +7% |
+
+这组数据表明，提示词压缩有价值，运行时仍需优化工具往返、Provider 延迟和失败恢复。Pi 专业化按指标推进，优先落地 `LiteraryTaskSpec`、双执行策略和语义载荷提交。
+
+复杂多 Agent、跨任务自主编排和大量领域工具暂缓，除非真实作品闭环证明它们能降低 Token、修复轮次和 P95 时延，同时保持一次通过率。
+
+## Provider 与本地模型
+
+Pi Provider Catalog 可以连接常用 API 与 OpenAI-compatible 端点。模型选择按角色持久保存，正在运行的任务不被粗暴切换；新任务读取最新配置。
+
+本地小模型适合结构化任务、索引和部分静态审查。正文与复杂文学判断能否使用小模型，取决于题材、上下文压缩和 Profile 质量，需要用盲评与 Gate 通过率验证。系统架构允许混合路由，避免把所有任务绑定到一个昂贵模型。
+
+## 当前投资边界
+
+Pi Worker 值得继续专业化，前提是保持薄领域内核和强确定性宿主。近期不在 Worker 中复制状态机、Canon Policy、Promotion 或全局编排；也不把完整聊天历史频繁送入模型。
+
+这条路线让 Pi 获得足够的文学任务感知，同时让每次增强都能用真实 Token、时延、修复率和作品质量衡量。
 
 </ArcDocShell>

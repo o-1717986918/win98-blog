@@ -2,7 +2,7 @@
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import { belongsToColumn, isPublished, sortPosts } from '../../../lib/content';
-import { arcDocs as docs } from '../../../components/arcvellum/docs';
+import { arcDocGroups, arcDocs as docs } from '../../../components/arcvellum/docs';
 import ArcVellumOrreryDemo from '../../../components/arcvellum/ArcVellumOrreryDemo.astro';
 import hero from './cover.png';
 import reader from './reader.png';
@@ -11,6 +11,7 @@ import { withBase } from '../../../lib/site-path';
 
 const posts = sortPosts((await getCollection('posts')).filter(isPublished).filter((post) => belongsToColumn(post, 'arcvellum')));
 const available = new Map(posts.map((post) => [post.id, post]));
+const groupedDocs = arcDocGroups.map((group) => ({ group, docs: docs.filter((doc) => doc.group === group) }));
 ---
 
 <main class="arc-site" data-pagefind-body>
@@ -31,13 +32,13 @@ const available = new Map(posts.map((post) => [post.id, post]));
       </div>
       <dl>
         <div><dt>当前发布线</dt><dd>v0.99.x Beta</dd></div>
-        <div><dt>正式路线</dt><dd>4 条</dd></div>
+        <div><dt>正式路线</dt><dd>7 条</dd></div>
         <div><dt>运行边界</dt><dd>LOCAL / SANDBOXED</dd></div>
       </dl>
     </div>
     <figure class="arc-hero__visual">
       <Image src={hero} alt="ArcVellum 叙事星仪界面，展示章节锚点与作品关系线" widths={[640, 960, 1280]} sizes="(max-width: 850px) 100vw, 58vw" loading="eager" />
-      <figcaption><span>LIVE PROJECT PROJECTION</span><b>叙事星仪不是背景；节点来自项目正式状态。</b></figcaption>
+      <figcaption><span>LIVE PROJECT PROJECTION</span><b>每个节点都来自项目正式状态。</b></figcaption>
       <div class="arc-reticle" aria-hidden="true"></div>
     </figure>
   </header>
@@ -45,7 +46,7 @@ const available = new Map(posts.map((post) => [post.id, post]));
   <ArcVellumOrreryDemo />
 
   <section class="arc-thesis" id="system">
-    <p>THE SYSTEM, NOT THE CHAT</p>
+    <p>THE LITERARY SYSTEM</p>
     <h2>创作智能可以发散；<br />项目权力必须收敛。</h2>
     <div class="arc-thesis__grid">
       <article><b>01</b><h3>模型负责提出候选</h3><p>推演、写作、审查与建议都可以由不同 Agent 完成，但候选不因此自动成为事实。</p></article>
@@ -78,19 +79,26 @@ const available = new Map(posts.map((post) => [post.id, post]));
   </section>
 
   <section class="arc-docs" id="documents">
-    <aside class="arc-docs__sidebar"><p>DEVELOPMENT LEDGER / 02</p><h2>文章放到侧边，让发布页继续讲产品。</h2><span>文档按产品、文学内核、Agent 工作流、空间前端与交付证据分层；这里展示已完成文章，完整模块选题与来源映射见编辑清单。</span><a href={withBase('/posts/arcvellum-module-atlas/')}>打开模块文章地图 ↗</a></aside>
-    <div class="arc-doc-list" aria-label="ArcVellum 开发手记目录">
-      {docs.map((doc) => {
-        const post = available.get(doc.id);
-        return <a href={post ? withBase(`/posts/${doc.id}/`) : '#'} aria-disabled={!post}><span>{doc.no}</span><small>{doc.label}</small><strong>{doc.title}</strong><p>{doc.note}</p><i>打开文档 ↗</i></a>;
-      })}
+    <aside class="arc-docs__sidebar"><p>TECHNICAL DOCUMENTATION / 02</p><h2>沿系统边界阅读一部长篇求解器。</h2><span>文档以 ArcVellum 的分层模块为二级目录。每篇文章解释输入状态、求解过程、输出合同、失败条件与验证证据，读者可以从全景进入，也可以直接定位到文学内核、Agent、星仪或交付层。</span><a href={withBase('/posts/arcvellum-release/')}>从系统总览开始 ↗</a></aside>
+    <div class="arc-doc-groups" aria-label="ArcVellum 分层技术文档">
+      {groupedDocs.map(({ group, docs: groupDocs }, groupIndex) => (
+        <section class="arc-doc-group" aria-labelledby={`arc-doc-group-${groupIndex}`}>
+          <header><span>{String(groupIndex + 1).padStart(2, '0')}</span><h3 id={`arc-doc-group-${groupIndex}`}>{group}</h3><small>{groupDocs.length} 篇</small></header>
+          <div class="arc-doc-list">
+            {groupDocs.map((doc) => {
+              const post = available.get(doc.id);
+              return <a href={post ? withBase(`/posts/${doc.id}/`) : '#'} aria-disabled={!post}><span>{doc.no}</span><small>{doc.label}</small><strong>{doc.title}</strong><p>{doc.note}</p><i>{post ? '打开文档 ↗' : '编写中'}</i></a>;
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   </section>
 
   <section class="arc-proof">
     <div><p>RELEASE EVIDENCE</p><strong>30,080</strong><span>v0.99.0 正式闭环中的中文内容字符</span></div>
-    <div><p>FORMAL GATES</p><strong>295</strong><span>四条发布路线检查项合计</span></div>
-    <div><p>VUE ASSERTIONS</p><strong>200</strong><span>v0.99.1 模块化审计记录</span></div>
+    <div><p>FORMAL ROUTES</p><strong>7</strong><span>规划、场景、导入、文风、资产、审查与交付</span></div>
+    <div><p>TECHNICAL DOCS</p><strong>14</strong><span>按六个系统边界组织的长篇技术文档</span></div>
     <div><p>HONEST LIMIT</p><strong>BETA</strong><span>真实闭环不等于全题材、全供应商证明</span></div>
   </section>
 
@@ -115,7 +123,7 @@ const available = new Map(posts.map((post) => [post.id, post]));
   .arc-pipeline{display:grid;grid-template-columns:repeat(5,minmax(8rem,1fr) auto) minmax(8rem,1fr);gap:.55rem;align-items:center;padding:2.5rem;overflow-x:auto;border:1px solid var(--line);background:rgba(4,10,8,.52)}.arc-pipeline>i{color:#66766b;font-style:normal}.arc-node{min-height:8.5rem;padding:1rem;border:1px solid rgba(145,173,146,.32)}.arc-node small{display:block;color:#78877d;font:.55rem/1.4 ui-monospace,monospace}.arc-node strong{display:block;margin-top:3rem;font-family:'Songti SC',serif;font-size:1rem;font-weight:500}.arc-node--core{border-color:var(--mineral);box-shadow:inset 0 -.25rem var(--mineral)}.arc-node--writer{border-color:var(--moss)}.arc-node--canon{border-color:var(--clay)}
   .arc-surfaces{display:grid;grid-template-columns:1.15fr .85fr;border-bottom:1px solid var(--line)}.arc-surface{display:grid;grid-template-rows:minmax(22rem,60vh) auto;min-width:0;border-right:1px solid var(--line);background:#070d0b}.arc-surface:last-child{border-right:0}.arc-surface :global(img){align-self:center;width:100%;height:auto;max-height:60vh;object-fit:contain;object-position:center;filter:saturate(.75)}.arc-surface>div{padding:1.6rem clamp(1.2rem,3vw,3rem) 2rem;border-top:1px solid var(--line)}.arc-surface h2{margin:.65rem 0;font-family:'Songti SC',serif;font-size:clamp(1.6rem,2.7vw,3rem);font-weight:500;letter-spacing:-.04em}.arc-surface span{color:#8f9d94;font-size:.8rem;line-height:1.7}
   .arc-docs__sidebar>a{display:inline-block;margin-top:1.3rem;color:var(--mineral);font:.6rem/1.4 ui-monospace,monospace;text-decoration:none}
-  .arc-doc-list{border-top:1px solid var(--line)}.arc-doc-list a{display:grid;grid-template-columns:3rem 7rem 1fr 1fr auto;gap:1rem;align-items:center;min-height:6.5rem;padding:.9rem .3rem;border-bottom:1px solid var(--line);color:inherit;text-decoration:none;transition:padding .2s,background .2s}.arc-doc-list a:hover{padding-inline:1rem;background:rgba(145,173,146,.06)}.arc-doc-list>a>span{color:var(--clay);font:1rem/1 ui-monospace,monospace}.arc-doc-list small{color:var(--moss);font:.58rem/1 ui-monospace,monospace;letter-spacing:.1em}.arc-doc-list strong{font-family:'Songti SC',serif;font-size:1.2rem;font-weight:500}.arc-doc-list p{color:#7f8d83;font-size:.75rem}.arc-doc-list i{color:var(--mineral);font:normal .65rem/1 ui-monospace,monospace}
+  .arc-doc-groups{display:grid;gap:2.8rem}.arc-doc-group>header{display:grid;grid-template-columns:3rem 1fr auto;align-items:end;padding:0 .3rem .8rem;border-bottom:1px solid rgba(182,157,101,.46)}.arc-doc-group>header span{color:var(--clay);font:1rem/1 ui-monospace,monospace}.arc-doc-group>header h3{margin:0;font-family:'Songti SC',serif;font-size:1.55rem;font-weight:500}.arc-doc-group>header small{color:#718078;font:.58rem/1 ui-monospace,monospace}.arc-doc-list{border-top:0}.arc-doc-list a{display:grid;grid-template-columns:3rem 7rem 1fr 1fr auto;gap:1rem;align-items:center;min-height:6.5rem;padding:.9rem .3rem;border-bottom:1px solid var(--line);color:inherit;text-decoration:none;transition:padding .2s,background .2s}.arc-doc-list a:hover{padding-inline:1rem;background:rgba(145,173,146,.06)}.arc-doc-list a[aria-disabled='true']{opacity:.52;pointer-events:none}.arc-doc-list>a>span{color:var(--clay);font:1rem/1 ui-monospace,monospace}.arc-doc-list small{color:var(--moss);font:.58rem/1 ui-monospace,monospace;letter-spacing:.1em}.arc-doc-list strong{font-family:'Songti SC',serif;font-size:1.2rem;font-weight:500}.arc-doc-list p{color:#7f8d83;font-size:.75rem}.arc-doc-list i{color:var(--mineral);font:normal .65rem/1 ui-monospace,monospace}
   .arc-proof{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}.arc-proof>div{min-height:14rem;padding:1.5rem;border-right:1px solid var(--line)}.arc-proof>div:last-child{border-right:0}.arc-proof strong{display:block;margin:2.5rem 0 .8rem;color:var(--mineral);font:clamp(2.3rem,4.5vw,5rem)/1 ui-monospace,monospace;letter-spacing:-.08em}.arc-proof span{color:#87958c;font-size:.72rem;line-height:1.7}.arc-footer{display:grid;grid-template-columns:1fr 2fr auto;gap:2rem;align-items:center;min-height:8rem;padding:1rem clamp(1.2rem,6vw,7rem);color:#7f8d84;font:.62rem/1.6 ui-monospace,monospace}.arc-footer a{color:var(--moss);text-decoration:none}
   @media(max-width:900px){.arc-nav{grid-template-columns:1fr auto}.arc-nav>div{display:none}.arc-hero{grid-template-columns:1fr}.arc-hero__copy{min-height:85vh;border-right:0}.arc-hero__visual{min-height:56vw}.arc-thesis{grid-template-columns:1fr}.arc-thesis__grid{grid-column:1}.arc-section-head{grid-template-columns:1fr}.arc-surfaces{grid-template-columns:1fr}.arc-surface{border-right:0;border-bottom:1px solid var(--line)}.arc-docs{grid-template-columns:1fr}.arc-docs__sidebar{position:static}.arc-doc-list a{grid-template-columns:2.5rem 5.5rem 1fr auto}.arc-doc-list p{display:none}.arc-proof{grid-template-columns:repeat(2,1fr)}.arc-proof>div:nth-child(2){border-right:0}.arc-proof>div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
   @media(max-width:620px){.arc-nav{height:3.8rem}.arc-brand span{display:none}.arc-hero__copy{min-height:calc(100vh - 3.8rem);padding:4.5rem 1.2rem 2rem}.arc-hero h1{font-size:clamp(3.35rem,17vw,5.2rem)}.arc-hero dl{grid-template-columns:1fr}.arc-hero__visual{min-height:75vw}.arc-thesis__grid{grid-template-columns:1fr}.arc-thesis__grid article{min-height:12rem}.arc-thesis__grid h3{margin-top:2.5rem}.arc-pipeline{padding:1rem}.arc-doc-list a{grid-template-columns:2rem 1fr auto}.arc-doc-list small{display:none}.arc-doc-list strong{font-size:1rem}.arc-proof{grid-template-columns:1fr}.arc-proof>div{min-height:10rem;border-right:0;border-bottom:1px solid var(--line)!important}.arc-footer{grid-template-columns:1fr}.arc-surface{grid-template-rows:minmax(15rem,58vw) auto}}

@@ -1,13 +1,14 @@
 ---
-title: 文件已经生成，为什么流程仍然不算完成
-description: 一份正文或审查 JSON 可以存在，但只有 Task、Submission、Completion、Event、Route Audit 与 clean Review 一起成立，ArcVellum 才允许状态向下游移动。
-date: 2026-08-29T00:00:00+08:00
-minutes: 14
-tags: [ArcVellum, 状态机, Review CI]
+title: 文学审查如何成为可执行的质量闭环
+shortTitle: Review CI
+description: 解释 ArcVellum 如何组合确定性检测、语义 AgentReview、精确候选身份、修订复核和长篇审计，让质量结论真正约束正文晋升。
+date: 2026-08-31
+minutes: 28
+tags: [ArcVellum, 文学审查, Quality Gate]
 columns: [arcvellum]
 cover:
   src: ./cover.png
-  alt: ArcVellum 正文阅读器真实界面，只展示经过正式门禁晋升的作品正文
+  alt: ArcVellum 质量证据界面，展示审查状态与可追踪结论
 chrome: none
 theme: abyss
 back: true
@@ -15,64 +16,141 @@ back: true
 import cover from './cover.png'
 import ArcDocShell from '../../../components/arcvellum/ArcDocShell.astro'
 
-<ArcDocShell index="12" section="WORKFLOW / REVIEW" title="文件存在，不等于流程完成" deck="自动化最容易把“命令返回了文件”当作成功。ArcVellum 要求任务签发、提交、产物检查、完成标记、事件账本与路线门禁能够互相核对。" image={cover} imageAlt="ArcVellum 正文阅读器真实界面">
+<ArcDocShell index="07" section="LITERARY CORE / REVIEW" title="让审查结论真正改变作品" deck="文学判断需要模型理解，标点密度、候选身份、字数和证据完整性更适合代码检查。ArcVellum 把两者组合成生成、审查、修订、复核、晋升的闭环。" image={cover} imageAlt="ArcVellum 质量证据界面" nextHref="/posts/arcvellum-style-system/" nextLabel="文风怎样编译成生成约束">
 
-在一个长篇项目里，最糟糕的状态不是文件不存在，而是下游相信了一个并未正式完成的上游。一个 Agent 写出场景正文，另一个 Agent看到文件名便开始审查；审查 JSON 写完后，导出器又把它当作 clean pass。每一步都“有文件”，整条证据链却可能从未成立。
+审查系统的价值不在于生成一份评论。它需要阻止不合格候选进入正式正文，也需要把可操作的问题送回下一次修订，并证明修订后的内容重新接受了检查。
 
-Workflow State Machine 的工作就是拒绝这种乐观推断。
+长篇文学的质量问题横跨多个尺度。一个句子的标点可能机械，一场戏可能缺少转向，一章的张力可能均匀，全书的承诺可能长期未兑现。ArcVellum 将审查组织成分层 CI，让每种判断在合适的层次发生。
 
-## 一项正式任务的最小闭环
+## 两类判断
 
-注册路线遵循固定循环：
+### 确定性检查
+
+代码擅长处理能够明确计算的条件：
+
+- 文件、Schema、字段与来源是否完整；
+- 审查对象的内容哈希是否匹配；
+- 汉字目标与机器字符数是否落在允许区间；
+- 禁用句式的变体、破折号比例和标点形式；
+- expected outputs 之外是否有写入；
+- 完成凭据是否晚于当前任务签发；
+- promotion、state、Canon 与 continuity 的身份链是否闭合。
+
+### 语义 AgentReview
+
+模型负责需要文学理解的判断：人物选择是否来自既有动机，冲突、转向与代价是否成立，场景是否接住上一场并推动下一场，文风约束是否产生自然文本，读者问题与信息释放是否有效，修订是否真正解决问题。
+
+确定性检查给审查提供精确位置和统计，语义审查决定这些现象在当前文本中的文学意义。
+
+## Review 输入合同
+
+一次正式场景审查至少读取：
+
+1. exact candidate 正文与内容身份；
+2. 场景 YAML 和 composition；
+3. context trace 与相关 Canon；
+4. 出场人物状态和背景影响；
+5. 字数、节奏、衔接、读者体验合同；
+6. 挂载文风和项目标点策略；
+7. 确定性 Style Lint 结果；
+8. 上一场结尾与下一场义务。
+
+这些输入由 `agent-review-scene` 任务包下发。审查 Agent 只负责判断，不修改正文；主创 Agent 负责正式修订，避免同一角色在检查时顺手重写并宣称通过。
+
+## Style Lint 作为硬前置证据
+
+纯语义审查容易漏掉标点变体。例如机械对照句可以改变连接标点，表面避开单一字符串。Lint 将这些形式归入同一修辞模式，输出位置、规则、样本与严重度，再注入 AgentReview。
+
+Lint 的职责是报告可疑模式和硬阈值。它不使用通用正则直接改写正文，因为自动删除否定词可能反转语义，也可能误伤某种风格的有效修辞。
+
+项目允许为部分软规则配置低比例例外，例如全文中少量惯用表达。硬禁令、项目级自定义规则和语义冲突仍会阻断。例外必须按规则统计，不能靠替换标点规避检测。
+
+## 审查结果模型
+
+| 结论 | 后续动作 |
+|---|---|
+| `pass` | 可进入晋升门禁 |
+| `pass_with_notes` | 必须先完成明确的小幅修订与复核 |
+| `revise` | 进入正式 revise-scene，处理指定问题 |
+| `reject` | 回退到分支、composition 或重写策略 |
+
+`pass_with_notes` 不表示“可以忽略建议”。Notes 需要带位置、问题、影响、修订目标和验证方法，修订后重新检查 exact revised candidate。
+
+## 修订任务的批判性合同
+
+`revise-scene` 读取正文、Review notes、文风、Canon、字数与节奏目标，输出修订候选和修订报告。它遵守几条强约束：
+
+- 只改审查指出的问题及其必要上下文；
+- 不能用另一种机械转折替换被禁止的机械转折；
+- 若保留高风险修辞，需要说明它承担的节奏或认知功能；
+- 解释必须接受反例检查，不能用“增强文学性”作为空泛理由；
+- 不改变场景事实、适用范围和后续钩子；
+- 不用增加形容词、器官反应或比喻堆叠填补字数；
+- 修订报告列出 changed spans、保留理由和潜在副作用。
+
+正式复核会重新运行 Lint 和 AgentReview。原审查报告无法覆盖已经变化的内容身份。
+
+## 场景门禁
 
 ```text
-task-next -> task-open -> 平台 Agent 写预期产物
--> task-submit -> task-complete -> workflow-state / workflow-validate
+context and trace
+  + roleplay completion
+  + branch selection
+  + composition provenance
+  + word target
+  + reader contract
+  + generation provenance
+  + deterministic lint
+  + exact AgentReview
+  + revision evidence when required
+  -> promotion
 ```
 
-`task-open` 不只是展示说明，它签发 Task Package；`task-submit` 记录产物与 task id；`task-complete` 只有在预期文件被检查后才能写 completion marker。一个文件可以存在，但 submission 缺失、completion 仍 pending，或 upstream gate 仍 blocked。
+晋升后仍需完成静态检查、人物状态补丁、Canon 候选和连续性账本。作品的后续场景读取这些正式变化，因此场景审查既保护当前文本，也保护未来上下文。
 
-## 为什么要有这么多账本
+## 章节级审查
 
-| 账本 | 它证明什么 |
-|---|---|
-| `route_state.json` | 当前路线的派生状态 |
-| `*.task.json` | 哪一项任务被正式签发 |
-| `*.submission.json` | 平台 Agent 提交了哪些产物 |
-| `*.agent_completion.json` | 预期产物已经被检查 |
-| `task_events.jsonl` | issued / opened / submitted / blocked / completed 的追加事件 |
-| `workflow_contract.*` | 状态、事件、任务、产物与上下游关系是否一致 |
+单场景全部合格，章节仍可能阅读乏力。章节工作区检查：
 
-它们看似重复，实际上分别覆盖意图、提交、核验与历史。`workflow-validate` 可以发现下游已经 pass、上游仍 blocking，或 submission 引用不存在的 task；`workflow-dashboard` 聚合路线审计、待办 sidecar 与最近事件，但它是只读投影，不能因为仪表盘显示绿色就推进项目。
+- 场景功能是否重复；
+- 张力曲线是否有呼吸和层次；
+- 对话、动作、叙述、心理与环境纹理是否单一；
+- 场景桥是否形成因果咬合；
+- 章节结尾是否总用同一种悬念句；
+- 字数欠账是否来自事件库存不足；
+- 读者问题与 Promise/Payoff 是否按本章义务推进。
 
-## Review CI 不是一个评分器
+章节审查不会用扩写句子解决结构欠账。事件库存不足时，应增加有功能的场景、关系变化或余波，而非把现有场景写得冗长。
 
-审查维度包括 Canon 一致性、人物 OOC、场景目标、空草稿、blocked 场景、人工确认、Agent Review JSON Schema 与挂载文风遵循。结论有 `pass`、`pass_with_notes`、`revise_required` 和 `reject`。
+## 长篇审计
 
-这里最容易被误解的是 `pass_with_notes`。它不是“差不多可以”，而是没有阻断级问题、但仍有必须局部处理的 notes。revision actions、warnings、style notes 必须具体可执行；下一轮生成会把它们注入 review notes，写作 Agent 完成局部修订，再经过复审达到 clean pass。章节 ready、写回、导出和发布不能用 waiver 把 notes 静默吞掉。
+`longform-audit` 关注跨卷问题：主线、支线和人物弧是否长期停滞；某类场景、视角或语言纹理是否过度集中；读者问题是否拖延过久；承诺是否得到兑现、反转或解释；时间跨度、人物年龄、地点移动和组织变化是否连续；总字数、事件库存和详略分配是否仍可兑现。
 
-## 状态机不替 Agent 做文学判断
+长篇审计输出欠账列表和后续任务建议，不静默重写已晋升正文。
 
-CLI 决定下一项合法步骤、签发任务包、记录提交、验证确定性 Gate。平台 Agent 仍负责人物推演、分支比较、composition、正文、审查与修订。两者不是“机器规则对抗创意”，而是把创意判断与项目权力分开：Agent 能说“这段可以进入下一轮”，但不能直接把候选写成 Canon。
+## 文风审查的边界
 
-这种分工也解释了为什么不应在前端复制工作流。星仪或任务面板可以显示 lifecycle 和 action availability，真正动作仍要回到 application command 与 CLI route。否则 UI 会产生第二状态机，刷新或版本迁移后就可能与正式账本分叉。
+频率指标只能提供信号。某位作者的节奏可能依赖高密度破折号，某一场急促对话也可能需要短句。Review 应区分有功能的风格特征和模型惯性。
 
-## 长篇路线为什么还要增加读者门禁
+因此文风文件需要声明典型句法、适用场景、反例、密度范围、允许偏离条件和语义判断问题。Lint 使用项目阈值，AgentReview 使用具体风格证据，二者共同工作。
 
-字数预算与场景库存完成后，路线仍不止于“有足够多场景”。长篇规划依次经过预算 Agent 任务、预算审查、场景库存任务与审查、章节义务任务与审查。十万字以上或多卷项目还要求 Reader Experience Contract：逐场填写读者问题、承诺、兑现/延迟、张力来源与余味。
+## 审查者独立性
 
-这不是用表格代替创作，而是阻止数量达标掩盖叙事空心。正式中文长度也按清理后的内容字符计算，排除路径、Markdown 架构、review notes、状态补丁与 Agent Task 区块；机器非空白字符只作诊断。
+正文由主创 Agent 完成。审查可以使用独立 Profile、不同模型或独立上下文，使它不延续写作时的自我辩护。Subagent 适合做确定性资料整理、位置索引和证据核对，不承担正式正文创作。
 
-## 失败时怎样修，而不是跳过
+对成本敏感的项目可以让轻量模型执行结构化检查，让能力更强的审查 Agent 处理人物、节奏和文风判断。所有结果仍进入同一 Gate。
 
-当 route state 可疑时，维护者同时查看 `workflow-state`、`agent-task-status`、`route-audit` 和 `workflow-validate`。修复目标是恢复账本一致性，而不是直接改 `route_state.json` 为 pass。手工 workaround 只有在正式命令确实尝试并失败、且留下等价 provenance 时才可能进入审查，也不能绕过后续 Gate。
+## 可观测指标
 
-这种严格让批量并发变得可能。多个 Agent 可以同时完成不同候选任务，但统一 Task ID、submission、completion 与事件 Schema 让最终合并仍能核验上下游。没有这层状态纪律，“并行创作”只会更快地产生一批无法判断来源的文件。
+- 首次 `pass` 比例；
+- `pass_with_notes` 到复核通过的比例；
+- 每场平均修订轮次；
+- Lint 误报和漏报样本；
+- 审查与晋升 candidate mismatch 次数；
+- 章节欠账和长篇欠账关闭速度；
+- 审查 Token、时延和 Provider 往返；
+- 读者盲评与机器 Gate 的相关性。
 
-## 真正的完成定义
-
-ArcVellum 的完成不是“正文目录里多了一个 Markdown”，也不是“测试全部变绿”这么单一。它是一组一致事实：预期产物存在，来源可追踪，Schema 合法，审查 clean，状态写回受控，上游无阻断，下游没有抢跑，导出的正文只来自已晋升内容。
-
-这也是阅读器为什么看起来比工作流简单。读者只需要一本干净的书；复杂账本的价值，恰恰是让这些内部工程痕迹不必混进那本书。
+审查质量最终落在正文、读者体验和长期连续性上。报告数量只是过程指标，晋升后的作品状态才是系统结果。
 
 </ArcDocShell>

@@ -1,0 +1,196 @@
+---
+title: 怎样证明一次创作闭环真的成立
+shortTitle: 工程验证与证据
+description: 解释 ArcVellum 如何从单元、合同、连续端到端、Prompt A/B、视觉验收和桌面安装包多个层次证明系统真正可用。
+date: 2026-08-31
+minutes: 26
+tags: [ArcVellum, E2E, Verification]
+columns: [arcvellum]
+cover:
+  src: ./cover.png
+  alt: ArcVellum 质量与运行证据界面，展示真实作品闭环的验证状态
+chrome: none
+theme: abyss
+back: true
+---
+import cover from './cover.png'
+import ArcDocShell from '../../../components/arcvellum/ArcDocShell.astro'
+
+<ArcDocShell index="14" section="ENGINEERING / EVIDENCE" title="用真实作品、真实运行和真实安装包证明系统" deck="命令通过只说明一个局部成立。ArcVellum 的验证链覆盖文学规则、任务合同、Agent Runtime、连续场景、前端投影、DOCX 与桌面发布。" image={cover} imageAlt="ArcVellum 质量与运行证据界面">
+
+文学创作平台很容易在 demo 中显得可用：输入一句话，模型返回一段文字，界面出现几个节点。工程可用性需要更严格的证据。任务要能恢复，审查要约束晋升，状态写回要被下一场读取，长篇字数要兑现，安装包要在另一台机器启动。
+
+ArcVellum 将验证分为多个层次，每层回答不同问题。
+
+## 单元测试
+
+单元测试覆盖纯文学与工程规则：
+
+- 汉字、标点与机器字符数的计量；
+- 字数预算拆分和允许区间；
+- Style Lint 规则与例外阈值；
+- candidate identity、哈希和 revision；
+- Route Gate 与恢复建议；
+- Narrative Projection 节点、关系和稳定 id；
+- 星仪布局、相机和几何算法；
+- Prompt Recipe 选择和长度上限；
+- Provider 配置持久化与凭证过滤。
+
+纯函数保持确定性，边界输入包含空项目、乱码、重复 id、旧 completion 和超长文本。
+
+## 合同测试
+
+合同测试验证模块之间如何协作：
+
+| 合同 | 关键断言 |
+|---|---|
+| TaskPackage | source、agent source、expected outputs 与 Prompt 身份一致 |
+| Runtime | 只读授权、输出白名单、取消和事件顺序成立 |
+| Preflight | exact output、Schema、provenance 与命令接受结果一致 |
+| Projection | revision、patch、节点关系和动作 descriptor 稳定 |
+| API | DTO 不泄漏路径、凭证或流程原始痕迹 |
+| Export | manifest 只包含已晋升正文，渲染无草稿标记 |
+
+合同测试能捕获许多“各模块单独正确，连起来却失败”的问题，例如任务包展示了沙箱未授权的文件，Worker 写出了审查，预检却要求另一种命名。
+
+## Runtime 集成测试
+
+集成测试从任务签发开始，经过 staging、Worker、输出、预检和写回。重点模拟：
+
+- Provider 流式中断；
+- 180 秒无可见活动；
+- Worker 修改合同外文件；
+- 输出存在但缺少语义字段；
+- 修复轮次成功与耗尽；
+- 取消后进程回收；
+- 桌面重启后的 lease 恢复；
+- 模型切换与当前会话隔离。
+
+测试使用 fake Provider 验证确定性状态，也用真实模型进行有限 smoke，确认流式协议和提示词表现。
+
+## 场景连续闭环
+
+最小文学闭环至少覆盖一个场景从开始到进入下一场：
+
+```text
+context
+-> roleplay
+-> branches and selection
+-> composition
+-> prose candidate
+-> lint and review
+-> revision when needed
+-> promotion
+-> character state
+-> canon candidate
+-> continuity ledger
+-> next-scene context
+```
+
+验收不能停在正文文件出现。下一场上下文必须读取上一场正式变化，阅读器必须看见晋升正文，投影必须更新节点状态，路线审计必须无阻断。
+
+## 连续长篇样本
+
+单场成功无法证明长篇能力。当前验证样本包含一部两章、六场、30,080 个中文内容字符的连续作品。六场依次完成独立推演、正文、审查、晋升、状态、Canon 和连续性写回，用于观察：
+
+- 状态是否在场景间传播；
+- 任务是否重复回到旧场景；
+- 字数预算是否进入每场任务；
+- Review 是否绑定准确候选；
+- 自动创作能否越过多轮 Gate；
+- 最终交付是否按章节顺序拼接。
+
+更长的题材矩阵仍是走向稳定版的必要证据，包括不同叙述人称、时间跨度、人物数量和风格复杂度。
+
+## Prompt A/B
+
+提示词优化同时测量质量和成本。对照组使用旧 Prompt，实验组使用新 Recipe；任务、模型、温度和输入作品保持一致。
+
+当前 Prompt v3 样本显示：
+
+| 类型 | 输入 Token | 总 Token | 成本 | 时长 |
+|---|---:|---:|---:|---:|
+| 结构化任务 | -38% | -31% | -28% | -17% |
+| 审查任务 | -22% | -16% | -4% | +7% |
+
+审查时长上升提醒我们：字符压缩不能替代 Runtime 测量。后续还要统计 Provider 往返、工具读取、修复轮次、首次 Gate 通过率和盲评质量。
+
+## 文学质量验证
+
+机器 Gate 不能独立代表文学质量。项目需要建立：
+
+- 人类盲评，比较情节、人物、语言、节奏和可读性；
+- StyleProfile 有无挂载的消融；
+- 同一大纲在不同模型与 Prompt 上的对照；
+- Review notes 的有效修复率；
+- 长篇承诺、问题和人物弧的关闭率；
+- 最终正文的 AI 惯性抽样。
+
+评审材料过滤流程信息，防止评审者从文件名和模型标签猜测组别。
+
+## 前端视觉与交互验收
+
+星仪和工作面使用真实项目数据验证。Playwright 截图覆盖主要分辨率、桌面缩放和关键状态，并辅以人工视觉检查。
+
+检查内容包括：
+
+- 节点、曲线和标签是否重叠；
+- 章节目录是否定位正确；
+- 全书场景是否按章成簇；
+- 旋转、平移、缩放和聚焦动画是否稳定；
+- 多窗口拖动前后尺寸是否一致；
+- 正文、档案和顾问 Markdown 是否正确渲染；
+- 决策卡提交后是否消失；
+- SSE 更新是否保持阅读位置；
+- 桌面端是否拥有与 Web 开发版一致的动画。
+
+视觉效果需要在真实作品上确认。空 demo 的稀疏布局无法暴露 9 章、几十场和多条人物关系下的密度问题。
+
+## 交付验证
+
+Markdown 和 DOCX 输出后需要反向读取：
+
+- 章节顺序和标题层级；
+- 正文字符数；
+- 引号、标点和段落样式；
+- 草稿编号、Review、Canon 和状态标记是否消失；
+- 目录、分页、字体和图片是否可用；
+- export manifest 与实际文件是否一致。
+
+DOCX 还要渲染为页面图像抽查，避免结构正确但版式破损。
+
+## 桌面构建与发布
+
+生产验证包括 Vue build、Python bundle、Tauri build、安装器、更新清单、签名文件和校验和。Windows 需要在干净环境验证安装、启动、项目创建、模型连接、覆盖升级和卸载保留作品。
+
+macOS Apple Silicon 与 Intel 预览包可以验证架构和界面；完成 Developer ID 签名与 notarization 前，应明确标记为 unsigned preview。
+
+Release 发布后还要确认：
+
+- Git tag、应用版本与资产名一致；
+- 自动更新 `latest.json` 指向当前资产；
+- GitHub Actions 全部成功；
+- README 截图和功能状态与安装版一致；
+- 安装包不依赖开发机绝对路径、OpenCode 或外部 Python/Node。
+
+## 回归矩阵
+
+| 变更类型 | 最小验证 |
+|---|---|
+| 文学规则 | 单元 + 场景合同 + 连续闭环 |
+| Runtime | Worker 集成 + 取消恢复 + 真实 smoke |
+| Prompt | Registry + A/B + 盲评样本 |
+| Projection | contract + 增量 patch + 星仪截图 |
+| 前端 | unit + build + Playwright + 人工视觉 |
+| Export | manifest + DOCX render + 内容过滤 |
+| Desktop | Tauri build + 干净安装 + 自动更新 |
+
+小改动先运行模块测试，批量工作完成后运行完整回归。这样既保持开发速度，也不让局部补丁长期逃离系统验证。
+
+## 诚实边界
+
+ArcVellum 当前处于 Beta。已有证据证明正式场景闭环、连续两章样本、内置 Pi Worker、叙事星仪、正文阅读与桌面交付能够协同工作。尚需积累更多题材的长期样本、无人值守恢复、真实读者盲评、Windows 干净机器矩阵和 macOS 签名发布证据。
+
+工程验证的意义是准确描述已经成立的能力，也明确下一项需要证明的假设。对于一个会持续生成几十万字的系统，这份诚实比一次漂亮演示更重要。
+
+</ArcDocShell>
