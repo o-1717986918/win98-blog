@@ -152,7 +152,7 @@ case "$command" in
     printf 'Current: %s\n' "$(current_id)"
     printf 'Accepted releases:\n'
     for candidate in "$releases"/*; do
-      [[ -d "$candidate" && -f "$candidate/accepted" ]] || continue
+      [[ -d "$candidate" && ! -L "$candidate" && -f "$candidate/accepted" ]] || continue
       printf '%s\n' "${candidate##*/}"
     done | sort
     ;;

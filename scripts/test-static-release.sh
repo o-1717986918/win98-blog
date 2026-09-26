@@ -88,4 +88,7 @@ fi
 bash "$repo/scripts/server-static-release.sh" rollback "$one"
 [[ "$(readlink "$root/releases/current")" == "$one" ]]
 [[ -f "$root/releases/shared/_astro/second.js" ]]
+status="$(bash "$repo/scripts/server-static-release.sh" status)"
+expected_status="$(printf 'Current: %s\nAccepted releases:\n%s\n%s\n' "$one" "$one" "$two")"
+[[ "$status" == "$expected_status" ]]
 echo 'Static release install, checksum/symlink rejection, smoke restoration, asset retention and rollback passed.'

@@ -1,6 +1,6 @@
 # 站点部署：Actions 静态产物到腾讯云宝塔
 
-> 状态：仓库内实现已完成，站主的服务器/SSH/宝塔配置与真实回滚演练尚未完成。`win98.site` 当前 GHCR 整站镜像继续服务，切换前不得把本路线描述为已上线。旧 GHCR 和 Cloudflare 步骤见 `DEPLOYMENT_LEGACY.md`。
+> 状态：2026-09-26 已完成首次生产发布与宝塔切换。当前 release 为 `62829ea11d347877c39f4eb1ae568a65860de5ce-36223564941-1`；旧 GHCR 容器继续在 `18098` 提供救援。真实内容更新和回滚演练尚未完成。旧 GHCR 和 Cloudflare 步骤见 `DEPLOYMENT_LEGACY.md`。
 
 ## 1. 运行结构
 

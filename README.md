@@ -52,7 +52,7 @@ pnpm content:audit
 pnpm container:verify
 ```
 
-新的日常路线由 `publish-static` 手动工作流在 Actions 构建 `https://win98.site` 的完整 `dist`，服务器只校验、切换并用只读 Nginx 提供产物；仓库实现已完成，生产 SSH/宝塔切换待站主验收。原 `publish-ghcr` 与根目录 `compose.yaml` 保留旧整站镜像救援，不再用于每次内容更新。两条路线都不在生产机编译源码。
+日常路线由 `publish-static` 手动工作流在 Actions 构建 `https://win98.site` 的完整 `dist`，服务器只校验、切换并用只读 Nginx 提供产物；该路线已于 2026-09-26 首次投入生产。原 `publish-ghcr` 与根目录 `compose.yaml` 保留旧整站镜像救援，不再用于每次内容更新。两条路线都不在生产机编译源码。
 
 ## 目录
 
@@ -70,7 +70,7 @@ docs/handover/              # 接手现状、原则、研究与开发说明
 experiments/                # 不属于生产主轴的历史视觉实验
 prototype/                  # 冻结的原版单文件原型
 docker/                     # 非 root Nginx 与响应头/缓存契约
-compose.static.yaml         # 新的静态产物运行定义，线上切换待验收
+compose.static.yaml         # 当前生产静态产物运行定义
 compose.yaml                # 旧 GHCR 镜像救援定义
 ```
 
