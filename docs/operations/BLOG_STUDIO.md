@@ -27,9 +27,9 @@ pnpm notes:sync -- --source "D:\Knowledge\Vault" --dry-run
 pnpm notes:sync -- --source "D:\Knowledge\Vault"
 ```
 
-也可以在 Studio 的 `NOTE BRIDGE` 输入同一个本机目录。同步器递归读取 Markdown/MDX，跳过隐藏目录，将 Wiki 链接转换为 `/notes/<slug>/`，将相对图片复制到笔记共置的 `assets/`，并写入 `.sync-manifest.json`。它不会删除目标中已有的其他内容。
+也可以在 Studio 的 `NOTE BRIDGE` 输入同一个本机目录。同步器递归读取 Markdown/MDX，跳过隐藏目录，只将明确公开且非草稿的笔记转换成 `/notes/<slug>/` 内容，将引用的相对图片复制到笔记共置的 `assets/`，并写入只含公开条目的 `.sync-manifest.json`。它只清理此前由同一清单登记、现在已撤回的旧公开条目，不删除目标中其他人工内容。
 
-只有源 frontmatter 明确包含 `publish: true`、`public: true` 或 `blog: true` 的笔记进入公开站点；其余条目可以同步到内容库，但公开页面会过滤。源文件绝对路径不会写入站点，只保留相对 `source`。同名或中文文件名使用稳定哈希避免 URL 漂移。
+只有源 frontmatter 明确包含 `publish: true`、`public: true` 或 `blog: true` 且 `draft` 不为 true 的笔记才进入仓库内容目录；其他条目完全不写出，不能依赖“页面过滤”保护公开 Git 仓库。源文件绝对路径不会写入站点，清单只保留公开条目的相对 `source`。同名或中文文件名使用稳定哈希避免 URL 漂移。
 
 ## 已知边界
 

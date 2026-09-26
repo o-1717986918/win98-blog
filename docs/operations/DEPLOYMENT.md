@@ -1,192 +1,95 @@
-# 站点部署手册
+# 站点部署：Actions 静态产物到腾讯云宝塔
 
-## 0. 当前线上：GitHub Pages
+> 状态：仓库内实现已完成，站主的服务器/SSH/宝塔配置与真实回滚演练尚未完成。`win98.site` 当前 GHCR 整站镜像继续服务，切换前不得把本路线描述为已上线。旧 GHCR 和 Cloudflare 步骤见 `DEPLOYMENT_LEGACY.md`。
 
-当前首发地址是 `https://o-1717986918.github.io/win98-blog/`。`.github/workflows/github-pages.yml` 在 `main` 每次推送后构建并发布；站点以 `/win98-blog` 为 `BASE_PATH`，因此导航、图片、Pagefind、RSS、站点地图、Web Worker 与 Wasm 都必须经过统一子路径处理。
+## 1. 运行结构
 
-本机复现 GitHub Pages 构建：
+~~~text
+GitHub main → publish-static → verify:all + Astro + Pagefind
+→ site.tar.gz + SHA-256 → production Environment 审批
+→ SSH 上传到 /opt/win98-static/incoming/
+→ release.sh 校验、原子切换 current、回环 HTTP 冒烟
+→ 只读 Nginx 127.0.0.1:18099 → 宝塔 HTTPS 反代 → win98.site
+~~~
 
-```powershell
-$env:SITE_URL='https://o-1717986918.github.io'
-$env:BASE_PATH='/win98-blog'
-pnpm verify:all
-Remove-Item Env:SITE_URL
-Remove-Item Env:BASE_PATH
-```
+发布的事实源是当前代码仓库中的程序、文章、主题与公开学习笔记。普通文章和学习笔记更新都要完整构建网页，但服务器不运行 Git、Node、pnpm 或 Astro。`compose.yaml` 的旧 GHCR 容器可留在 `18098`，供首次切换和紧急救援。新服务使用 `compose.static.yaml`，不会覆盖旧容器。
 
-GitHub Pages 是当前可立即访问的公开首发渠道；自租服务器的目标路径改为下述 **GitHub GHCR + 宝塔 Docker Compose**。Cloudflare Pages 继续作为不自托管时的备选方案。迁移时把 `SITE_URL` 换成最终域名、把 `BASE_PATH` 设为 `/`，再完整执行生产验收。
+## 2. 一次性准备：服务器
 
-`public/_headers` 会随产物发布，但 GitHub Pages 不解释该文件；当前安全响应头必须在真实承载层另行核验，不能把仓库文件存在当作线上已生效。
-
-## 1. 目标生产路径：GHCR + 宝塔 Docker
-
-### 1.1 架构与门禁
-
-`.github/workflows/publish-ghcr.yml` 只允许在 `main` 手动执行。它接收最终 `site_url`，先运行 `pnpm deploy:check`，再构建 `linux/amd64` 镜像、写入 SBOM 和 build provenance、推送 `sha-<commit>` 与可选 `stable` 标签，最后从 GHCR 重新拉取并以生产安全参数启动冒烟容器。
-
-镜像地址固定为：
-
-```text
-ghcr.io/o-1717986918/win98-blog
-```
-
-`SITE_URL` 是静态产物的一部分，不是容器启动参数。正式域名变更时必须重新发布镜像，不能只改宝塔反向代理。工作流使用 `GITHUB_TOKEN` 写包，不需要创建 GitHub 发布 PAT。当前 GHCR 包按站主决定保持 public，服务器可匿名拉取，也不需要只读 PAT。
-
-本机完整复现容器交付：
-
-```powershell
-docker version
-docker compose version
-pnpm container:verify
-```
-
-`container:verify` 会用测试 HTTPS origin 构建镜像，以只读文件系统、无 capabilities、回环随机端口启动 Nginx，并验证健康检查、首页 canonical、归档、笔记、Pagefind、Wasm、缓存头、安全头和真实 404。它不推送镜像。
-
-### 1.2 第一次 GHCR 发布
-
-1. 正式域名固定为 `https://win98.site`，不带路径或尾斜杠。
-2. 在 GitHub 仓库进入 **Actions → publish-ghcr → Run workflow**，分支选择 `main`，填写 `https://win98.site`，保持 `publish_stable=true`。
-3. 等待 `Verify, publish and smoke-test` 全绿，在 Job Summary 保存镜像 digest 与 `sha-<commit>` 标签。
-4. 当前包继承公开源仓库权限并保持 public，可匿名拉取；宝塔服务器无需 `docker login ghcr.io`。公开化不可逆，如果未来改为私有交付，需要删除并重建包或改用新的包名，不能假设原包可直接转回 private。
-5. 生产 Compose 固定使用已验收的 `sha-<commit>`，不要只依赖可变的 `stable`。
-
-### 1.3 宝塔一键运行与反向代理
-
-在服务器创建专用目录（例如 `/opt/win98-blog`），只放仓库中的 `compose.yaml` 和下列 `.env`：
-
-```dotenv
-WIN98_IMAGE=ghcr.io/o-1717986918/win98-blog
-WIN98_TAG=sha-替换为已验收的提交
-WIN98_PORT=18098
-```
-
-在宝塔“Docker → Compose”导入该目录，或在目录中执行：
+以管理员身份创建非 root、无 Docker 权限的专用部署用户（下例为 `win98deploy`），让其只拥有归档上传目录和发布数据目录。发布脚本及容器配置所在的父目录必须仍由 root 拥有，避免部署账号替换这些文件。示例命令适用于 Linux；在宝塔终端执行前，核对用户名与路径：
 
 ```bash
-docker compose config
-docker compose pull
-docker compose up -d
-docker compose ps
-curl -fsS http://127.0.0.1:18098/healthz
+sudo useradd --create-home --shell /bin/bash win98deploy
+sudo install -d -o root -g root -m 755 /opt/win98-static
+sudo install -d -o win98deploy -g win98deploy -m 755 /opt/win98-static/incoming /opt/win98-static/releases
+sudo install -d -o root -g root -m 755 /opt/win98-static/bin
+sudo install -d -o root -g root -m 755 /opt/win98-static/docker
+sudo install -o win98deploy -g win98deploy -m 644 /dev/null /opt/win98-static/release.lock
 ```
 
-Compose 只把容器 `8080` 映射到宿主机 `127.0.0.1:18098`。不要改为 `0.0.0.0`，也不要开放 18098 防火墙端口。随后在宝塔创建纯静态/反向代理站点：
+把仓库文件 `scripts/server-static-release.sh` 安装为 `/opt/win98-static/bin/release.sh`（root 拥有、权限 755）；把 `compose.static.yaml`、`docker/static-nginx.conf` 和 `docker/security-headers.conf` 放在 `/opt/win98-static/` 的同名相对位置。只在配置变更时更新这些文件；日常内容发布只传输 `site.tar.gz`。需要 Linux 的 `bash`、GNU `tar`、`sha256sum`、`flock`、`curl` 和 Docker Compose；不需要安装 Node 或 Git。
 
-1. 绑定最终域名；
-2. 反向代理目标填写 `http://127.0.0.1:18098`；
-3. 申请证书并强制 HTTPS；
-4. 保留原始 `Host`、`X-Real-IP`、`X-Forwarded-For` 与 `X-Forwarded-Proto`；
-5. 访问公网 `/healthz`、首页、`/archive/`、`/pagefind/pagefind.js` 和一个不存在的地址，确认分别为 200、200、200、200、404。
-
-### 1.4 更新、固定版本与回滚
-
-日常生产不要长期依赖可变 `stable`。在 GitHub 发布并验收新镜像后，把服务器 `.env` 的 `WIN98_TAG` 改为对应 `sha-<commit>`，再执行：
+在 `/opt/win98-static/` 启动新的静态容器，默认仅监听 `127.0.0.1:18099`：
 
 ```bash
-docker compose pull
-docker compose up -d
-docker image prune -f
+cd /opt/win98-static
+docker compose -f compose.static.yaml config
+docker compose -f compose.static.yaml up -d
+curl -fsS http://127.0.0.1:18099/healthz
 ```
 
-只有站点健康且人工验收通过后才清理旧镜像。回滚时把 `WIN98_TAG` 改回发布记录中的上一个 SHA 标签，重复 `pull` 和 `up -d`；不重新构建旧源码。`docker image prune -f` 只清理未使用镜像，不应在回滚前执行。
+首次没有 `current` 时，`/healthz` 可以是 200，首页仍应为 404；首个成功版本到达后首页才会有内容。不要把静态站端口映射到 `0.0.0.0` 或直接开放防火墙。`releases/` 整个目录被只读挂进容器，不要只挂载 `current` 的当时目标，否则后续切换可能不可见。
 
-## 2. Cloudflare Pages 备选迁移方案
+## 3. 一次性准备：SSH 与 GitHub
 
-计划中的自定义域名主机采用 **Cloudflare Pages Direct Upload + GitHub Actions**。仓库自己完成测试、静态构建、Pagefind 索引、浏览器回归和产物审计，再把已经验证的 `dist` 上传到 Pages。这样迁移后的线上构建与本地/CI 使用同一条 `pnpm deploy:prepare` 契约。
+为 `win98deploy` 配置只用于本机的 SSH 公钥；私钥只存于 GitHub 的 `production` Environment Secret `WIN98_DEPLOY_KEY`。服务器 SSH 防火墙只开放确需的来源，部署用户不加入 `sudo`/`docker` 组。环境变量：
 
-暂不启用 Cloudflare 的 Git 仓库集成。Direct Upload 项目后续不能原地切换成 Git integration；若未来要切换，需要新建 Pages 项目并迁移域名。这个选择记录在 `docs/decisions/0012-reader-facing-copy-and-pages-deployment.md`。
+| 类型 | 名称 | 值 |
+| --- | --- | --- |
+| Variable | `WIN98_DEPLOY_HOST` | 服务器域名或 IPv4 地址，不带协议 |
+| Variable | `WIN98_DEPLOY_USER` | `win98deploy`，或实际专用用户名 |
+| Variable | `WIN98_DEPLOY_PORT` | SSH 端口；不设时为 `22` |
+| Secret | `WIN98_DEPLOY_KEY` | 专用私钥全文，绝不提交到仓库 |
+| Secret | `WIN98_DEPLOY_KNOWN_HOSTS` | **线下核对指纹后**保存的 OpenSSH `known_hosts` 行；非标准端口使用 `[host]:port` 格式 |
 
-## 3. Cloudflare 一次性准备
+不要把未核对的 `ssh-keyscan` 输出直接当成可信指纹。GitHub `production` Environment 应限制为 `main`，按需要启用人工审批；工作流的构建 job 不读取 SSH 密钥，只有生产 deploy job 在审批后获得它。仓库变量中的评论/统计配置若启用，也会写进公开页面，只能填公开值。
 
-1. 在 Cloudflare 创建 API Token，权限只授予目标账号的 `Account / Cloudflare Pages / Edit`。
-2. 取得 Cloudflare Account ID。
-3. 登录 Wrangler，创建 Direct Upload 项目：
+## 4. 首发与宝塔切换
 
-   ```powershell
-   pnpm dlx wrangler@4.127.0 login
-   pnpm dlx wrangler@4.127.0 pages project create
+1. 确认 `main` 只有准备公开的文章、笔记和媒体。笔记同步现在默认只导出 `publish: true` 且非 `draft` 的文件；不要把私人 Vault 或私有草稿手工提交到公开仓库。
+2. 在 GitHub **Actions → publish-static → Run workflow** 从 `main` 手动启动。构建 job 完成生产门禁、Linux 发布脚本测试和归档；deploy job 在 `production` 审批后上传并调用 `/opt/win98-static/bin/release.sh install`。
+3. 记录 Job Summary 的 release ID 与归档 SHA-256。在服务器检查：
+
+   ```bash
+   sudo -u win98deploy /opt/win98-static/bin/release.sh status
+   curl -fsS http://127.0.0.1:18099/release-id.txt
+   curl -fsS -o /dev/null http://127.0.0.1:18099/archive/
+   curl -fsS -o /dev/null http://127.0.0.1:18099/pagefind/pagefind.js
    ```
 
-   项目名建议为 `someone-site`，production branch 设为 `main`。若项目已存在，跳过创建。
-4. 在 GitHub 建立 `preview` 与 `production` 两个 Environment；为 `production` 配置 required reviewers，避免单人误触直接上线。
-5. 在两个 Environment 或仓库中设置以下 Actions 配置。
+4. 打开回环预览并检查首页、文章三档、主题、公开笔记、搜索、RSS、sitemap、Wasm、404 和响应头。通过后在宝塔把 `win98.site` 的反向代理目标从 `http://127.0.0.1:18098` 改为 `http://127.0.0.1:18099`。保持 `Host` 与 `X-Forwarded-*`，继续使用现有 HTTPS 证书。
+5. 公网检查 `https://win98.site/`、`/archive/`、`/notes/`、`/pagefind/pagefind.js`、`/rss.xml`、`/sitemap-index.xml` 与一个不存在的路径；最后应为真实 404。通过前不停止旧 `18098` 容器。
 
-| 类型 | 名称 | 示例/说明 |
-|---|---|---|
-| Variable | `SITE_URL` | 最终 HTTPS 根域名，不带尾斜杠 |
-| Variable | `CLOUDFLARE_PAGES_PROJECT` | `someone-site` |
-| Variable | `CLOUDFLARE_PRODUCTION_BRANCH` | `main` |
-| Secret | `CLOUDFLARE_ACCOUNT_ID` | 32 位 Account ID |
-| Secret | `CLOUDFLARE_API_TOKEN` | Pages Edit token |
+该工作流仍是手动触发，避免单次 `main` 推送未经站主确认就上线。日常更新只需提交内容并运行同一工作流；不重新构建 GHCR 镜像。
 
-评论与统计变量按 `.env.example` 添加。它们会进入公开网页，不能放真正的私密凭据；Waline 数据库密钥等服务端秘密属于对应服务，不属于本仓库。
+## 5. 回滚、故障与备份
 
-`PUBLIC_WEBMENTION_ENDPOINT` 与 `PUBLIC_PERFORMANCE_ENDPOINT` 也是可选公开地址，必须使用 HTTPS。留空时前者不写入页面，后者只在当前标签页保存一次性能样本，不产生网络请求。GitHub Pages 不能承载接收 API；需要 Webmention 或聚合现场性能时，应使用独立服务或迁移后的 Cloudflare Worker，并在隐私页公开保存边界。
+`release.sh status` 列出当前和历史版本。回滚到已验收版本：
 
-## 4. Cloudflare 第一次发布
-
-先复制环境文件并填写真实值：
-
-```powershell
-Copy-Item .env.example .env
-pnpm deploy:prepare
+```bash
+sudo -u win98deploy /opt/win98-static/bin/release.sh rollback <完整-release-id>
 ```
 
-`deploy:prepare` 会依次执行 Vitest、完整求解器冒烟、静态构建、Pagefind、链接/锚点/体积/封面审计、Playwright 浏览器回归、canonical 检查，并验证 Cloudflare 项目、账号和 token 是否齐备。它不上传任何文件。
+脚本切换后会检查本机 HTTP 的版本标记、首页、归档、Pagefind、RSS 和 sitemap。冒烟失败会恢复旧指针；归档散列、路径或关键文件错误则在切换前失败。回滚不需 Actions、GitHub 或构建。若静态容器整体故障，把宝塔反代暂时改回旧 GHCR 容器 `127.0.0.1:18098`，再查日志；不要为了修复去编辑已验收的 release 内文件。
 
-推荐在 GitHub Actions 手动运行 `deploy-cloudflare-pages`，先选 `preview`。工作流会创建 `manual-<run number>` 预览分支并把部署 URL 写入 Job Summary。通过 `docs/operations/PRODUCTION_CHECKLIST.md` 后，再从 `main` 手动选择 `production`；非 production branch 会被工作流拒绝。
+`/opt/win98-static/releases/` 和配置文件需要服务器备份；至少保留当前与一个成功旧版。`incoming/` 的已上传归档和 GitHub workflow artifact 可按保留期清理，但不要把有保留期限的 Actions artifact 当作唯一回滚来源。共享 `releases/shared/` 保留旧页面仍引用的 `_astro` 与 Pagefind 资源；紧急撤回敏感内容时必须评估并清除旧 release、共享资源及外部缓存，此操作不能用普通回滚替代。
 
-授权本机也可以执行：
+首次生产切换完成后，按 `PRODUCTION_CHECKLIST.md` 做一次文章更新、一次公开笔记更新和一次无构建回滚，并把真实 release ID、耗时与结果记录到站主的发布记录。记录完成前，仓库中的实现不等于线上已交付。
 
-```powershell
-pnpm deploy:pages:preview
-$env:CONFIRM_PRODUCTION='YES'
-pnpm deploy:pages:production
-Remove-Item Env:CONFIRM_PRODUCTION
-```
+## 6. 旧路径
 
-生产命令没有 `CONFIRM_PRODUCTION=YES` 会主动退出。不要把确认值长期保存在 `.env`。
+- `compose.yaml`、`publish-ghcr.yml` 与 `Dockerfile` 保留为整站镜像救援；不再是日常内容更新主线。
+- GitHub Pages 的 `/win98-blog` 工作流仍是公开镜像渠道，但该产物的子路径与生产域名不同，不得上传到 `win98.site`。
+- Cloudflare Pages Direct Upload 仍是更换主机时的备选，具体操作存档于 `DEPLOYMENT_LEGACY.md`。
 
-### 4.1 本次内容重构后的发布顺序
-
-1. 在无外部凭据的机器上先运行 `pnpm verify:all`，确认内容引用、ArcVellum 十四篇手记、工具主题、Pagefind、全部静态路由与浏览器连接行为通过。
-2. 确认 `pnpm solver:smoke` 返回内置地图的 33 步识别路径。冒烟脚本还会根据 `tools/solver-wasm/solver-engine.provenance.json` 校验制品 SHA-256、源码提交与 33/191 步行为契约。`public/solver/solver-engine.wasm` 是已构建产物；只有当求解器源仓库变更时，才使用 `tools/solver-wasm/build.ps1` 重建，并同步更新溯源清单。清单中的 `compilerVersion` 只有在真实重建时才可填写，不得猜测。
-3. 启动本地预览，在 390×844 与桌面视口检查首页三栏阅读顺序、侧栏分层展开、底部重点文章、全站返回桥、ArcVellum 目录与工具主题。
-4. 在求解器文章先执行“只跑识别”，再执行一次内置地图“识别 + 完整规划”。确认 Worker 期间页面仍可滚动，结果显示 191 步规划路径，“停止”能中断运行。
-5. 手动部署 preview，在 preview 域名再执行第 3–4 步，特别检查 `.wasm` 返回 200 且 Worker 可同源加载。该模块不依赖 `SharedArrayBuffer`，因此不需要为它额外启用 COOP/COEP。
-6. 通过 `PRODUCTION_CHECKLIST.md` 后再人工批准 production。首发后保留前一个 deployment，并立即做一次回滚演练。
-
-## 5. Cloudflare 自定义域名
-
-1. 先在 Pages 项目的 **Custom domains** 中关联域名，再修改 DNS；不要只添加 CNAME。
-2. 根域名必须由 Cloudflare 托管该 zone 并使用 Cloudflare nameserver。
-3. 外部 DNS 托管的子域名可在 Pages 关联后 CNAME 到 `<project>.pages.dev`。
-4. 域名生效后，把 `SITE_URL` 更新为最终源站，重新跑一次 preview 和 production；检查 canonical、RSS、sitemap、OG 图片都使用最终域名。
-
-## 6. 发布后验证与回滚
-
-完整验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。最低检查包括：首页和一篇 full/minimal/none 内容、移动端导航、Pagefind、`robots.txt`、`sitemap-index.xml`、`rss.xml`、分享图、404、评论/统计的实际网络请求。
-
-发生问题时：
-
-1. 在 Cloudflare Pages Deployments 中把上一个成功 deployment 设回生产；
-2. 在 Git 中回退或修正问题提交；
-3. 重新运行 `pnpm deploy:prepare` 和 production workflow；
-4. 记录故障、影响范围和回滚 deployment URL。
-
-Direct Upload 当前限制为单次最多 20,000 个文件、单文件最多 25 MiB。仓库的构建预算更严格，正常不会接近该边界。
-
-## 7. 自动化策略
-
-GHCR 与 Cloudflare 生产 workflow 均只允许 `workflow_dispatch`，这是首发阶段的刻意限制。完成首次上线、回滚演练和至少一次稳定发布后，才评估把 `main` push 加入镜像发布触发；PR 仍由 `ci.yml` 验证，不直接获得生产权限。
-
-## 8. 官方依据
-
-- [Cloudflare Pages Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/)
-- [Direct Upload 持续集成](https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/)
-- [Cloudflare Pages 自定义域名](https://developers.cloudflare.com/pages/configuration/custom-domains/)
-- [Cloudflare Wrangler Action](https://github.com/cloudflare/wrangler-action)
-- [Astro 部署指南](https://docs.astro.build/en/guides/deploy/)
-- [GitHub：发布 Docker 镜像](https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images)
-- [GitHub Packages 权限与可见性](https://docs.github.com/en/packages/learn-github-packages/about-permissions-for-github-packages)
-- [NGINX Unprivileged 官方镜像](https://github.com/nginx/docker-nginx-unprivileged)
+依据：[GitHub Environment 与审批](https://docs.github.com/en/actions/concepts/workflows-and-actions/deployment-environments)、[Actions artifact 保留期](https://docs.github.com/en/actions/tutorials/store-and-share-data)、[Astro 部署](https://docs.astro.build/en/guides/deploy/)。

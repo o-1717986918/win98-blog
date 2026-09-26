@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { access, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
@@ -14,7 +14,7 @@ afterEach(async () => {
 });
 
 describe('local notes sync', () => {
-  it('copies attachments, preserves private notes and never exposes a private wiki route', async () => {
+  it('copies public attachments without materializing private notes or private wiki routes', async () => {
     const workspace = await mkdtemp(resolve(tmpdir(), 'someone-site-notes-'));
     temporaryDirectories.push(workspace);
     const source = resolve(workspace, 'vault');
@@ -32,6 +32,7 @@ publish: true
 [[Second public]] / [[Private draft]]
 
 ![[assets/diagram.svg]]
+![[Private draft.md]]
 `, 'utf8');
     await writeFile(resolve(source, 'Second public.md'), `---
 title: Second public
@@ -44,6 +45,17 @@ title: Private draft
 created: 2026-08-29
 publish: false
 ---
+
+PRIVATE_BODY_MUST_NOT_LEAVE_VAULT
+`, 'utf8');
+    await writeFile(resolve(source, 'Unreleased public.md'), `---
+title: Unreleased public
+created: 2026-08-29
+publish: true
+draft: true
+---
+
+This text must not be copied.
 `, 'utf8');
 
     await execute(process.execPath, [
@@ -62,11 +74,17 @@ publish: false
     expect(publicNote).not.toContain('source:');
     expect(publicNote).not.toContain('/notes/private-draft/');
     expect(publicNote).toContain('Private draft');
+    expect(publicNote).not.toContain('PRIVATE_BODY_MUST_NOT_LEAVE_VAULT');
     expect(publicNote).toMatch(/\.\/assets\/diagram-[a-f0-9]{8}\.svg/u);
-    expect(manifest.entries).toHaveLength(3);
-    expect(manifest.entries.filter((entry) => entry.publish)).toHaveLength(2);
+    expect(manifest.entries).toHaveLength(2);
+    expect(manifest.entries.every((entry) => entry.publish)).toBe(true);
     expect(manifest.entries.find((entry) => entry.slug === 'public-note')?.attachments).toBe(1);
     expect(JSON.stringify(manifest)).not.toContain(workspace);
+    expect(JSON.stringify(manifest)).not.toContain('Private draft');
+    expect(JSON.stringify(manifest)).not.toContain('Unreleased public');
+    await expect(access(resolve(output, 'private-draft', 'index.md'))).rejects.toThrow();
+    expect(await readdir(resolve(output, 'public-note', 'assets'))).toHaveLength(1);
+    await expect(access(resolve(output, 'unreleased-public', 'index.md'))).rejects.toThrow();
 
     await rm(resolve(source, 'Second public.md'));
     await writeFile(resolve(source, 'Replacement.md'), `---

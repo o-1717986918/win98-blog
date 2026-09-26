@@ -2,7 +2,7 @@
 
 一个静态优先、允许文章与主题逐级获得网页级自由的个人博客。仓库从 `C:\Users\26532\.zcode\workspace\default` 的原项目接手而来；外部源目录保持不动，原型和初始架构文档作为历史设计基线保留，当前事实以可执行 Schema、源码、测试和已接受 ADR 为准。
 
-线上站点：[o-1717986918.github.io/win98-blog](https://o-1717986918.github.io/win98-blog/)
+线上站点：[win98.site](https://win98.site/)；GitHub Pages 项目站仍保留为备用访问入口。
 
 ## 已交付能力
 
@@ -42,9 +42,9 @@ pnpm content:new column my-column "主题标题"
 pnpm content:audit
 ```
 
-`pnpm verify` 运行单元、求解器与完整静态构建门禁；`pnpm verify:all` 在此基础上再运行真实浏览器回归，适合发布前一次性验收。编辑、发布与资源共置见 `docs/operations/CONTENT_WORKFLOW.md`；GitHub Pages 首发、GHCR + 宝塔 Docker 生产路径与 Cloudflare 备选方案见 `docs/operations/DEPLOYMENT.md`，逐项上线验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。
+`pnpm verify` 运行单元、求解器与完整静态构建门禁；`pnpm verify:all` 在此基础上再运行真实浏览器回归，适合发布前一次性验收。编辑与资源共置见 `docs/operations/CONTENT_WORKFLOW.md`；已选择的 Actions 静态产物路线及服务器切换步骤见 `docs/handover/STATIC_ARTIFACT_PUBLISHING_EXECUTION_PLAN.md` 和 `docs/operations/DEPLOYMENT.md`，逐项上线验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。独立内容仓库加服务器 builder 的旧路线保留在 `docs/handover/CONTENT_SEPARATED_PUBLISHING_EXECUTION_PLAN.md`，不作为当前主线。
 
-## Docker 与 GHCR
+## 自租服务器发布与 GHCR 救援
 
 需要本机 Docker Desktop。以下命令会构建并用生产安全参数启动临时镜像，验证 canonical、健康检查、静态路由、Pagefind、Wasm、缓存与安全响应头：
 
@@ -52,7 +52,7 @@ pnpm content:audit
 pnpm container:verify
 ```
 
-正式镜像由 GitHub Actions 的 `publish-ghcr` 手动工作流发布到 public `ghcr.io/o-1717986918/win98-blog`。工作流只接受 `main` 和真实 HTTPS `site_url`，产出不可变 `sha-<commit>` 及可选 `stable` 标签；服务器可匿名使用根目录 `compose.yaml` 拉取，不在生产机编译源码。
+新的日常路线由 `publish-static` 手动工作流在 Actions 构建 `https://win98.site` 的完整 `dist`，服务器只校验、切换并用只读 Nginx 提供产物；仓库实现已完成，生产 SSH/宝塔切换待站主验收。原 `publish-ghcr` 与根目录 `compose.yaml` 保留旧整站镜像救援，不再用于每次内容更新。两条路线都不在生产机编译源码。
 
 ## 目录
 
@@ -70,7 +70,8 @@ docs/handover/              # 接手现状、原则、研究与开发说明
 experiments/                # 不属于生产主轴的历史视觉实验
 prototype/                  # 冻结的原版单文件原型
 docker/                     # 非 root Nginx 与响应头/缓存契约
-compose.yaml                # 宝塔服务器的 GHCR 运行定义
+compose.static.yaml         # 新的静态产物运行定义，线上切换待验收
+compose.yaml                # 旧 GHCR 镜像救援定义
 ```
 
 新增主题与关联文章见 `docs/handover/COLUMN_MODEL.md`。项目级约束见 `AGENTS.md`，日常运维见 `docs/operations/OPERATIONS.md`。

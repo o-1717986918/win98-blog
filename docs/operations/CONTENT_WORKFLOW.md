@@ -46,6 +46,8 @@ pnpm content:new column stable-kebab-slug "主题标题"
 - 正常 `pnpm build` 排除草稿和构建时刻之后的内容；日期按 ISO 时间解析，精确排期建议写完整时区，例如 `2026-09-01T09:00:00+08:00`；
 - 需要生成包含未发布内容的私有预览时，设置 `PREVIEW_DRAFTS=true`，不得把该产物部署到公开生产环境；
 - 发布前执行 `pnpm verify:all`，它统一覆盖单元测试、完整求解器冒烟、静态构建、Pagefind、内容/链接/体积审计与真实浏览器回归；首次本地运行端到端测试需执行 `pnpm exec playwright install chromium`。
+- 生产更新提交到 `main` 后，手动运行 GitHub Actions 的 `publish-static`；该工作流以 `https://win98.site/` 重跑完整门禁并上传静态产物。服务器只验收、切换版本，不重新构建 GHCR 镜像。正式切换前仍以 `docs/operations/DEPLOYMENT.md` 的站主侧步骤为准。
+- 本地知识库笔记同步默认只写出明确公开且非草稿的条目及附件；`publish: false` 或 `draft: true` 的源文件不得提交到公开仓库。公开笔记与文章同样会在下一次静态构建中更新首页、搜索和 sitemap。
 
 ## 4. 审查清单
 
@@ -54,9 +56,9 @@ pnpm content:new column stable-kebab-slug "主题标题"
 3. 标题层级连续，表格和代码块在窄屏可滚动；
 4. `none` 页面只显式导入自己需要的资源，并为可搜索正文声明 `data-pagefind-body`；
 5. 更新文章时同步 `updated`，必要时在正文说明重大修订；
-6. 合并通过 CI 后再由托管平台发布预览或生产版本。
+6. 合并通过 CI 后再由 `publish-static` 生成生产版本；普通 `ci.yml` 产物使用预览域名，不能直接部署到 `win98.site`。
 7. `featured:true` 必须有证据账本；标题超过 32 字时提供 `shortTitle`；外部同步发布后把真实 URL 写入 `syndication`。
 
 ## 5. 回滚
 
-内容和配置都在 Git 中。错误发布优先回退对应提交并重新构建；不要在托管平台手改 `dist`。评论属于外部系统，回滚站点不会删除评论数据。
+内容和配置都在 Git 中。站点错误优先用服务器 `release.sh rollback <release-id>` 立即恢复已验收版本，再修复或回退 Git 提交并重新发布；不要在服务器手改 `dist`。评论属于外部系统，回滚站点不会删除评论数据。

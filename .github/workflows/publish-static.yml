@@ -1,0 +1,128 @@
+name: publish-static
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: win98-static-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Verify and package production HTML
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      release_id: ${{ steps.package.outputs.release_id }}
+      archive_sha256: ${{ steps.package.outputs.archive_sha256 }}
+    env:
+      SITE_URL: https://win98.site
+      BASE_PATH: /
+      PREVIEW_DRAFTS: false
+      PUBLIC_COMMENTS_PROVIDER: ${{ vars.PUBLIC_COMMENTS_PROVIDER || 'none' }}
+      PUBLIC_GISCUS_REPO: ${{ vars.PUBLIC_GISCUS_REPO }}
+      PUBLIC_GISCUS_REPO_ID: ${{ vars.PUBLIC_GISCUS_REPO_ID }}
+      PUBLIC_GISCUS_CATEGORY: ${{ vars.PUBLIC_GISCUS_CATEGORY }}
+      PUBLIC_GISCUS_CATEGORY_ID: ${{ vars.PUBLIC_GISCUS_CATEGORY_ID }}
+      PUBLIC_WALINE_SERVER_URL: ${{ vars.PUBLIC_WALINE_SERVER_URL }}
+      PUBLIC_ANALYTICS_PROVIDER: ${{ vars.PUBLIC_ANALYTICS_PROVIDER || 'none' }}
+      PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN: ${{ vars.PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN }}
+      PUBLIC_UMAMI_SCRIPT_URL: ${{ vars.PUBLIC_UMAMI_SCRIPT_URL }}
+      PUBLIC_UMAMI_WEBSITE_ID: ${{ vars.PUBLIC_UMAMI_WEBSITE_ID }}
+      PUBLIC_WEBMENTION_ENDPOINT: ${{ vars.PUBLIC_WEBMENTION_ENDPOINT }}
+      PUBLIC_PERFORMANCE_ENDPOINT: ${{ vars.PUBLIC_PERFORMANCE_ENDPOINT }}
+    steps:
+      - name: Require main
+        run: test "$GITHUB_REF" = refs/heads/main
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run complete production gate
+        run: pnpm deploy:check
+      - name: Test Linux release procedure
+        run: bash scripts/test-static-release.sh
+      - name: Package exact static output
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "$(find dist ! -type f ! -type d -print -quit)" ]]; then
+            echo 'dist contains a symlink or special file' >&2
+            exit 1
+          fi
+          release_id="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          tar -C dist -czf site.tar.gz .
+          archive_sha256="$(sha256sum site.tar.gz | cut -d ' ' -f 1)"
+          printf '%s  site.tar.gz\n' "$archive_sha256" > site.sha256
+          echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
+          echo "archive_sha256=$archive_sha256" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: win98-static-${{ steps.package.outputs.release_id }}
+          path: |
+            site.tar.gz
+            site.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  deploy:
+    name: Transfer verified output and activate
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: https://win98.site
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: win98-static-${{ needs.build.outputs.release_id }}
+      - name: Check downloaded archive
+        shell: bash
+        env:
+          EXPECTED_SHA256: ${{ needs.build.outputs.archive_sha256 }}
+        run: |
+          set -euo pipefail
+          sha256sum --check site.sha256
+          test "$(sha256sum site.tar.gz | cut -d ' ' -f 1)" = "$EXPECTED_SHA256"
+      - name: Upload and activate on the static host
+        shell: bash
+        env:
+          RELEASE_ID: ${{ needs.build.outputs.release_id }}
+          ARCHIVE_SHA256: ${{ needs.build.outputs.archive_sha256 }}
+          DEPLOY_HOST: ${{ vars.WIN98_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.WIN98_DEPLOY_USER }}
+          DEPLOY_PORT: ${{ vars.WIN98_DEPLOY_PORT || '22' }}
+          DEPLOY_KEY: ${{ secrets.WIN98_DEPLOY_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.WIN98_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_ID" =~ ^[0-9a-f]{40}-[0-9]+-[0-9]+$ ]]
+          [[ "$ARCHIVE_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]] && (( DEPLOY_PORT >= 1 && DEPLOY_PORT <= 65535 ))
+          [[ -n "$DEPLOY_KEY" && -n "$DEPLOY_KNOWN_HOSTS" ]]
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/win98-deploy"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/win98-deploy" "$HOME/.ssh/known_hosts"
+          ssh_options=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -i "$HOME/.ssh/win98-deploy")
+          scp "${ssh_options[@]}" -P "$DEPLOY_PORT" site.tar.gz \
+            "$DEPLOY_USER@$DEPLOY_HOST:/opt/win98-static/incoming/$RELEASE_ID.tar.gz"
+          ssh "${ssh_options[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "/opt/win98-static/bin/release.sh install $RELEASE_ID $ARCHIVE_SHA256"
+          {
+            echo '## Static production release'
+            echo "- Release: \`$RELEASE_ID\`"
+            echo "- Archive SHA-256: \`$ARCHIVE_SHA256\`"
+            echo '- Host: https://win98.site/'
+          } >> "$GITHUB_STEP_SUMMARY"

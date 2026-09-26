@@ -87,6 +87,8 @@ function outputDirectory(outputRoot, slug) {
 async function locateAttachment(noteFile, sourceRoot, reference) {
   const clean = decodeURIComponent(reference.split(/[?#]/u)[0] ?? '').replace(/^<|>$/gu, '');
   if (!clean || /^(?:https?:|data:|\/)/iu.test(clean)) return null;
+  // A public note may link to a private Markdown file; only image assets may leave the Vault.
+  if (!/\.(?:avif|gif|jpe?g|png|svg|webp)$/iu.test(clean)) return null;
   const beside = await safeExistingChild(sourceRoot, resolve(dirname(noteFile), clean));
   if (beside) {
     try { if ((await stat(beside)).isFile()) return beside; } catch {}
@@ -112,12 +114,15 @@ async function main() {
   for (const file of files) {
     const source = await readFile(file, 'utf8');
     const parsed = frontmatter(source);
+    const publish = (parsed.data.publish === true || parsed.data.public === true || parsed.data.blog === true)
+      && parsed.data.draft !== true;
+    // The default output lives in a public Git repository: never materialize private Vault entries there.
+    if (!publish) continue;
     const relativePath = relative(sourceRoot, file).replaceAll('\\', '/');
     const title = String(parsed.data.title ?? basename(file, extname(file))).trim();
     let slug = stableSlug(parsed.data.slug ?? title, relativePath);
     if (used.has(slug)) slug = `${slug}-${createHash('sha1').update(relativePath).digest('hex').slice(0, 6)}`;
     used.add(slug);
-    const publish = parsed.data.publish === true || parsed.data.public === true || parsed.data.blog === true;
     entries.push({ file, relativePath, title, slug, parsed, publish, fileStat: await stat(file) });
   }
 
@@ -197,7 +202,7 @@ async function main() {
     }
     await writeFile(resolve(outputRoot, '.sync-manifest.json'), `${JSON.stringify({ generatedAt: new Date().toISOString(), entries: manifest }, null, 2)}\n`, 'utf8');
   }
-  console.log(`${options.dryRun ? 'Dry run' : 'Sync'} complete: ${manifest.length} notes, ${manifest.filter((item) => item.publish).length} public.`);
+  console.log(`${options.dryRun ? 'Dry run' : 'Sync'} complete: ${manifest.length} public notes.`);
 }
 
 main().catch((error) => {

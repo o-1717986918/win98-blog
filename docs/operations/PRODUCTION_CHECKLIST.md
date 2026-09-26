@@ -5,8 +5,8 @@
 ## A. 账号与资产（站主）
 
 - [ ] 当前 GitHub Pages 仓库、发布源和 `github-pages` Environment 已启用；迁移期间保留其回退能力。
-- [ ] （自托管）正式 HTTPS 域名已确定，GitHub `publish-ghcr` 从 `main` 执行成功，镜像 digest 与 `sha-<commit>` 已记录。
-- [ ] （自托管）GHCR 包可见性已明确记录；当前 public 包可匿名拉取，服务器未保存不必要的 GitHub PAT。
+- [ ] （自托管新路线）`production` Environment 已限制 `main` 并配置审批、专用 SSH 私钥和人工核验的主机指纹；部署用户无 root/Docker 权限。
+- [ ] （自托管新路线）`publish-static` 从 `main` 执行成功，release ID 和 archive SHA-256 已记录；原 GHCR 镜像与 `18098` 容器保留救援。
 - [ ] （仅 Cloudflare）Direct Upload 项目已创建，项目名与 `CLOUDFLARE_PAGES_PROJECT` 一致，API Token 只有 Pages Edit 权限。
 - [ ] （仅 Cloudflare）`preview` / `production` Environment 已建立，production 有审批保护。
 - [ ] 域名、续费联系人、DNS 控制权与回滚责任人已记录在凭据管理器。
@@ -15,12 +15,13 @@
 ## B. 构建门禁（自动）
 
 - [ ] `pnpm install --frozen-lockfile` 成功。
-- [ ] `pnpm deploy:prepare` 成功。
+- [ ] `publish-static` 使用 `SITE_URL=https://win98.site`、`BASE_PATH=/`、`PREVIEW_DRAFTS=false` 通过 `pnpm deploy:check`；Cloudflare 发布时另运行 `pnpm deploy:prepare`。
 - [ ] GitHub CI 和目标发布 workflow 的 `verify:all` 全绿。
-- [ ] `pnpm container:verify` 成功；镜像以只读文件系统、无 capabilities 启动并通过 Docker HEALTHCHECK。
-- [ ] GHCR 发布后的重新拉取冒烟通过，服务器使用记录过的 `sha-<commit>` 或 digest，不只依赖 `stable`。
+- [ ] 新静态容器以只读文件系统、无 capabilities 在回环 `18099` 启动，`/healthz` 和发布后的 `/release-id.txt` 正确；旧 GHCR 救援镜像仍可通过 `pnpm container:verify` 复核。
+- [ ] 服务器归档 SHA-256 验证、静态页面冒烟、错误归档不切换与无构建回滚演练通过。
 - [ ] `dist` 内无 `example.com` 或 `localhost` canonical，RSS 与 sitemap 指向 `SITE_URL`。
 - [ ] 没有草稿、未来日期内容或失效的主题引用意外进入生产。
+- [ ] 公开 Git 仓库及归档中没有私人/草稿笔记正文、附件或本地 Vault 路径。
 
 ## C. Preview 验收（人工）
 
@@ -37,8 +38,8 @@
 
 ## D. 容器、域名与发现
 
-- [ ] （自托管）容器端口只绑定 `127.0.0.1:18098`，防火墙未开放该端口；公网只经宝塔 HTTPS 反向代理进入。
-- [ ] （自托管）`docker compose ps` 显示 healthy，宝塔反代保留 Host 与 X-Forwarded-*，未知路由返回真实 404。
+- [ ] （自托管）新容器端口只绑定 `127.0.0.1:18099`，旧救援容器为 `18098`；防火墙未公开两者，公网只经宝塔 HTTPS 反向代理进入。
+- [ ] （自托管）`docker compose -f compose.static.yaml ps` 显示 healthy，宝塔反代保留 Host 与 X-Forwarded-*，未知路由返回真实 404。
 - [ ] （仅 Cloudflare）在 Pages Custom domains 先关联域名，再完成 DNS。
 - [ ] HTTPS 证书有效，HTTP 正确跳转到 HTTPS，主机名策略唯一。
 - [ ] `/robots.txt`、`/sitemap-index.xml`、`/rss.xml`、`/llms.txt` 返回 200 和正确 MIME。
@@ -60,5 +61,5 @@
 - [ ] 桌面与至少一台真实移动设备完成烟雾测试。
 - [ ] 记录初始 LCP、CLS 与交互延迟样本；接入真实用户聚合后检查移动/桌面各自的 75 分位目标。
 - [ ] 检查真实设备字体回退、低性能设备粒子开销与系统减弱动态。
-- [ ] 已确认上一个稳定 deployment 或 GHCR SHA 标签，可按当前承载方式完成确定性回滚。
+- [ ] 已记录上一个稳定 release ID，`release.sh rollback` 可无构建恢复；旧 GHCR SHA 标签也已记录作容器救援。
 - [ ] 完成一次非事故回滚演练，并记录恢复时间。

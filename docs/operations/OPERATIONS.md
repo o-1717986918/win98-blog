@@ -10,13 +10,16 @@
 | 全量验证 | `pnpm verify` |
 | 生产预览 | `pnpm preview` |
 | 上线前域名/服务检查 | `pnpm deploy:check` |
+| 生产静态发布 | GitHub Actions 的 `publish-static`（仅 `main`，手动触发） |
+| 服务器版本状态 | `sudo -u win98deploy /opt/win98-static/bin/release.sh status` |
+| 服务器无构建回滚 | `sudo -u win98deploy /opt/win98-static/bin/release.sh rollback <release-id>` |
 | Cloudflare 配置与构建门禁 | `pnpm deploy:prepare` |
 | Pages 预览发布 | `pnpm deploy:pages:preview` |
 | Pages 生产发布（PowerShell） | `$env:CONFIRM_PRODUCTION='YES'; pnpm deploy:pages:production` |
 
 `pnpm build` 依次执行工作区冻结资产检查、内容审计、Astro 类型检查、静态构建、Pagefind 索引、产物契约、内部链接和体积预算。
 
-`pnpm deploy:check` 会通过 Node 的 `--env-file-if-exists=.env` 加载本机部署变量，再以同一环境执行全量验证并检查最终 canonical。`deploy:prepare` 额外确认 Cloudflare 项目、账号与 token，但不会上传。正式发布步骤和验收表分别见 `DEPLOYMENT.md`、`PRODUCTION_CHECKLIST.md`。
+`pnpm deploy:check` 会通过 Node 的 `--env-file-if-exists=.env` 加载本机部署变量，再以同一环境执行全量验证并检查最终 canonical。`publish-static` 固定 `SITE_URL=https://win98.site`，在 Actions 上完成构建、发布脚本测试、产物传输与服务器版本切换。`deploy:prepare` 仅用于 Cloudflare 备选，额外确认其项目、账号和 token。正式步骤和验收表分别见 `DEPLOYMENT.md`、`PRODUCTION_CHECKLIST.md`。
 
 ## 监控目标
 
@@ -26,6 +29,10 @@
 - Pagefind 是按需加载，搜索失败不影响导航、主题、标签、归档或正文阅读。
 
 ## 故障处理
+
+### 静态发布失败
+
+构建失败不会接触生产服务器；上传或散列检查失败不会切换 `current`。服务器 HTTP 冒烟失败会尝试恢复旧版本。先看 `publish-static` 的失败步骤和 `/opt/win98-static/bin/release.sh status`，不要直接在宝塔文件管理器覆盖正在服务的 HTML。若静态容器故障，可暂时把宝塔反代改回旧 GHCR 容器的回环端口 `18098`。
 
 ### 构建失败
 
@@ -45,7 +52,8 @@
 
 ## 备份与所有权
 
-- Git 远端保存源码、内容与配置历史；构建 artifact 至少保留最近一个稳定版本；
+- Git 远端保存源码、公开内容与配置历史；服务器 `/opt/win98-static/releases/` 至少保留当前和一个已验收旧版，GitHub workflow artifact 有保留期限，不能代替服务器回滚版本；
+- `/opt/win98-static/releases/shared/` 保存已打开旧网页可能引用的资源，敏感内容撤回时要连旧 release 和共享资源一起检查；
 - 共置媒体随 Git 或项目约定的 LFS/对象存储备份；
 - Giscus 评论属于 GitHub Discussions；Waline 数据库必须单独备份；
 - 域名、DNS、托管账号和 provider 密钥不进入仓库，记录在站主的凭据管理器中。
