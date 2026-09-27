@@ -49,7 +49,7 @@ Astro 对同一路由中静态导入的所有布局会聚合样式。为真正�
 - Webmention 接收与性能样本聚合同样需要站主提供 HTTPS 端点；未配置时不会产生对应网络请求；
 - ArcVellum Demo 使用模拟作品数据但运行真实技术路线；它是架构解释器，不是完整 ArcVellum 客户端，文章清单中的未来稿也未冒充已发布；
 - Blog Studio 是本机单用户工具，没有远程协作、账号系统或双向 Obsidian 合并；笔记同步以显式发布和本地源为准；
-- 当前 `win98.site` 已由 ADR-0021 的 Actions 静态产物路线服务：`publish-static` 构建并验证完整产物，受限 SSH 账户上传，服务器原子切换，只读静态容器监听 `127.0.0.1:18099`，宝塔负责 HTTPS 反代。首次生产 release 为 `62829ea11d347877c39f4eb1ae568a65860de5ce-36223564941-1`；原 GHCR 容器保留在 `18098` 作救援。一次真实内容更新与无构建回滚演练仍待完成；ADR-0020 的“独立内容仓库 + 服务器 builder”仅为备选；
+- 当前 `win98.site` 已由 ADR-0021 的 Actions 静态产物路线服务：`publish-static` 构建并验证完整产物，受限 SSH 账户上传，服务器原子切换，只读静态容器监听 `127.0.0.1:18099`，宝塔负责 HTTPS 反代。首次生产 release 为 `62829ea11d347877c39f4eb1ae568a65860de5ce-36223564941-1`；2026-09-27 的真实文章更新已切换到 `d48df26852cf909035313c44444c99f1b900f6db-36329017664-1`。原 GHCR 容器保留在 `18098` 作救援；公开笔记更新与无构建回滚演练仍待完成；ADR-0020 的“独立内容仓库 + 服务器 builder”仅为备选；
 - 公网域名、DNS 与托管账号属于站主外部状态；GHCR workflow、宝塔 Compose、Direct Upload 备选、本机命令、域名顺序和回滚步骤见 `docs/operations/DEPLOYMENT.md`，发布验收见 `docs/operations/PRODUCTION_CHECKLIST.md`。
 
 冻结源资产和哈希见 `MIGRATION_MANIFEST.md`。
