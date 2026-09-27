@@ -77,7 +77,7 @@ jobs:
     name: Transfer verified output and activate
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     environment:
       name: production
       url: https://win98.site
