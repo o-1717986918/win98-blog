@@ -1,0 +1,27 @@
+[Unit]
+Description=win98.site GitHub training invitations
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=win98onboarding
+Group=win98onboarding
+StateDirectory=win98-onboarding
+StateDirectoryMode=0700
+LoadCredential=github-token:/etc/win98-onboarding/github-token
+ExecStart=/usr/bin/python3 -B /opt/win98-onboarding/service.py serve
+Restart=on-failure
+RestartSec=5s
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+MemoryMax=128M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

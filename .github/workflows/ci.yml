@@ -27,6 +27,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm verify:all
+      - run: python3 -B -m unittest discover -s tools/github-onboarding -p 'test_*.py'
       - uses: actions/upload-artifact@v7
         with:
           name: static-site

@@ -1,0 +1,153 @@
+---
+import Code from './Code.astro';
+import External from './External.astro';
+import Icon from './Icon.astro';
+import Registration from './Registration.astro';
+import Screenshot from './Screenshot.astro';
+import Section from './Section.astro';
+import collaboration from './assets/collaboration.svg';
+import verification from './assets/email-verification.png';
+import profile from './assets/profile-menu.png';
+import './guide.css';
+
+const repo = 'https://github.com/aust-robot-ai-training/robot-ai-training-homework';
+const student = 'GITHUB_USERNAME';
+---
+
+<main class="onboarding-page">
+  <article class="article" data-pagefind-body>
+    <header class="article-header">
+      <h1>Git 与 GitHub 入门</h1>
+      <p class="article-intro">从注册账号、安装工具到克隆作业仓库，完成 AI 组培训的协作环境准备。</p>
+    </header>
+    <figure class="article-illustration">
+      <img src={collaboration.src} alt="协作示意图：电脑上的作业通过 Git 推送到培训仓库的个人分支" />
+      <figcaption>协作示意：将本地作业推送到培训仓库的个人分支。</figcaption>
+    </figure>
+    <section class="before-start">
+      <h2>开始之前</h2>
+      <p><b>Git</b> 是电脑上的版本管理工具，用来记录文件修改；<b>GitHub</b> 是在线存放代码和协作的网站；<b>GitHub CLI</b> 的命令名为 <code>gh</code>，用于在终端登录账号和查看自动检查结果。</p>
+      <p>仓库保存文件与历史记录。克隆将在线仓库复制到电脑。分支是一条工作线，本培训使用 <code>student/你的用户名</code> 作为个人分支。</p>
+      <p>按顺序完成账号注册、用户名登记、接受邀请、工具安装、终端登录、仓库克隆与个人分支配置。</p>
+    </section>
+    <Section id="account" number={1} title="注册 GitHub 账号" lead="准备一个可接收邮件的邮箱，在浏览器中完成注册。">
+      <ol class="instructions">
+        <li>打开 <External href="https://github.com/signup">GitHub 注册页</External>，按页面要求填写邮箱、密码和用户名，完成验证。</li>
+        <li>打开邮箱，按 GitHub 邮件中的提示验证邮箱。返回 <External href="https://github.com/">GitHub</External> 并登录。</li>
+        <li>如果需要重新发送验证邮件，点击右上角头像 → <b>Settings</b> → <b>Emails</b> → <b>Resend verification email</b>，再检查收件箱及垃圾邮件。</li>
+      </ol>
+      <Screenshot src={verification.src} alt="GitHub 邮箱设置中 Resend verification email 按钮的位置" source="https://docs.github.com/zh/account-and-profile/how-tos/email-preferences/verifying-your-email-address" caption="邮箱验证入口。页面样式可能随 GitHub 更新。" />
+      <p class="success-note">完成标志：能够登录 GitHub，邮箱已完成验证。</p>
+    </Section>
+    <Section id="register" number={2} title="提交你的用户名" lead="输入你的 GitHub 用户名或个人主页链接，提交后立即向 GitHub 请求团队邀请。">
+      <div class="profile-guide">
+        <div>
+          <ol class="instructions">
+            <li>点击 GitHub 右上角头像，选择 <b>Your profile</b>。</li>
+            <li>查看浏览器地址栏：<code>github.com/</code> 后面的账号名就是用户名。</li>
+            <li>填写下方表单。也可以粘贴完整个人主页链接。</li>
+          </ol>
+          <div class="url-example"><span>https://github.com/</span><b>example-user</b>
+          </div>
+          <p class="small-note">示例中的用户名为 <code>example-user</code>。个人主页上的显示昵称可能与用户名不同。</p>
+        </div>
+        <Screenshot src={profile.src} alt="GitHub 右上角头像菜单中 Your profile 的位置" source="https://docs.github.com/en/account-and-profile/how-tos/profile-customization/pinning-items-to-your-profile" caption="个人主页入口" />
+      </div>
+      <Registration />
+    </Section>
+    <Section id="invitation" number={3} title="接受组织邀请" lead="GitHub 确认邀请后，使用刚登记的账号接受邀请。">
+      <ol class="instructions">
+        <li>检查 GitHub 注册邮箱中的邀请邮件，或打开 <External href="https://github.com/notifications">GitHub 通知</External>。</li>
+        <li>打开邀请，确认组织名为 <code>aust-robot-ai-training</code>，点击 <b>Accept invitation</b>。</li>
+        <li>在 GitHub 头像菜单的 <b>Your organizations</b> 中查看已加入的组织。培训方将学员加入 <code>training-2026</code> 团队并授予作业仓库写入权限。</li>
+      </ol>
+      <p><External href="https://github.com/aust-robot-ai-training">打开培训组织主页</External></p>
+      <p class="small-note">邀请通常在 7 天后过期。没有收到时，检查垃圾邮件、当前登录账号和登记的用户名，再用同一个用户名重试。公开仓库可直接浏览，写入权限需在加入培训团队后使用。</p>
+    </Section>
+    <Section id="install" number={4} title="安装 Git 与 GitHub CLI" lead="以下操作使用 Windows。">
+      <h3>安装 Git</h3>
+      <ol class="instructions">
+        <li>打开 <External href="https://git-scm.com/install/windows">Git for Windows 下载页</External>。常见 Intel、AMD 电脑选择 <b>64-bit Git for Windows Setup</b>；ARM 电脑选择 ARM64 版。</li>
+        <li>运行安装程序。安装目录可自行选择，按向导继续。</li>
+        <li>到 PATH / 环境变量设置时，选择 <b>Git from the command line and also from 3rd-party software</b>。其余选项可保留默认值，点击 <b>Install → Finish</b>。</li>
+        <li>关闭此前打开的终端。点击开始菜单，搜索 <b>cmd</b>，打开“命令提示符”，输入下面的命令并按回车。</li>
+      </ol>
+      <Code note="出现 git version 和版本号表示 Git 已可使用。" command="git --version" />
+      <h3>安装 GitHub CLI</h3>
+      <ol class="instructions">
+        <li>打开 <External href="https://cli.github.com/">GitHub CLI 下载页</External>，选择 Windows 的 <b>Download MSI</b>。</li>
+        <li>运行安装包，按向导完成安装。关闭 CMD 后重新打开，再检查版本。</li>
+      </ol>
+      <Code note="出现 gh version 和版本号表示 CLI 已可使用。" command="gh --version" />
+      <details class="detail-panel"><summary>已有 winget 时的安装方式 <Icon name="chevron" /></summary>
+        <div>
+          <p>在 CMD 中运行以下命令，按提示完成安装。安装结束后重新打开 CMD。</p>
+          <Code command={"winget install --id Git.Git -e\nwinget install --id GitHub.cli -e"} />
+        </div>
+      </details>
+    </Section>
+    <Section id="login" number={5} title="在终端登录 GitHub" lead="让本机 Git 使用你已经注册的 GitHub 账号。">
+      <Code command={"gh auth login --hostname github.com --git-protocol https --web"} />
+      <ol class="instructions">
+        <li>如果终端询问是否让 Git 使用 GitHub 凭据，选择 <b>Y</b>。</li>
+        <li>记下终端显示的一次性代码，按回车打开浏览器。确认浏览器中登录的是登记的那个账号。</li>
+        <li>在网页输入代码并授权 GitHub CLI。如果没有自动打开浏览器，手动访问 <External href="https://github.com/login/device">GitHub 设备授权页</External>。</li>
+        <li>回到 CMD，完成 Git 凭据配置并查看登录状态。</li>
+      </ol>
+      <Code note="gh auth status 应显示自己的 GitHub 用户名。" command={"gh auth setup-git --hostname github.com\ngh auth status"} />
+      <p class="small-note">账号不正确时，重新执行登录命令添加正确账号，再使用 <code>gh auth switch --hostname github.com</code> 选择账号。密码和设备授权代码仅用于对应的登录页面。</p>
+    </Section>
+    <Section id="clone" number={6} title="克隆仓库，创建个人分支" lead="选择电脑上的任意磁盘与文件夹，作为作业的存放位置。">
+      <h3>先进入你选好的文件夹</h3>
+      <ol class="instructions">
+        <li>在文件资源管理器中打开用于存放作业的文件夹。</li>
+        <li>点击顶部地址栏，输入 <code>cmd</code> 并按回车。打开的终端就在这个位置。</li>
+        <li>在 CMD 输入 <code>cd</code> 可查看当前位置。也可以使用下面的命令切换到实际路径。</li>
+      </ol>
+      <Code note="将引号内的文字换成已有文件夹的完整路径；/d 支持切换磁盘。" command={'cd /d "你选择的已有文件夹完整路径"'} />
+      <h3>下载作业仓库</h3>
+      <Code location="所选文件夹" note="看到下载进度后，会出现 course 文件夹；cd course 进入仓库。" command={`git clone ${repo}.git course\ncd course`} />
+      <h3>设置提交者信息</h3>
+      <p>在仓库目录内执行，将引号内的内容换成自己的用户名和已验证邮箱。邮箱也可使用 GitHub <b>Settings → Emails</b> 中显示的 <code>noreply</code> 地址。</p>
+      <Code location="course 作业仓库" note="执行成功时通常没有输出。" customize command={`git config --local user.name "你的GitHub用户名"\ngit config --local user.email "你的GitHub已验证邮箱"`} />
+      <h3>创建自己的分支</h3>
+      <p data-username-note>将 <code>GITHUB_USERNAME</code> 替换为你的 GitHub 用户名。</p>
+      <Code location="course 作业仓库" note="分支名应为 student/你的用户名；origin 地址应指向培训方作业仓库。" customize command={`git switch -c student/${student}\ngit branch --show-current\ngit remote -v`} />
+      <details class="detail-panel"><summary>已经有本地分支，或从另一台电脑继续 <Icon name="chevron" /></summary>
+        <div>
+          <p>本机已有个人分支时，直接切换：</p>
+          <Code location="course 作业仓库" customize command={`git switch student/${student}`} />
+          <p>个人分支已从另一台电脑上传，而本机尚无该分支时：</p>
+          <Code location="course 作业仓库" customize command={`git fetch origin\ngit switch --track origin/student/${student}`} />
+          <p>每次继续学习时，进入已有的作业仓库目录。</p>
+        </div>
+      </details>
+    </Section>
+    <section class="appendix resources" id="resources">
+      <h2>配套视频</h2>
+      <p>按当前步骤观看注册、安装、克隆和分支部分。</p>
+      <ul>
+        <li><External href="https://www.bilibili.com/video/BV1s3411g7PS/">康文昌：Git、GitHub 入门（B站）</External>：账号、仓库与基本协作。</li>
+        <li><External href="https://www.bilibili.com/video/BV1WT421S7y4/">Git 和 GitHub 零基础教程（B站）</External>：安装、分支与常用命令。</li>
+      </ul>
+    </section>
+    <section class="appendix faq" id="faq">
+      <h2>常见问题</h2>{[
+      ["git 或 gh 提示找不到命令", "关闭所有终端窗口，再打开 CMD 检查版本。Git 仍无法识别时，重新运行安装程序，检查 PATH 选项；gh 仍无法识别时，重新完成 CLI 安装。"],
+      ["网页打不开或登录失败", "检查网址、网络及当前浏览器登录状态，稍后重新尝试。终端没有自动打开浏览器时，手动访问 github.com/login/device，输入终端显示的一次性代码。"],
+      ["用户名提交后，为什么还没有加入组织？", "还需要在 GitHub 接受邀请。检查注册邮箱、垃圾邮件和 GitHub 通知，并确认用户名填写正确。邀请过期后，可用同一个 GitHub 用户名重新提交。"],
+      ["推送提示 403 或 Permission denied", "在作业目录运行 gh auth status，确认账号；检查是否接受组织邀请并加入培训团队，然后运行 gh auth setup-git --hostname github.com 后重试。"],
+      ["提示 course 文件夹或分支已存在", "进入现有 course 文件夹检查是否已经克隆；需要新的副本时选择其他位置。本机已有分支时使用 git switch student/你的用户名。"],
+      ["remote branch not found / 提交身份不明", "远端分支不存在时先克隆默认分支并新建个人分支。提交身份不明时，在仓库目录重新执行 git config --local user.name 和 git config --local user.email。"],
+      ["没有可提交的修改 / nothing to commit", "检查文件是否已经保存到当前仓库，运行 git status 查看状态。若文件已提交但尚未推送，可直接 git push。"],
+      ].map(([question, answer]) => <details class="detail-panel"><summary>{question}<Icon name="chevron" /></summary>
+      <div>
+        <p>{answer}</p>
+      </div>
+    </details>)}</section>
+  </article>
+</main>
+
+<script>
+  import './onboarding';
+</script>

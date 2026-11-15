@@ -1,0 +1,8 @@
+---
+import Icon from './Icon.astro';
+interface Props {
+  href: string;
+}
+---
+
+<a href={Astro.props.href} target="_blank" rel="noopener noreferrer" class="text-link"><slot /><Icon name="external" /></a>

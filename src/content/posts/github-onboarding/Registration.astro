@@ -1,0 +1,31 @@
+---
+import Icon from './Icon.astro';
+
+const canSubmit = import.meta.env.DEV || Astro.site?.origin === 'https://win98.site';
+---
+
+{canSubmit ? (
+  <form class="registration" action="/api/github-onboarding/register" method="post" data-registration>
+    <div class="form-top">
+      <h3>登记 GitHub 账号</h3>
+      <p>用于加入 aust-robot-ai-training 培训组织</p>
+    </div>
+    <label for="github-username">GitHub 用户名或个人主页链接</label>
+    <div class="input-row">
+      <input id="github-username" name="github_username" type="text" autocapitalize="none" spellcheck="false" autocomplete="username" placeholder="例如 example-user" required maxlength="250" aria-describedby="registration-help" />
+      <button class="button" type="submit" disabled><span>提交并获取邀请</span><Icon name="arrow" /></button>
+    </div>
+    <div class="form-trap" aria-hidden="true">
+      <label for="website">Website</label>
+      <input id="website" name="website" tabindex="-1" autocomplete="off" />
+    </div>
+    <p class="form-help" id="registration-help">请填写你自己的账号。提交后会立即向 GitHub 请求邀请，收到后请在 GitHub 确认加入。登记名单仅供培训方查看。</p>
+    <div class="form-status" role="status" aria-live="polite"></div>
+    <a class="text-link" href="#invitation" data-continue hidden>继续：接受组织邀请 <Icon name="arrow" /></a>
+    <noscript><p>请启用 JavaScript 后提交登记。</p></noscript>
+  </form>
+) : (
+  <div class="registration">
+    <a class="button" href="https://win98.site/posts/github-onboarding/#register">前往正式站点登记 <Icon name="external" /></a>
+  </div>
+)}
