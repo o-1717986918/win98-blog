@@ -6,10 +6,7 @@ const canSubmit = import.meta.env.DEV || Astro.site?.origin === 'https://win98.s
 
 {canSubmit ? (
   <form class="registration" action="/api/github-onboarding/register" method="post" data-registration>
-    <div class="form-top">
-      <h3>登记 GitHub 账号</h3>
-      <p>用于加入 aust-robot-ai-training 培训组织</p>
-    </div>
+    <h3 class="form-heading">登记 GitHub 账号</h3>
     <label for="github-username">GitHub 用户名或个人主页链接</label>
     <div class="input-row">
       <input id="github-username" name="github_username" type="text" autocapitalize="none" spellcheck="false" autocomplete="username" placeholder="例如 example-user" required maxlength="250" aria-describedby="registration-help" />
@@ -19,7 +16,7 @@ const canSubmit = import.meta.env.DEV || Astro.site?.origin === 'https://win98.s
       <label for="website">Website</label>
       <input id="website" name="website" tabindex="-1" autocomplete="off" />
     </div>
-    <p class="form-help" id="registration-help">请填写你自己的账号。提交后会立即向 GitHub 请求邀请，收到后请在 GitHub 确认加入。登记名单仅供培训方查看。</p>
+    <p class="form-help" id="registration-help">提交后自动收到github组织邀请</p>
     <div class="form-status" role="status" aria-live="polite"></div>
     <a class="text-link" href="#invitation" data-continue hidden>继续：接受组织邀请 <Icon name="arrow" /></a>
     <noscript><p>请启用 JavaScript 后提交登记。</p></noscript>

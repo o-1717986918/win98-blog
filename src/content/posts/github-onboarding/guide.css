@@ -119,12 +119,6 @@ pre code {
 .article-illustration img {
   width:100%
 }
-.article-illustration figcaption {
-  text-align:center;
-  color:#9aa3af;
-  font-size:11px;
-  margin-top:5px
-}
 .before-start h2 {
   font-size:25px;
   margin-bottom:17px
@@ -174,15 +168,6 @@ pre code {
   font-weight:600;
   color:#344258
 }
-.small-note {
-  font-size:13px!important;
-  color:#647086!important;
-  line-height:1.95
-}
-.success-note {
-  color:#4e796a;
-  font-size:13px
-}
 .screenshot {
   margin:22px 0 20px
 }
@@ -192,7 +177,6 @@ pre code {
   border:1px solid #e5e9ee;
   background:#fafbfc;
   border-radius:5px;
-  position:relative;
   padding:19px;
   cursor:zoom-in
 }
@@ -204,22 +188,9 @@ pre code {
   margin:auto
 }
 .screenshot figcaption {
-  color:#939dab;
-  font-size:11px;
+  font-size:14px;
   line-height:1.8;
   margin-top:9px
-}
-.screenshot figcaption a {
-  color:#7c8da6
-}
-.image-zoom {
-  position:absolute;
-  right:7px;
-  bottom:5px;
-  font-size:9px;
-  color:#a0aab8;
-  background:#fff;
-  padding:1px 4px
 }
 .profile-guide {
   display:block
@@ -254,17 +225,10 @@ pre code {
   margin:28px 0 20px;
   position:relative
 }
-.form-top {
-  margin-bottom:19px
-}
-.form-top h3 {
+.form-heading {
   font-size:19px;
-  font-weight:600
-}
-.form-top p {
-  font-size:12px;
-  color:#667287;
-  margin-top:4px
+  font-weight:600;
+  margin-bottom:19px
 }
 .registration label {
   display:block;
@@ -314,7 +278,7 @@ pre code {
 }
 .form-help {
   color:#647086;
-  font-size:11px;
+  font-size:14px;
   line-height:1.85;
   margin-top:12px
 }
@@ -360,27 +324,14 @@ pre code {
 .code-toolbar {
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap:8px;
+  justify-content:flex-end;
   padding:8px 13px;
   border-bottom:1px solid #e7ebf0;
-  font-size:10px;
   line-height:1.6;
-  color:#909cad;
   background:#f1f4f8
 }
-.code-toolbar>span {
-  display:flex;
-  align-items:center;
-  gap:5px;
-  flex-wrap:wrap
-}
-.code-toolbar i {
+.code-toolbar:has(button[hidden]) {
   display:none
-}
-.code-location {
-  font-family:var(--body);
-  color:#9ba5b3
 }
 .code-toolbar button {
   display:flex;
@@ -388,8 +339,8 @@ pre code {
   gap:5px;
   background:transparent;
   border:0;
-  color:#8193af;
-  font-size:10px;
+  color:#4d6080;
+  font-size:13px;
   padding:2px
 }
 .code-toolbar button:hover {
@@ -402,14 +353,6 @@ pre code {
   line-height:1.9;
   margin:0;
   padding:17px
-}
-.code-note {
-  font-family:var(--body);
-  border-top:1px solid #e7ebf0;
-  font-size:11px;
-  line-height:1.8;
-  color:#8693a4;
-  padding:10px 13px
 }
 .detail-panel {
   margin:20px 0;
@@ -515,9 +458,6 @@ pre code {
     max-width:380px;
     margin:24px auto 30px
   }
-  .article-illustration figcaption {
-    font-size:10px
-  }
   .before-start h2,.appendix>h2 {
     font-size:22px
   }
@@ -543,22 +483,12 @@ pre code {
   .screenshot-button {
     padding:12px
   }
-  .screenshot figcaption {
-    font-size:10px
-  }
   .code-block pre {
     font-size:11px;
     padding:14px
   }
   .code-toolbar {
-    font-size:9px;
     padding:8px 10px
-  }
-  .code-location {
-    display:none
-  }
-  .code-note {
-    font-size:10px
   }
   .url-example {
     font-size:12px
@@ -577,9 +507,6 @@ pre code {
   .input-row .button {
     min-height:43px;
     width:100%
-  }
-  .form-top p {
-    font-size:11px
   }
   .detail-panel summary,.faq summary {
     font-size:13px
@@ -601,7 +528,7 @@ pre code {
   }
 }
 @media print {
-  .registration,.code-toolbar button,.image-zoom {
+  .registration,.code-toolbar {
     display:none
   }
   .article {

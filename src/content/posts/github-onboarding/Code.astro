@@ -2,18 +2,14 @@
 import Icon from './Icon.astro';
 interface Props {
   command: string;
-  location?: string;
-  note?: string;
   customize?: boolean;
 }
-const { command, location = '任意目录', note, customize } = Astro.props;
+const { command, customize } = Astro.props;
 ---
 
 <div class="code-block">
   <div class="code-toolbar">
-    <span>Windows · CMD <span class="code-location"> · {location}</span></span>
     <button type="button" data-copy-command hidden><Icon name="copy" /><span>复制命令</span></button>
   </div>
   <pre tabindex="0"><code data-command-template={customize ? command : undefined}>{command}</code></pre>
-  {note && <p class="code-note">{note}</p>}
 </div>

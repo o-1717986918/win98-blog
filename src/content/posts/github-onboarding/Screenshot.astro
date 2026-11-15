@@ -3,17 +3,15 @@ interface Props {
   src: string;
   alt: string;
   source: string;
-  caption: string;
 }
-const { src, alt, source, caption } = Astro.props;
+const { src, alt, source } = Astro.props;
 ---
 
 <figure class="screenshot">
   <a class="screenshot-button" href={src} data-zoom aria-label={'放大查看：' + alt}>
     <img {src} {alt} loading="lazy" />
-    <span class="image-zoom">点击查看大图</span>
   </a>
-  <figcaption>{caption} <a href={source} target="_blank" rel="noopener noreferrer">GitHub 官方截图</a></figcaption>
+  <figcaption><a href={source} target="_blank" rel="noopener noreferrer">GitHub 官方截图</a></figcaption>
   <dialog class="screenshot-dialog" aria-label={alt}>
     <form method="dialog"><button type="submit">关闭大图</button></form>
     <img data-enlarged {alt} />
