@@ -14,12 +14,18 @@ import secrets
 import sqlite3
 import sys
 import time
+import unicodedata
 from urllib.parse import urlsplit
 
 
-REGISTER_PATH = "/api/github-onboarding/register"
+REGISTER_PATH = "/api/github-onboarding/register-student"
 TEAM_PATH = "/orgs/aust-robot-ai-training/teams/training-2026/memberships/"
 RETRY_MESSAGE = "暂时无法确认邀请，请稍后用同一个用户名重试。"
+STUDENT_FORMAT = "请填写专业、班级和姓名，例如计算机26-4王小明或计算机-26-4-王小明。"
+CLASS_PATTERN = r"[^\W_]+(?:\s+[^\W_]+)*(?:\s*-\s*[0-9]{1,3})?"
+DELIMITED_STUDENT = re.compile(r"([^-]+?)\s*-\s*(" + CLASS_PATTERN + r")\s*-\s*(.+)")
+COMPACT_STUDENT = re.compile(r"(.+?)\s*([0-9]{2,4}\s*-\s*[0-9]{1,3})\s*(.+)")
+DASHES = str.maketrans({char: "-" for char in "‐‑‒–—−"})
 
 
 class Rejected(ValueError):
@@ -47,10 +53,33 @@ def normalize(value):
     return username.lower()
 
 
+def parse_student(value):
+    if not isinstance(value, str) or not 0 < len(value) <= 96:
+        raise Rejected(400, STUDENT_FORMAT)
+    value = unicodedata.normalize("NFKC", value).translate(DASHES).strip()
+    if any(unicodedata.category(char).startswith("C") for char in value):
+        raise Rejected(400, STUDENT_FORMAT)
+    match = DELIMITED_STUDENT.fullmatch(value) or COMPACT_STUDENT.fullmatch(value)
+    if not match:
+        raise Rejected(400, STUDENT_FORMAT)
+    major, class_name, student_name = (" ".join(part.split()) for part in match.groups())
+    class_name = re.sub(r"\s*-\s*", "-", class_name)
+    if (
+        not 1 <= len(major) <= 48 or not major[0].isalpha()
+        or not all(char.isalnum() or char in " ()·&/" for char in major)
+        or not 1 <= len(class_name) <= 24
+        or not 1 <= len(student_name) <= 40 or not student_name[0].isalpha()
+        or not all(unicodedata.category(char)[0] in "LM" or char in " ·.'’-" for char in student_name)
+    ):
+        raise Rejected(400, STUDENT_FORMAT)
+    return major, class_name, student_name
+
+
 @contextlib.contextmanager
 def database(path):
     with contextlib.closing(sqlite3.connect(path)) as connection, connection:
         connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA foreign_keys = ON")
         yield connection
 
 
@@ -66,9 +95,17 @@ def initialize(path):
                 lease_id TEXT
             )
         """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS student_profiles (
+                username TEXT PRIMARY KEY NOT NULL REFERENCES registrations(username),
+                major TEXT NOT NULL,
+                class_name TEXT NOT NULL,
+                student_name TEXT NOT NULL
+            )
+        """)
 
 
-def claim(path, username):
+def claim(path, username, student):
     now = int(time.time())
     lease_id = secrets.token_hex(16)
     with database(path) as connection:
@@ -81,6 +118,15 @@ def claim(path, username):
         """, (username, now + 90, lease_id, now))
         if cursor.rowcount != 1:
             raise Rejected(409, "该账号的邀请正在处理，请稍后重试。")
+        connection.execute("""
+            INSERT INTO student_profiles (username, major, class_name, student_name)
+            VALUES (?, ?, ?, ?) ON CONFLICT(username) DO NOTHING
+        """, (username, *student))
+        existing = connection.execute("""
+            SELECT major, class_name, student_name FROM student_profiles WHERE username = ?
+        """, (username,)).fetchone()
+        if tuple(existing) != student:
+            raise Rejected(409, "此 GitHub 账号已有登记。如需更正学员信息，请联系培训方。")
     return lease_id
 
 
@@ -130,7 +176,8 @@ def register(path, github, payload):
     if not isinstance(payload, dict) or payload.get("website"):
         raise Rejected(400, "提交格式有误，请刷新后重试。")
     username = normalize(payload.get("github_username"))
-    lease_id = claim(path, username)
+    student = parse_student(payload.get("student_info"))
+    lease_id = claim(path, username, student)
 
     state = "retry"
     try:
@@ -219,12 +266,27 @@ def make_server(port, origin, db_path, github):
 def export_registrations(db_path, search, report):
     with database(db_path) as connection:
         rows = connection.execute("""
-            SELECT username, state, registered_at
-            FROM registrations WHERE instr(username, ?) > 0 ORDER BY username
+            SELECT r.username, r.state, r.registered_at, p.major, p.class_name, p.student_name
+            FROM registrations AS r LEFT JOIN student_profiles AS p ON p.username = r.username
+            WHERE instr(r.username, ?) > 0 ORDER BY r.username
         """, (search.lower(),)).fetchall()
     writer = csv.writer(sys.stdout)
-    writer.writerow(["github_username", "last_invite_state", "registered_at_utc"] if report else ["github_username"])
+    columns = ["github_username"]
+    if report:
+        columns.extend(["last_invite_state", "registered_at_utc", "major", "class_name", "student_name"])
+    writer.writerow(columns)
     writer.writerows(tuple(row) if report else (row["username"],) for row in rows)
+
+
+def set_student(path, username, student):
+    with database(path) as connection:
+        if not connection.execute("SELECT 1 FROM registrations WHERE username = ?", (username,)).fetchone():
+            raise Rejected(404, "没有找到此 GitHub 用户名的登记。")
+        connection.execute("""
+            INSERT INTO student_profiles (username, major, class_name, student_name) VALUES (?, ?, ?, ?)
+            ON CONFLICT(username) DO UPDATE SET major = excluded.major,
+                class_name = excluded.class_name, student_name = excluded.student_name
+        """, (username, *student))
 
 
 def main():
@@ -232,11 +294,13 @@ def main():
     parser.add_argument("--db", type=Path, default=Path("/var/lib/win98-onboarding/registrations.sqlite3"))
     commands = parser.add_subparsers(dest="command", required=True)
     server = commands.add_parser("serve")
-    server.add_argument("--port", type=int, default=18100)
+    server.add_argument("--port", type=int, default=18101)
     server.add_argument("--origin", default="https://win98.site")
     export = commands.add_parser("export")
     export.add_argument("--search", default="")
     export.add_argument("--report", action="store_true")
+    correction = commands.add_parser("set-student")
+    correction.add_argument("username")
     args = parser.parse_args()
     os.umask(0o077)
     logging.basicConfig(level=logging.INFO)
@@ -244,6 +308,12 @@ def main():
     initialize(args.db)
     if args.command == "export":
         export_registrations(args.db, args.search, args.report)
+    elif args.command == "set-student":
+        try:
+            set_student(args.db, normalize(args.username), parse_student(input("专业、班级、姓名：")))
+        except (Rejected, EOFError) as error:
+            parser.error(str(error))
+        print("学员信息已保存。")
     else:
         token = (Path(os.environ["CREDENTIALS_DIRECTORY"]) / "github-token").read_text().strip()
         if not re.fullmatch(r"github_pat_[A-Za-z0-9_]+", token):

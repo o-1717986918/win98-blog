@@ -1,5 +1,5 @@
 [Unit]
-Description=win98.site GitHub training invitations
+Description=win98.site GitHub training invitations and student registration
 After=network-online.target
 Wants=network-online.target
 
@@ -9,7 +9,7 @@ Group=win98onboarding
 StateDirectory=win98-onboarding
 StateDirectoryMode=0700
 LoadCredential=github-token:/etc/win98-onboarding/github-token
-ExecStart=/usr/bin/python3 -B /opt/win98-onboarding/service.py serve
+ExecStart=/usr/bin/python3 -B /opt/win98-onboarding-students/service.py serve
 Restart=on-failure
 RestartSec=5s
 UMask=0077

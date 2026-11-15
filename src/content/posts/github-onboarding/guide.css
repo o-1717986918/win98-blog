@@ -240,6 +240,9 @@ pre code {
   display:flex;
   gap:10px
 }
+.student-field {
+  margin-top:14px;
+}
 .input-row input {
   min-width:0;
   flex:1;

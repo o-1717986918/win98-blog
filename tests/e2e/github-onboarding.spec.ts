@@ -30,7 +30,7 @@ test('实验栏目中的 GitHub 教程在手机和桌面可阅读并支持截图
   expect(errors).toEqual([]);
 });
 
-test('访客可直接提交用户名并按 GitHub 的响应显示登记结果', async ({ page }) => {
+test('访客提交用户名和学员信息后看到登记结果', async ({ page }) => {
   await page.goto(path);
   const form = page.locator('[data-registration]');
   if ((await form.count()) === 0) {
@@ -40,10 +40,11 @@ test('访客可直接提交用户名并按 GitHub 的响应显示登记结果', 
   }
 
   let available = false;
-  await page.route('**/api/github-onboarding/register', (route) => {
+  await page.route('**/api/github-onboarding/register-student', (route) => {
     expect(route.request().method()).toBe('POST');
     expect(route.request().postDataJSON()).toEqual({
       github_username: '@Example-User',
+      student_info: '计算机26-4王小明',
       website: '',
     });
     return available
@@ -51,7 +52,10 @@ test('访客可直接提交用户名并按 GitHub 的响应显示登记结果', 
       : route.fulfill({ status: 503, json: { error: '请稍后重试。' } });
   });
   await form.getByLabel('GitHub 用户名或个人主页链接').fill('@Example-User');
-  await expect(form.getByRole('textbox')).toHaveCount(1);
+  const student = form.getByLabel('专业、班级、姓名');
+  await expect(student).toHaveAttribute('required', '');
+  await student.fill('计算机26-4王小明');
+  await expect(form.getByRole('textbox')).toHaveCount(2);
   const submit = form.getByRole('button', { name: '提交并获取邀请' });
   await submit.click();
   await expect(form.getByRole('status')).toHaveText('请稍后重试。');

@@ -5,12 +5,18 @@ const canSubmit = import.meta.env.DEV || Astro.site?.origin === 'https://win98.s
 ---
 
 {canSubmit ? (
-  <form class="registration" action="/api/github-onboarding/register" method="post" data-registration>
+  <form class="registration" action="/api/github-onboarding/register-student" method="post" data-registration>
     <h3 class="form-heading">登记 GitHub 账号</h3>
     <label for="github-username">GitHub 用户名或个人主页链接</label>
     <div class="input-row">
       <input id="github-username" name="github_username" type="text" autocapitalize="none" spellcheck="false" autocomplete="username" placeholder="例如 example-user" required maxlength="250" aria-describedby="registration-help" />
-      <button class="button" type="submit" disabled><span>提交并获取邀请</span><Icon name="arrow" /></button>
+    </div>
+    <div class="student-field">
+      <label for="student-info">专业、班级、姓名</label>
+      <div class="input-row">
+        <input id="student-info" name="student_info" type="text" spellcheck="false" autocomplete="off" placeholder="例如：计算机26-4王小明" required maxlength="96" />
+        <button class="button" type="submit" disabled><span>提交并获取邀请</span><Icon name="arrow" /></button>
+      </div>
     </div>
     <div class="form-trap" aria-hidden="true">
       <label for="website">Website</label>

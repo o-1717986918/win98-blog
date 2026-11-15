@@ -12,13 +12,15 @@ const webmentionEnabled = Boolean(import.meta.env.PUBLIC_WEBMENTION_ENDPOINT);
   <div class="page-wrap privacy-page">
     <header class="page-intro">
       <div><p class="eyebrow">PRIVACY</p><h1 class="display-title">隐私<br />说明</h1></div>
-      <div class="page-intro__copy"><p>本站以无数据库的静态页面为核心。下面列出当前构建实际启用的浏览器存储与第三方服务。</p></div>
+      <div class="page-intro__copy"><p>本站以静态页面为核心。下面列出本站使用的浏览器存储、登记数据和第三方服务。</p></div>
     </header>
     <div class="prose privacy-copy">
       <h2>浏览器本地设置</h2>
       <p>主题、字号、沉浸阅读和背景动效偏好保存在当前浏览器的 <code>localStorage</code> 中，仅用于恢复界面设置，不会由本站上传。</p>
       <h2>站内搜索</h2>
       <p>全文索引随静态网站一同下载，查询在浏览器本地执行；本站不接收搜索关键词。</p>
+      <h2>培训登记</h2>
+      <p>提交培训登记时，网站会保存 GitHub 用户名、专业、班级和姓名，供培训方核对名单。发送邀请时只向 GitHub 提交 GitHub 用户名。需要更正登记信息时，请联系培训方。</p>
       <h2>访问统计</h2>
       <p><strong>当前状态：{analyticsLabel}</strong>。未启用时不会加载统计脚本；启用时，数据处理边界由对应部署方的配置与隐私政策决定。</p>
       <h2>现场性能</h2>
