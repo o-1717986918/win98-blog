@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 from threading import Event, Thread
 import unittest
 
+from notify import make_message, notify_next
 from service import REGISTER_PATH, TEAM_PATH, database, export_registrations, initialize, make_server, set_student
 
 
@@ -120,6 +121,33 @@ class RegistrationTest(unittest.TestCase):
         self.assertNotIn("state", data)
         self.unavailable = False
         self.assertEqual(self.submit()[0], 200)
+
+    def test_email_queues_once_for_a_new_invitation_and_can_retry(self):
+        self.memberships[TEAM_PATH + "already-pending"] = "pending"
+        self.memberships[TEAM_PATH + "already-active"] = "active"
+        self.assertEqual(self.submit("Already-Pending")[0], 200)
+        self.assertEqual(self.submit("Already-Active")[0], 200)
+        self.assertEqual(self.submit()[0], 200)
+        self.assertEqual(self.submit()[0], 200)
+
+        emails = []
+
+        def send(event):
+            emails.append(make_message(event, "sender@example.test", "admin@example.test"))
+            if len(emails) == 1:
+                raise TimeoutError
+
+        self.assertTrue(notify_next(self.db, send))
+        self.assertFalse(notify_next(self.db, send))
+        with database(self.db) as connection:
+            rows = connection.execute("SELECT username, attempts, sent_at FROM invitation_emails").fetchall()
+            self.assertEqual([tuple(row) for row in rows], [("example-user", 1, None)])
+            connection.execute("UPDATE invitation_emails SET next_attempt = 0")
+        self.assertTrue(notify_next(self.db, send))
+        self.assertFalse(notify_next(self.db, send))
+        self.assertEqual(emails[0]["Message-ID"], emails[1]["Message-ID"])
+        self.assertIn("example-user", emails[1].get_content())
+        self.assertNotIn("王小明", emails[1].get_content())
 
     def test_simultaneous_submissions_create_one_invitation(self):
         entered, proceed = self.paused = Event(), Event()

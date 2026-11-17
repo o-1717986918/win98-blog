@@ -1,0 +1,27 @@
+[Unit]
+Description=win98.site training invitation email notifications
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=win98onboarding
+Group=win98onboarding
+StateDirectory=win98-onboarding
+StateDirectoryMode=0700
+LoadCredential=mail-smtp:/etc/win98-onboarding/mail-smtp.json
+ExecStart=/usr/bin/python3 -B /opt/win98-onboarding-notify/notify.py --smtp-config %d/mail-smtp
+Restart=on-failure
+RestartSec=30s
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+MemoryMax=64M
+TasksMax=16
+
+[Install]
+WantedBy=multi-user.target

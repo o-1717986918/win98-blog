@@ -103,6 +103,16 @@ def initialize(path):
                 student_name TEXT NOT NULL
             )
         """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS invitation_emails (
+                id INTEGER PRIMARY KEY,
+                username TEXT NOT NULL REFERENCES registrations(username),
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                next_attempt INTEGER NOT NULL DEFAULT 0,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                sent_at TEXT
+            )
+        """)
 
 
 def claim(path, username, student):
@@ -130,7 +140,7 @@ def claim(path, username, student):
     return lease_id
 
 
-def finish(path, username, lease_id, state):
+def finish(path, username, lease_id, state, invitation_created):
     with database(path) as connection:
         cursor = connection.execute("""
             UPDATE registrations SET state = ?, lease_until = 0, lease_id = NULL
@@ -138,6 +148,8 @@ def finish(path, username, lease_id, state):
         """, (state, username, lease_id))
         if cursor.rowcount != 1:
             raise Rejected(503, RETRY_MESSAGE)
+        if invitation_created:
+            connection.execute("INSERT INTO invitation_emails (username) VALUES (?)", (username,))
 
 
 def github_client(token):
@@ -163,13 +175,14 @@ def github_client(token):
 def invite(github, username):
     endpoint = TEAM_PATH + username
     status, data = github("GET", endpoint)
-    if status == 404:
+    new_membership = status == 404
+    if new_membership:
         status, data = github("PUT", endpoint)
     state = data.get("state") if isinstance(data, dict) else None
     if status != 200 or state not in ("pending", "active"):
         logging.warning("GitHub team membership request returned HTTP %s", status)
         raise Rejected(503, RETRY_MESSAGE)
-    return state
+    return state, new_membership and state == "pending"
 
 
 def register(path, github, payload):
@@ -180,14 +193,15 @@ def register(path, github, payload):
     lease_id = claim(path, username, student)
 
     state = "retry"
+    invitation_created = False
     try:
-        state = invite(github, username)
+        state, invitation_created = invite(github, username)
     except (OSError, http.client.HTTPException, ValueError) as error:
         if not isinstance(error, Rejected):
             logging.warning("GitHub team membership request failed (%s)", type(error).__name__)
         raise Rejected(503, RETRY_MESSAGE) from error
     finally:
-        finish(path, username, lease_id, state)
+        finish(path, username, lease_id, state, invitation_created)
 
     # A visitor can submit any handle. Keep existing membership state in the private report.
     return {
