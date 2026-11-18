@@ -243,6 +243,9 @@ pre code {
 .student-field {
   margin-top:14px;
 }
+.registration .registration-visibility {
+  margin:0 0 10px;
+}
 .input-row input {
   min-width:0;
   flex:1;

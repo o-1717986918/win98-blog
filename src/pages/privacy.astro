@@ -20,7 +20,7 @@ const webmentionEnabled = Boolean(import.meta.env.PUBLIC_WEBMENTION_ENDPOINT);
       <h2>站内搜索</h2>
       <p>全文索引随静态网站一同下载，查询在浏览器本地执行；本站不接收搜索关键词。</p>
       <h2>培训登记</h2>
-      <p>提交培训登记时，网站会保存 GitHub 用户名、专业、班级和姓名，供培训方核对名单。发送邀请时只向 GitHub 提交 GitHub 用户名。需要更正登记信息时，请联系培训方。</p>
+      <p>提交培训登记时，网站会保存 GitHub 用户名、专业、班级和姓名。发送邀请时，网站向 GitHub 提交用户名。通过含名单说明的表单提交后，网站也会将 GitHub 用户名、专业、班级、姓名和邀请状态同步到 aust-robot-ai-training 组织的私有项目。培训团队成员和其他有名单权限的组织成员可查看。需要更正登记信息时，请联系培训方。</p>
       <h2>访问统计</h2>
       <p><strong>当前状态：{analyticsLabel}</strong>。未启用时不会加载统计脚本；启用时，数据处理边界由对应部署方的配置与隐私政策决定。</p>
       <h2>现场性能</h2>

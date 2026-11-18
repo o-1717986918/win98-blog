@@ -45,6 +45,7 @@ test('访客提交用户名和学员信息后看到登记结果', async ({ page 
     expect(route.request().postDataJSON()).toEqual({
       github_username: '@Example-User',
       student_info: '计算机26-4王小明',
+      directory_notice: 'org-members-v1',
       website: '',
     });
     return available
@@ -54,6 +55,7 @@ test('访客提交用户名和学员信息后看到登记结果', async ({ page 
   await form.getByLabel('GitHub 用户名或个人主页链接').fill('@Example-User');
   const student = form.getByLabel('专业、班级、姓名');
   await expect(student).toHaveAttribute('required', '');
+  await expect(form.getByText(/组织成员可查看/)).toBeVisible();
   await student.fill('计算机26-4王小明');
   await expect(form.getByRole('textbox')).toHaveCount(2);
   const submit = form.getByRole('button', { name: '提交并获取邀请' });

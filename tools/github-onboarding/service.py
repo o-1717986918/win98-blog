@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 
 REGISTER_PATH = "/api/github-onboarding/register-student"
 TEAM_PATH = "/orgs/aust-robot-ai-training/teams/training-2026/memberships/"
+DIRECTORY_NOTICE = "org-members-v1"
 RETRY_MESSAGE = "暂时无法确认邀请，请稍后用同一个用户名重试。"
 STUDENT_FORMAT = "请填写专业、班级和姓名，例如计算机26-4王小明或计算机-26-4-王小明。"
 CLASS_PATTERN = r"[^\W_]+(?:\s+[^\W_]+)*(?:\s*-\s*[0-9]{1,3})?"
@@ -113,9 +114,15 @@ def initialize(path):
                 sent_at TEXT
             )
         """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS project_directory (
+                username TEXT PRIMARY KEY NOT NULL REFERENCES student_profiles(username),
+                submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
 
-def claim(path, username, student):
+def claim(path, username, student, directory_notice):
     now = int(time.time())
     lease_id = secrets.token_hex(16)
     with database(path) as connection:
@@ -137,6 +144,11 @@ def claim(path, username, student):
         """, (username,)).fetchone()
         if tuple(existing) != student:
             raise Rejected(409, "此 GitHub 账号已有登记。如需更正学员信息，请联系培训方。")
+        if directory_notice == DIRECTORY_NOTICE:
+            connection.execute("""
+                INSERT INTO project_directory (username) VALUES (?)
+                ON CONFLICT(username) DO NOTHING
+            """, (username,))
     return lease_id
 
 
@@ -190,7 +202,7 @@ def register(path, github, payload):
         raise Rejected(400, "提交格式有误，请刷新后重试。")
     username = normalize(payload.get("github_username"))
     student = parse_student(payload.get("student_info"))
-    lease_id = claim(path, username, student)
+    lease_id = claim(path, username, student, payload.get("directory_notice"))
 
     state = "retry"
     invitation_created = False

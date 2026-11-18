@@ -9,7 +9,8 @@ from threading import Event, Thread
 import unittest
 
 from notify import make_message, notify_next
-from service import REGISTER_PATH, TEAM_PATH, database, export_registrations, initialize, make_server, set_student
+from project_sync import FIELDS, synchronize
+from service import DIRECTORY_NOTICE, REGISTER_PATH, TEAM_PATH, database, export_registrations, initialize, make_server, set_student
 
 
 class RegistrationTest(unittest.TestCase):
@@ -148,6 +149,42 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(emails[0]["Message-ID"], emails[1]["Message-ID"])
         self.assertIn("example-user", emails[1].get_content())
         self.assertNotIn("王小明", emails[1].get_content())
+
+    def test_roster_sync_only_includes_submissions_with_the_disclosure(self):
+        self.assertEqual(self.submit("Legacy-User")[0], 200)
+        payload = {"directory_notice": DIRECTORY_NOTICE}
+        self.assertEqual(self.submit(payload=payload)[0], 200)
+        fields = [{"name": label, "id": key, "dataType": "TEXT"} for key, label in FIELDS.items()]
+        item = None
+        writes = []
+
+        def graphql(document, variables):
+            nonlocal item
+            if "organization(login:" in document:
+                return {"organization": {"projectV2": {"id": "project", "public": False, "closed": False,
+                                                        "fields": {"nodes": fields}}}}
+            if "items(first:" in document:
+                return {"node": {"items": {"pageInfo": {"hasNextPage": False}, "nodes": [item] if item else []}}}
+            if "addProjectV2DraftIssue" in document:
+                self.assertIsNone(item)
+                item = {"id": "draft", "isArchived": False, "fieldValues": {"nodes": []},
+                        "content": {"body": variables["body"], "title": variables["title"]}}
+                return {"addProjectV2DraftIssue": {"projectItem": {"id": "draft"}}}
+            updates = {entry["fieldId"]: entry["value"]["text"] for entry in variables.values()}
+            writes.append(updates)
+            known = {node["field"]["id"]: node["text"] for node in item["fieldValues"]["nodes"]}
+            known.update(updates)
+            item["fieldValues"]["nodes"] = [{"field": {"id": key}, "text": value} for key, value in known.items()]
+
+        self.assertEqual(synchronize(self.db, graphql, self.github, 1), 1)
+        self.assertEqual(item["content"]["title"], "example-user")
+        self.assertEqual(writes, [{"major": "计算机", "class_name": "26-4",
+                                   "student_name": "王小明", "state": "待接受邀请"}])
+        self.memberships[TEAM_PATH + "example-user"] = "active"
+        self.assertEqual(synchronize(self.db, graphql, self.github, 1), 1)
+        self.assertEqual(writes[-1], {"state": "已加入团队"})
+        synchronize(self.db, graphql, self.github, 1)
+        self.assertEqual(len(writes), 2)
 
     def test_simultaneous_submissions_create_one_invitation(self):
         entered, proceed = self.paused = Event(), Event()

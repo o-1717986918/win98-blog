@@ -13,8 +13,10 @@ const canSubmit = import.meta.env.DEV || Astro.site?.origin === 'https://win98.s
     </div>
     <div class="student-field">
       <label for="student-info">专业、班级、姓名</label>
+      <p class="registration-visibility" id="registration-visibility">提交后，你的 GitHub 账号、专业、班级、姓名和邀请状态会同步到培训组织的 GitHub 名单。培训团队成员和其他有名单权限的组织成员可查看。</p>
+      <input type="hidden" name="directory_notice" value="org-members-v1" />
       <div class="input-row">
-        <input id="student-info" name="student_info" type="text" spellcheck="false" autocomplete="off" placeholder="例如：计算机26-4王小明" required maxlength="96" />
+        <input id="student-info" name="student_info" type="text" spellcheck="false" autocomplete="off" placeholder="例如：计算机26-4王小明" required maxlength="96" aria-describedby="registration-visibility" />
         <button class="button" type="submit" disabled><span>提交并获取邀请</span><Icon name="arrow" /></button>
       </div>
     </div>
